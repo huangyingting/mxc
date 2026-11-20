@@ -38,6 +38,8 @@ python build.py --target demo
 - HTML：`dist/html/index.html`，同时复制到 `docs/index.html`
 - ProcessContainer Demo：`npm --prefix demo run demo`
 - Session Container Demo：`npm --prefix demo run demo:session`，验证独立 Agent 用户、不同 Windows Session ID 与跨执行状态
+
+Session Container 解决的是独立 Windows 用户/Session 与状态隔离，不是凭据保险箱；文件策略不可用、网络必须全开放、`SendInput` 被阻止。ERP 凭据仍应由 Host/Broker 或专用低权限账号管理。
 - Lab：阅读 `labs/lab-01-least-privilege/README.md`
 
 ## GitHub Pages

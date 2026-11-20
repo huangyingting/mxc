@@ -254,7 +254,7 @@ tb(s,W-M-4000000,1550000,4000000,'Stronger isolation',size=14,color=MUTED,align=
 rect(s,M,ry,CW-350000,38100,fill=EDGE)
 rect(s,W-M-400000,ry-150000,400000,340000,fill=EDGE,preset='rightArrow')
 gap=180000; cw4=(CW-3*gap)/4; y0=2350000; ch=3550000
-bx=[('Process container','Windows 11 · macOS · Linux','AppContainer, Seatbelt or Bubblewrap. Lightweight and responsive; the default for coding agents.',None),('Session container','Windows 11 only','A separate Windows session with its own desktop, clipboard and input. No MXC file or network filtering.',None),('WSL container','Windows 11','Runs Linux workloads on a Windows host through WSL.',None),('MicroVM','Windows 11 · Linux','Hardware-enforced virtual machine boundary; the strongest option.','Experimental')]
+bx=[('Process container','Windows 11 · macOS · Linux','AppContainer, Seatbelt or Bubblewrap. Lightweight and responsive; the default for coding agents.',None),('Session container','Windows 11 only','Separate Windows account and OS session with session-local UI. No file or network filtering; SendInput is blocked.',None),('WSL container','Windows 11','Runs Linux workloads on a Windows host through WSL.',None),('MicroVM','Windows 11 · Linux','Hardware-enforced virtual machine boundary; the strongest option.','Experimental')]
 for i,(t,p,d,st) in enumerate(bx):
     x=M+i*(cw4+gap)
     rect(s,x+cw4/2-110000,ry-110000+19050,220000,220000,fill=CY,preset='ellipse')
@@ -266,7 +266,7 @@ for i,(t,p,d,st) in enumerate(bx):
     yy=tb(s,x+250000,yy+40000,cw4-500000,p,size=14,color=CY,bold=True)
     tb(s,x+250000,yy+120000,cw4-500000,d,size=15,color=MUTED)
 footer(s,'Sources: Windows Developer Blog, Oct 7, 2026; Microsoft Learn, MXC architecture',11)
-note(s,'隔离方式应按工作负载需求选择。Process container 启动开销较低，适合 Coding Agent；Windows、macOS 和 Linux 分别映射到 AppContainer、Seatbelt 和 Bubblewrap。\nSession container 提供 Windows 独立会话、桌面、剪贴板和输入，适合桌面自动化，但它不是等价的文件与网络过滤器，部分策略不可用。WSL container 用于在 Windows 上运行 Linux 工作负载。MicroVM 提供更强的硬件隔离，但仍处于实验范围。选型应权衡隔离强度、兼容性和性能，而非默认选择最重的虚拟化方案。')
+note(s,'隔离方式应按工作负载需求选择。Process container 启动开销较低，适合 Coding Agent；Windows、macOS 和 Linux 分别映射到 AppContainer、Seatbelt 和 Bubblewrap。\nSession container 创建独立 Windows 用户和 OS Session，Session 内窗口、GDI 与剪贴板可工作，但 Host 的 UI 和用户 Profile 不属于该 Session。官方实现拒绝文件策略，要求网络明确为 egress、ingress、host loopback 全部 allow，并阻止 SendInput。因此它解决身份、会话和桌面分离，不解决精细文件/网络最小权限，也不是通用凭据隔离器。')
 
 # ---------- 11 WHERE MXC RUNS
 s=11
@@ -339,9 +339,9 @@ for i,t in enumerate(['API tokens','SSH keys','Browser secrets','Your clipboard'
 ex=ox+ow+350000; ew=W-M-ex
 y=tb(s,ex,1750000,ew,None,paras=[{'text':'Credentials','sizePt':19,'bold':True,'color':INK},{'text':'Keep secrets out of the workload\'s reach. Let the trusted host or proxy attach them to approved calls.','sizePt':15,'color':MUTED}])
 y=tb(s,ex,y+200000,ew,None,paras=[{'text':'UI and input','sizePt':19,'bold':True,'color':INK},{'text':'Restrict windows, clipboard and synthetic keyboard or pointer input.','sizePt':15,'color':MUTED}])
-tb(s,ex,y+200000,ew,None,paras=[{'text':'Need a desktop?','sizePt':19,'bold':True,'color':CY},{'text':'A session container gives the agent its own desktop, clipboard and input.','sizePt':15,'color':MUTED}])
+tb(s,ex,y+200000,ew,None,paras=[{'text':'Need a desktop?','sizePt':19,'bold':True,'color':CY},{'text':'A session has its own desktop and clipboard; synthetic input is blocked.','sizePt':15,'color':MUTED}])
 footer(s,'Sources: Microsoft Learn, MXC overview; Windows Developer Blog, Oct 7, 2026',15)
-note(s,'API token、SSH key、浏览器凭据和用户私有资料不应复制到 Workload 可见的环境。外部服务认证应由可信 Host 或代理完成，凭据只附加到经过策略验证的请求中。\nUI 策略应限制窗口访问、剪贴板以及合成键盘或指针输入。必须操作桌面应用时，可使用 Session container 提供独立桌面、剪贴板和输入，避免 Workload 共享用户当前会话。')
+note(s,'API token、SSH key、浏览器凭据和用户私有资料不应复制到 Workload 可见的环境。外部服务认证应由可信 Host 或代理完成，凭据只附加到经过策略验证的请求中。\nSession container 的源码语义是独立 Windows 用户和 Session：Session 内窗口、GDI 和 Session 自己的剪贴板可用，但无法访问 Host 的对应对象，且 SendInput 被阻止。若 Session 内已经登录 ERP，ERP Cookie 或 Token 对该 Agent 用户可见；Session 并不会把这些凭据变成不可读取。此时必须使用专用低权限账号、短期登录和可信认证 Broker。')
 
 # ---------- 15 LEARNING MODE (image right)
 s=15
@@ -407,14 +407,14 @@ s=18
 img(s,'hd-desktop.jpg',W-PANEL,0,PANEL,H,'Hand-drawn sketch panel: a human relaxes at his own desk while a robot agent processes invoices at its own separate desktop behind a glass wall')
 cxl=W-PANEL-2*M
 header(s,'04 · USE CASES','Desktop and data agents',cx=cxl)
-cards=[('Computer-use agent','Fills forms and processes invoices in desktop apps, away from the user\'s own session.','Fit: session container, with its own desktop, clipboard and input'),('Sensitive-document agent','Reads one approved folder, writes one report, no network.','Fit: process container with a deny-by-default policy'),('Agents on Cloud PCs','Run beside existing work on Windows 365; process isolation works as on a physical PC.','Fit: Windows 365 + MXC, generally available')]
+cards=[('Desktop automation agent','Keeps app state in a separate Windows account and session, driven through app APIs or UI automation.','Fit: session container; its network is open and SendInput is blocked'),('Sensitive-document agent','Reads one approved folder, writes one report, no network.','Fit: process container with a deny-by-default policy'),('Agents on Cloud PCs','Run beside existing work on Windows 365; process isolation works as on a physical PC.','Fit: Windows 365 + MXC, generally available')]
 y=1600000; ch=1380000
 for t,d,f in cards:
     rect(s,M,y,cxl,ch,fill=CARD)
     tb(s,M+250000,y,cxl-500000,None,paras=[{'text':t,'sizePt':18,'bold':True,'color':INK},{'text':d,'sizePt':14,'color':MUTED},{'text':f,'sizePt':14,'color':CY,'bold':True}],cy=ch)
     y+=ch+110000
 footer(s,'Sources: Windows Developer Blog; Microsoft Learn',19,cx=cxl)
-note(s,'Computer-use Agent 需要操作桌面应用，可使用 Session container 隔离桌面、剪贴板和输入。敏感文档 Agent 通常只需要一个只读输入目录、一个可写报告目录以及完全关闭的网络，不需要共享用户会话。\nWindows 365 已支持 MXC。Process container 在 Cloud PC 与物理设备上的能力一致；采用 Session 或虚拟化 Backend 时，仍需单独验证平台支持和嵌套虚拟化要求。')
+note(s,'Session container 适合需要独立 Windows 用户、应用状态和长生命周期的桌面自动化，例如使用 UI Automation、应用内 API 或可信自动化驱动器。它不能泛化为“模型直接使用鼠标点击 Host 桌面”：源码明确阻止 SendInput，Session 内窗口与剪贴板也只属于 Agent Session。\nERP 等应用的身份需要单独设计。Session 不继承员工 SSO；若在其中登录，凭据就位于该 Agent 用户的 Profile 中。应使用专用低权限机器人账号或 Host-side credential broker，而不是复制员工 Cookie。Windows 365 的 Process container 与物理 PC 行为一致；Session/虚拟化 Backend 仍需额外验证。')
 
 # ---------- 19 ECOSYSTEM
 s=19

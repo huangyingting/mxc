@@ -56,10 +56,12 @@ IsolationSession 是 Windows-only 的独立用户会话，不能等同于 Proces
 
 ## 适用场景
 
-- **Computer-use / GUI Agent**：需要独立桌面、剪贴板和输入会话，不应共享员工当前会话。
+- **有状态桌面自动化**：应用可通过应用内 API、UI Automation 等可信驱动器操作，需保留独立 Windows 用户和应用状态。
 - **有状态工具 Agent**：多个命令共享会话、应用登录状态、临时工作区或交互终端。
 - **多租户或并发 Agent**：每个 Agent 使用独立 Windows 用户和 Session，避免相互污染用户配置。
 
-不适合靠 Session Container 单独完成精细文件与网络最小权限控制；这类需求应使用 ProcessContainer，必要时再把可信 GUI 工作放入独立 Session。
+MXC 源码明确限制：IsolationSession 不接受文件 Policy；网络必须将 egress、ingress、host loopback 全部声明为 `allow`；窗口、GDI 和 Session 自己的剪贴板在 Session 内可用，但 `SendInput` 被阻止。因此它不能替代 ProcessContainer 的精细文件/网络隔离，也不是所有“Computer-use” Agent 都能直接使用的驱动层。
+
+IsolationSession 也不是凭据保险箱。独立 Agent 用户保护的是 Host 用户的 Profile、Registry、Cookie 和 Token 不被直接继承；一旦 ERP 在 Agent Session 内登录，Cookie 或 Token 就可能被以该 Agent 用户运行的代码访问。应使用专用低权限机器人账号，或由 Host/可信 Broker 持有短时凭据；不要复制员工浏览器 Profile、Cookie 或 Refresh Token。
 
 官方 `microsoft/mxc` 仓库当前提供两个直接示例：`samples/run-in-persisted-container` 对应状态化生命周期，`samples/run-with-io-pty-interactive` 对应交互式 PTY。本示例保留前者的生命周期，并增加独立 OS 用户、Session ID 和共享状态断言。公开仓库目前没有完整的 GUI Computer-use 自动化示例。
