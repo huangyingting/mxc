@@ -1,16 +1,21 @@
 {
   "filesystem": {
-    "readable": ["input"],
-    "writable": ["output"],
-    "denied": ["secrets"]
+    "readonlyPaths": ["input"],
+    "readwritePaths": ["output"],
+    "deniedPaths": ["protected/denied.txt"]
   },
   "network": {
-    "default": "deny",
-    "allow": [
-      {
-        "host": "api.github.com",
-        "ports": [443]
-      }
-    ]
+    "egress": {
+      "default": "deny"
+    },
+    "ingress": {
+      "default": "deny",
+      "hostLoopback": "deny"
+    }
+  },
+  "ui": {
+    "disable": true,
+    "clipboard": "none",
+    "allowInputInjection": false
   }
 }

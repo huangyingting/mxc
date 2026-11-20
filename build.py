@@ -4,9 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import shutil
-import unittest
+import subprocess
 
 from presentation.src import build_html, build_pptx
 
@@ -29,11 +30,21 @@ def build_site() -> None:
     print(f"Saved GitHub Pages site {PAGES_OUT}")
 
 
-def test_demo() -> None:
-    suite = unittest.defaultTestLoader.discover(str(ROOT / "demo" / "tests"))
-    result = unittest.TextTestRunner(verbosity=2).run(suite)
-    if not result.wasSuccessful():
-        raise SystemExit(1)
+def build_demo() -> None:
+    demo_dir = ROOT / "demo"
+    lock_file = demo_dir / "package-lock.json"
+    install = "ci" if lock_file.exists() else "install"
+    npm = shutil.which("npm.cmd" if os.name == "nt" else "npm")
+    if npm is None:
+        raise RuntimeError("npm is required to build the MXC SDK demo")
+    subprocess.run(
+        [npm, "--prefix", str(demo_dir), install, "--no-audit"],
+        check=True,
+    )
+    subprocess.run(
+        [npm, "--prefix", str(demo_dir), "run", "build"],
+        check=True,
+    )
 
 
 def main() -> None:
@@ -50,7 +61,7 @@ def main() -> None:
     if args.target in ("all", "presentation", "html"):
         build_site()
     if args.target in ("all", "demo"):
-        test_demo()
+        build_demo()
 
 
 if __name__ == "__main__":

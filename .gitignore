@@ -8,6 +8,8 @@ dist/*
 docs/index.html
 demo/output/*
 !demo/output/.gitkeep
+demo/node_modules/
+demo/dist/
 
 # Test and analysis caches
 .pytest_cache/

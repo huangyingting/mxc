@@ -1,28 +1,39 @@
-# Policy Demo
+# Real MXC SDK Demo
 
-这个 Demo 用一小段 Python 代码说明 Host 如何做默认拒绝、路径边界和网络精确放行。它**不是操作系统沙箱**；生产环境必须使用 MXC Backend 实际执行隔离。
+该 Demo 使用官方 `@microsoft/mxc-sdk/v1`，通过 MXC Backend 实际执行两个 Workload：
 
-## 运行
+1. 只读 `demo/input/`，写入 `demo/output/report.txt`，预期成功。
+2. 尝试读取 `demo/protected/denied.txt`，预期被 MXC 拒绝。
 
-从仓库根目录执行：
+网络入站、出站和回环均默认拒绝，UI、剪贴板与输入注入也处于禁用状态。代码通过 `getPlatformSupport()` 和 Windows `probe(request)` 先验证宿主能力，再调用真实 `run(request)`；不会模拟容器结果。
+
+## 平台要求
+
+- Node.js 24.21.0+（Windows 原生 stdio）；其他平台需 Node.js 24+
+- MXC 支持的宿主平台和已安装的 ProcessBackend 运行时
+- Windows 推荐使用支持 BaseContainer/PSEC 的 Windows 11 环境
+
+如果宿主不支持 MXC，Demo 会报告 `getPlatformSupport()` 的实际原因并退出失败，不会降级为普通进程执行。
+
+## 构建和运行
 
 ```text
-python -m demo.src.policy_demo
+npm --prefix demo ci
+npm --prefix demo run build
+npm --prefix demo run demo
 ```
 
-预期看到一次受控写入、一次 HTTPS 放行、一次越界读取拒绝和一次非白名单网络拒绝。
-
-## 构建和测试
+或在仓库根目录运行：
 
 ```text
 python build.py --target demo
 ```
 
-构建会运行 `demo/tests/` 中的标准库单元测试，不需要额外依赖。
+`build.py` 只安装依赖并执行 TypeScript 类型检查/构建，不自动启动需要本机 MXC 能力的集成 Demo。
 
-## 演示步骤
+## 观察点
 
-1. 打开 `demo/config/policy.json`，说明只读输入、只写输出、拒绝优先。
-2. 运行 Demo，观察相同的策略入口如何处理文件与网络请求。
-3. 修改 `"ports": [443]` 或 `host`，验证放行范围立即收窄。
-4. 尝试读取 `../README.md`，强调路径校验发生在实际 I/O 之前。
+- `demo/config/policy.json` 是 Host 提交给 MXC SDK 的最小权限策略。
+- `demo/src/main.ts` 对两个场景使用同一文件系统、网络与 UI Policy。
+- 允许场景验证 SDK 返回码，并从 Host 侧检查生成报告。
+- 拒绝场景在容器内尝试读取受保护文件；若读取成功，Workload 会以失败退出。

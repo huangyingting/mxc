@@ -509,17 +509,17 @@ note(s,'Host 需要设置超时，并区分启动失败、Workload 失败、用�
 s=24
 header(s,'06 · LIVE DEMO 1','Files stay fenced')
 lw0=5000000; y=1650000
-for i,t in enumerate(['Policy grants read/write to C:\\demo\\output only.','The workload writes a report: it succeeds.','The same workload reads C:\\Users\\me\\Documents: denied.']):
+for i,t in enumerate(['Policy grants read-only input and one writable output directory.','The MXC workload writes a report: it succeeds.','The same workload reads a protected file: MXC denies it.']):
     tb(s,M,y,700000,str(i+1),size=30,color=AMB if i==2 else CY,font=HF,bold=True)
     y=tb(s,M+700000,y+60000,lw0-700000,t,size=18,color=INK)+330000
 rect(s,M,y+100000,lw0,1000000,fill=CARD2,line=CY,lw=19050)
-tb(s,M+250000,y+100000,lw0-500000,'Point out: the workload code is identical. Only the policy changed.',size=16,bold=True,cy=1000000)
+tb(s,M+250000,y+100000,lw0-500000,'Point out: both scenarios use getPlatformSupport, probe and run.',size=16,bold=True,cy=1000000)
 tx=M+lw0+400000; tw=W-M-tx; ty=1650000; th=4250000
 rect(s,tx,ty,tw,th,fill=CODEBG,line=EDGE)
-term=[('PS> .\\demo-host.exe write-report.json',INK),('[mxc] containment: processcontainer',FOOT),('Report written to C:\\demo\\output\\report.txt',CY),('exit code 0',CY),(' ',INK),('PS> .\\demo-host.exe read-documents.json',INK),('[mxc] containment: processcontainer',FOOT),('PermissionError: Access is denied',AMB),('  C:\\Users\\me\\Documents\\salary.xlsx',AMB),('exit code 1',AMB)]
+term=[('PS> npm --prefix demo run demo',INK),('[mxc] @microsoft/mxc-sdk/v1',FOOT),('MXC ProcessContainer tier: base-container',FOOT),('ALLOW: input read and output write succeeded',CY),('DENY: protected file remained inaccessible',AMB),('MXC demo report: .\\demo\\output\\report.txt',CY)]
 tb(s,tx+250000,ty+500000,tw-400000,None,paras=[{'text':t,'color':c} for t,c in term],size=13,font=MF)
-footer(s,'Sample host app built on the MXC SDK; terminal output is illustrative',25)
-note(s,'文件隔离验证使用相同 Workload 执行两个场景。第一个场景仅允许写入专用输出目录，预期成功生成报告。第二个场景尝试读取未授权的用户 Documents 目录，预期返回 Permission denied。\n测试变量只应为 Policy，其他代码、命令和宿主环境保持一致，以证明访问结果由执行层策略决定。应同时记录允许事件、拒绝原因和退出码，不将空输出或静默失败当作成功。')
+footer(s,'Live host app uses the official @microsoft/mxc-sdk/v1',25)
+note(s,'文件隔离 Demo 使用官方 TypeScript SDK 的真实 MXC 容器。第一个请求仅允许读取 demo/input，并向 demo/output/report.txt 写入结果；第二个请求使用相同文件系统、网络和 UI Policy，尝试读取 demo/protected/denied.txt。\nHost 通过 getPlatformSupport 检查 Backend，Windows 环境还调用 probe 验证 ProcessContainer 能力，最终通过 run 执行请求。演示应确认允许场景成功生成报告，受保护文件场景由容器拒绝并保持零退出码。该 Demo 不包含普通进程降级路径。')
 
 # ---------- 25 DEMO 2
 s=25

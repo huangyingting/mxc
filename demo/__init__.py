@@ -1,1 +1,0 @@
-"""Runnable MXC policy demonstration."""

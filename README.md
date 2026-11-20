@@ -11,7 +11,7 @@
 | `dist/pptx/` | 生成的 PowerPoint 文件 |
 | `dist/html/` | 生成的独立 HTML 网页 |
 | `docs/` | GitHub Pages 发布目录，构建时复制 HTML |
-| `demo/` | 可运行的最小权限策略 Demo、配置和测试 |
+| `demo/` | 使用官方 MXC Node.js SDK 的真实沙箱 Demo |
 | `labs/` | Hands-on lab 的任务、脚手架、验证器和参考答案 |
 | `.github/workflows/pages.yml` | GitHub Pages 自动构建与部署 |
 
@@ -24,7 +24,7 @@ python -m pip install -r requirements.txt
 python build.py --target all
 ```
 
-Windows 可运行 `run.bat`，macOS/Linux 可运行 `./run.sh`。
+Windows 可运行 `run.bat`，macOS/Linux 可运行 `./run.sh`。完整构建会通过 `npm` 自动安装 Demo 的锁定依赖；Demo 运行需要 Node.js 24+ 及 MXC 支持的主机。
 
 单独构建：
 
@@ -36,7 +36,7 @@ python build.py --target demo
 
 - PPTX：`dist/pptx/Guardrails with Sandboxing - MXC.pptx`
 - HTML：`dist/html/index.html`，同时复制到 `docs/index.html`
-- Demo：`python -m demo.src.policy_demo`
+- Demo：`npm --prefix demo run demo`
 - Lab：阅读 `labs/lab-01-least-privilege/README.md`
 
 ## GitHub Pages
@@ -56,4 +56,4 @@ HTML 为包含图片、样式和脚本的单文件，画面中不显示控件或
 
 ## Demo 的边界
 
-Demo 以 Python 代码解释“策略判断”的设计，不是操作系统级沙箱。真实隔离必须由 MXC 支持的操作系统后端执行。
+Demo 直接调用官方 `@microsoft/mxc-sdk`，真实隔离由当前主机支持的 MXC Backend 执行。如果主机不支持 MXC，程序会明确失败而不会回退到普通进程。
