@@ -1,3 +1,4 @@
+import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -58,9 +59,15 @@ async function main(): Promise<void> {
     ) {
       throw new Error("MXC did not return complete IsolationSession metadata.");
     }
-
     console.log(`SESSION provisioned user: ${metadata.agentUserName}`);
     console.log(`SESSION workspace: ${metadata.ephemeralWorkspacePath}`);
+    console.log(`SESSION host user: ${os.userInfo().username}`);
+    if (
+      metadata.agentUserName.toLowerCase()
+      === os.userInfo().username.toLowerCase()
+    ) {
+      throw new Error("IsolationSession unexpectedly reused the host user identity.");
+    }
 
     await startContainer(containerId);
     started = true;
@@ -71,6 +78,47 @@ async function main(): Promise<void> {
       inheritDefaultEnvironment: true,
       timeoutMs: 30_000,
     } as const;
+
+    const identity = await runInContainer(containerId, {
+      ...executionOptions,
+      command:
+        'powershell.exe -NoProfile -NonInteractive -Command "'
+        + "$p = [Diagnostics.Process]::GetCurrentProcess(); "
+        + "Write-Output ('IDENTITY=' + [Environment]::UserName); "
+        + "Write-Output ('SESSION_ID=' + $p.SessionId)\"",
+    });
+    assertCompleted("session identity", identity);
+    if (!identity.stdout.toLowerCase().includes(
+      metadata.agentUserName.toLowerCase(),
+    )) {
+      throw new Error(
+        "The session workload did not run under the provisioned agent user.",
+      );
+    }
+
+    const hostSessionId = execFileSync(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "[Diagnostics.Process]::GetCurrentProcess().SessionId",
+      ],
+      { encoding: "utf8" },
+    ).trim();
+    const isolatedSessionId = identity.stdout.match(/SESSION_ID=(\d+)/)?.[1];
+    if (isolatedSessionId === undefined) {
+      throw new Error("The session workload did not report its Windows session ID.");
+    }
+    if (isolatedSessionId === hostSessionId) {
+      throw new Error(
+        `IsolationSession reused the host Windows session ${hostSessionId}.`,
+      );
+    }
+    console.log(
+      `SESSION identity uses ${metadata.agentUserName} in Windows session `
+      + `${isolatedSessionId}; host session is ${hostSessionId}`,
+    );
 
     const first = await runInContainer(containerId, {
       ...executionOptions,
@@ -96,6 +144,7 @@ async function main(): Promise<void> {
       throw new Error("Session state was not visible after a second execution.");
     }
     console.log("SESSION state persisted across two runInContainer calls");
+    console.log("SESSION host observed the shared workspace file");
   } catch (error) {
     operationError = error;
   } finally {

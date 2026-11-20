@@ -37,7 +37,7 @@ python build.py --target demo
 - PPTX：`dist/pptx/Guardrails with Sandboxing - MXC.pptx`
 - HTML：`dist/html/index.html`，同时复制到 `docs/index.html`
 - ProcessContainer Demo：`npm --prefix demo run demo`
-- Session Container Demo：`npm --prefix demo run demo:session`
+- Session Container Demo：`npm --prefix demo run demo:session`，验证独立 Agent 用户、不同 Windows Session ID 与跨执行状态
 - Lab：阅读 `labs/lab-01-least-privilege/README.md`
 
 ## GitHub Pages
