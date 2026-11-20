@@ -58,6 +58,15 @@ HTML 为包含图片、样式和脚本的单文件，画面中不显示控件或
 - 图片位于 `presentation/assets/images/`。
 - 不要手工修改 `docs/index.html` 或 `dist/`，它们都是构建产物。
 
+## 视觉系统
+
+- 标题：**Aptos Display**
+- 正文：**Aptos**
+- 代码：**Cascadia Code**
+- 配色：暖白背景、深海军文字、蓝色强调色、浅冷色卡片与少量砖红警示色
+
+HTML 在系统缺少 Aptos/Cascadia 时会回退到 Segoe UI、Arial 或 Consolas；PPTX 使用 Office 原生现代字体，保持跨文件一致性。
+
 ## Demo 的边界
 
 Demo 直接调用官方 `@microsoft/mxc-sdk`，真实隔离由当前主机支持的 MXC Backend 执行。如果主机不支持 MXC，程序会明确失败而不会回退到普通进程。

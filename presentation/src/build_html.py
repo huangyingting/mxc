@@ -4,7 +4,7 @@
 
 Usage:  pip install pillow
         python -m presentation.src.build_html [--out dist/html/index.html]
-Keys in the browser: <- / -> or Space to navigate, N = speaker notes, F = fullscreen,
+Keys in the browser: <- / -> or Space to navigate, F = fullscreen,
 Home/End = first/last. Print (Ctrl+P) gives one slide per page.
 """
 import argparse, base64, html, io, json, os
@@ -19,8 +19,15 @@ CLIP = {'rightArrow':'polygon(0 25%,70% 25%,70% 0,100% 50%,70% 100%,70% 75%,0 75
         'leftArrow':'polygon(30% 0,30% 25%,100% 25%,100% 75%,30% 75%,30% 100%,0 50%)',
         'chevron':'polygon(0 0,82% 0,100% 50%,82% 100%,0 100%,18% 50%)',
         'homePlate':'polygon(0 0,82% 0,100% 50%,82% 100%,0 100%)'}
-FALLBACK = {'Georgia':'Georgia,"Times New Roman",serif','Calibri':'Calibri,Carlito,"Segoe UI",Arial,sans-serif',
-            'Courier New':'"Courier New",Consolas,monospace','Arial':'Arial,Helvetica,sans-serif'}
+FALLBACK = {
+    'Aptos Display':'"Aptos Display","Segoe UI Variable Display","Segoe UI",Arial,sans-serif',
+    'Aptos':'Aptos,"Segoe UI Variable Text","Segoe UI",Arial,sans-serif',
+    'Cascadia Code':'"Cascadia Code","Cascadia Mono",Consolas,monospace',
+    'Georgia':'Georgia,"Times New Roman",serif',
+    'Calibri':'Calibri,Carlito,"Segoe UI",Arial,sans-serif',
+    'Courier New':'"Courier New",Consolas,monospace',
+    'Arial':'Arial,Helvetica,sans-serif',
+}
 e = lambda s: html.escape(s, quote=True)
 
 def data_uri(path, maxw, cache={}):

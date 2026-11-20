@@ -1,7 +1,7 @@
 # Illustration prompts (to regenerate or add new comics)
 
 Shared style suffix (append to every prompt):
-> Style: loose hand-drawn pen-and-ink doodle with light pencil hatching and a very light, sparse watercolor wash, like a notebook sketch. Plain off-white paper background (#F7F4EE). Muted, restrained palette: charcoal ink lines (#333333), soft slate blue (#4A6C8C), warm grey, and only a tiny touch of muted brick red (#B5533C). No glow, no neon, no gradients. No text, no words, no letters, no numbers, no watermarks, no logos.
+> Style: loose hand-drawn pen-and-ink doodle with light pencil hatching and a very light, sparse watercolor wash, like a notebook sketch. Plain warm-white paper background (#F6F4EF). Muted, restrained palette: deep navy ink lines (#182330), modern blue (#2F6F8F), cool warm grey, and only a tiny touch of muted brick red (#B95745). No glow, no neon, no gradients. No text, no words, no letters, no numbers, no watermarks, no logos.
 
 Recurring character: a simple friendly little robot (boxy body, round head, two dot eyes, small antenna).
 

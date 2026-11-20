@@ -28,15 +28,15 @@ from PIL import Image
 # ===================== THEME =====================
 # ===================== LAYOUT ====================
 W,H=12192000,6858000; M=457200; CW=W-2*M
-BG='F3EEE4'; CARD='E9E2D4'; CARD2='E9E2D4'; EDGE='C9C0AE'; INK='2B2B2B'; MUTED='57534C'; FOOT='6E685F'
-CY='3F607E'; AMB='A84A35'; CODEBG='FAF7F1'; CODE='2F4B66'
-HF='Georgia'; BF='Calibri'; MF='Courier New'
+BG='F6F4EF'; CARD='FFFDFC'; CARD2='EAF1F5'; EDGE='D4DCE2'; INK='182330'; MUTED='5D6875'; FOOT='77818C'
+CY='2F6F8F'; AMB='B95745'; CODEBG='F1F5F7'; CODE='23516F'
+HF='Aptos Display'; BF='Aptos'; MF='Cascadia Code'
 PANEL=4572000   # width of the side illustration panel
 # ===================== HELPERS ===================
 slides={}  # idx -> list of patches
 notes={}
 def P(s,op): slides.setdefault(s,[]).append(op)
-WF={'Georgia':0.6,'Arial':0.56,'Calibri':0.5,'Courier New':0.6}
+WF={'Aptos Display':0.55,'Aptos':0.51,'Cascadia Code':0.6,'Georgia':0.6,'Arial':0.56,'Calibri':0.5,'Courier New':0.6}
 def nlines(text,size,cx,font,bold):
     f=WF[font]*(1.07 if bold else 1)
     cpl=max(1,int((cx-182880)/(size*12700*f)))
