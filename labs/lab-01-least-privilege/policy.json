@@ -1,0 +1,16 @@
+{
+  "filesystem": {
+    "read": ["workspace"],
+    "write": ["workspace/output"],
+    "denied": ["workspace/secrets"]
+  },
+  "network": {
+    "default": "deny",
+    "allow": [
+      {
+        "host": "api.github.com",
+        "ports": [443]
+      }
+    ]
+  }
+}

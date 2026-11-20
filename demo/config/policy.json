@@ -1,0 +1,16 @@
+{
+  "filesystem": {
+    "readable": ["input"],
+    "writable": ["output"],
+    "denied": ["secrets"]
+  },
+  "network": {
+    "default": "deny",
+    "allow": [
+      {
+        "host": "api.github.com",
+        "ports": [443]
+      }
+    ]
+  }
+}

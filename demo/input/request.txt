@@ -1,0 +1,1 @@
+Summarize the approved input without accessing other files.

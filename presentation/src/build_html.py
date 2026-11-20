@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""build_html.py - turns the same 28 slides into ONE self-contained HTML file
+(images embedded, no external files). Uses the slide content from build_pptx.py.
+
+Usage:  pip install pillow
+        python -m presentation.src.build_html [--out dist/html/index.html]
+Keys in the browser: <- / -> or Space to navigate, N = speaker notes, F = fullscreen,
+Home/End = first/last. Print (Ctrl+P) gives one slide per page.
+"""
+import argparse, base64, html, io, json, os
+from PIL import Image
+try:
+    from . import build_pptx as D
+except ImportError:
+    import build_pptx as D
+
+PX = 9525  # EMU per CSS px  (slide = 1280 x 720 px)
+CLIP = {'rightArrow':'polygon(0 25%,70% 25%,70% 0,100% 50%,70% 100%,70% 75%,0 75%)',
+        'leftArrow':'polygon(30% 0,30% 25%,100% 25%,100% 75%,30% 75%,30% 100%,0 50%)',
+        'chevron':'polygon(0 0,82% 0,100% 50%,82% 100%,0 100%,18% 50%)',
+        'homePlate':'polygon(0 0,82% 0,100% 50%,82% 100%,0 100%)'}
+FALLBACK = {'Georgia':'Georgia,"Times New Roman",serif','Calibri':'Calibri,Carlito,"Segoe UI",Arial,sans-serif',
+            'Courier New':'"Courier New",Consolas,monospace','Arial':'Arial,Helvetica,sans-serif'}
+e = lambda s: html.escape(s, quote=True)
+
+def data_uri(path, maxw, cache={}):
+    if path not in cache:
+        im = Image.open(path).convert('RGB'); im.thumbnail((maxw, maxw))
+        b = io.BytesIO(); im.save(b, 'JPEG', quality=80, optimize=True)
+        cache[path] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
+    return cache[path]
+
+def box(o):
+    return f"left:{o['x']/PX:.1f}px;top:{o['y']/PX:.1f}px;width:{o['cx']/PX:.1f}px;height:{o['cy']/PX:.1f}px;"
+
+def text_html(o):
+    paras = o.get('paragraphs') or [{'text': o['text']}]
+    font = FALLBACK.get(o.get('fontFamily', D.BF), 'sans-serif')
+    ls = f"letter-spacing:{o['letterSpacingPt']*4/3:.1f}px;" if o.get('letterSpacingPt') else ''
+    out = []
+    for p in paras:
+        sz = p.get('sizePt', o.get('sizePt', 16)) * 4/3
+        st = (f"font-size:{sz:.1f}px;color:#{p.get('color', o.get('color', D.INK))};"
+              f"font-weight:{700 if p.get('bold', o.get('bold')) else 400};"
+              f"text-align:{p.get('align', o.get('align','center'))};")
+        out.append(f'<p style="{st}">' + '<br>'.join(e(l) for l in p['text'].split('\n')) + '</p>')
+    return f'<div class="t" style="font-family:{e(font)};{ls}">' + ''.join(out) + '</div>'
+
+def slide_html(k, ops, img_dir, maxw):
+    parts = []
+    for o in ops:
+        if o['op'] == 'add_image':
+            src = data_uri(os.path.join(img_dir, os.path.basename(o['path'])), maxw)
+            parts.append(f'<img class="a" style="{box(o)}" src="{src}" alt="{e(o.get("altText",""))}">')
+        elif o['op'] == 'add_text_box':
+            parts.append(f'<div class="a" style="{box(o)}">{text_html(o)}</div>')
+        elif o['op'] == 'add_shape':
+            pr = o['preset']; st = box(o) + f"background:#{o['fill']};"
+            if pr == 'ellipse': st += 'border-radius:50%;'
+            if pr == 'roundRect': st += f"border-radius:{min(o['cx'],o['cy'])/PX/6:.1f}px;"
+            if pr in CLIP: st += f'clip-path:{CLIP[pr]};'
+            if o.get('line') and pr not in CLIP: st += f"box-shadow:inset 0 0 0 {max(1,o.get('lineWidth',12700)/PX):.1f}px #{o['line']};"
+            inner = text_html(o) if 'text' in o else ''
+            parts.append(f'<div class="a" style="{st}">{inner}</div>')
+    note = e(D.notes.get(k, ''))
+    return f'<section class="slide" data-n="{k+1}" aria-label="Slide {k+1}">{"".join(parts)}<aside class="note">{note}</aside></section>'
+
+CSS = """
+:root{--bg:#%s;--ink:#%s;--chrome:#2b2b2b;--chrome-ink:#f3eee4}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%%;background:var(--chrome);color:var(--ink);overflow:hidden}
+#stage{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.slide{position:absolute;width:1280px;height:720px;background:var(--bg);overflow:hidden;display:none;transform-origin:center center;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.slide.on{display:block}
+.a{position:absolute}
+img.a{object-fit:cover}
+.t{position:absolute;inset:0;padding:4px 10px;display:flex;flex-direction:column;justify-content:center;line-height:1.2}
+.note{display:none}
+#bar{position:fixed;inset-block-end:0;inset-inline:0;display:flex;gap:12px;align-items:center;justify-content:center;padding:8px;color:var(--chrome-ink);font:14px Calibri,Arial,sans-serif;opacity:.25;transition:opacity .2s}
+#bar:hover{opacity:1}
+#bar button{background:transparent;color:var(--chrome-ink);border:1px solid var(--chrome-ink);border-radius:4px;padding:4px 12px;font:inherit;cursor:pointer}
+#notes{position:fixed;inset-block-end:48px;inset-inline:5%%;max-height:32vh;overflow:auto;background:#fffdf8;color:#2b2b2b;border-radius:8px;padding:16px 20px;font:16px/1.6 "Microsoft YaHei","PingFang SC",Calibri,sans-serif;white-space:pre-wrap;display:none;box-shadow:0 6px 30px rgba(0,0,0,.4)}
+#notes.on{display:block}
+@media (prefers-color-scheme:dark){:root{--chrome:#1a1a1a}}
+@media print{@page{size:13.333in 7.5in;margin:0}
+ html,body{overflow:visible;background:#fff}#bar,#notes{display:none!important}
+ #stage{position:static;display:block}.slide{position:relative;display:block!important;transform:none!important;box-shadow:none;page-break-after:always;break-after:page}}
+"""
+JS = """
+(function(){
+var S=[].slice.call(document.querySelectorAll('.slide')),i=0,N=document.getElementById('notes'),C=document.getElementById('count');
+function fit(){var s=Math.min(innerWidth/1280,(innerHeight-40)/720);S.forEach(function(x){x.style.transform='scale('+s+')';});}
+function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(x,j){x.classList.toggle('on',j===i);});
+ C.textContent=(i+1)+' / '+S.length;N.textContent=S[i].querySelector('.note').textContent||'(no notes)';
+ if(history.replaceState)history.replaceState(null,'','#'+(i+1));}
+document.getElementById('prev').addEventListener('click',function(){go(i-1);});
+document.getElementById('next').addEventListener('click',function(){go(i+1);});
+document.getElementById('tn').addEventListener('click',function(){N.classList.toggle('on');});
+document.getElementById('stage').addEventListener('click',function(ev){go(ev.clientX<innerWidth/3?i-1:i+1);});
+addEventListener('keydown',function(ev){var k=ev.key;
+ if(k==='ArrowRight'||k==='PageDown'||k===' ')go(i+1);else if(k==='ArrowLeft'||k==='PageUp')go(i-1);
+ else if(k==='Home')go(0);else if(k==='End')go(S.length-1);else if(k==='n'||k==='N')N.classList.toggle('on');
+ else if((k==='f'||k==='F')&&document.documentElement.requestFullscreen)document.documentElement.requestFullscreen();});
+addEventListener('resize',fit);fit();go((parseInt(location.hash.slice(1),10)||1)-1);
+})();
+"""
+
+def build(out, img_dir, maxw):
+    out_dir = os.path.dirname(os.path.abspath(out))
+    os.makedirs(out_dir, exist_ok=True)
+    body = ''.join(slide_html(k, D.slides[k], img_dir, maxw) for k in sorted(D.slides))
+    doc = f"""<!DOCTYPE html>
+<html lang="en" dir="ltr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Guardrails with Sandboxing - Microsoft Execution Containers (MXC)</title>
+<style>{CSS % (D.BG, D.INK)}</style></head>
+<body><main id="stage">{body}</main>
+<div id="notes" lang="zh-CN" aria-live="polite"></div>
+<nav id="bar"><button id="prev" type="button" aria-label="Previous slide">&#8592;</button><span id="count"></span>
+<button id="next" type="button" aria-label="Next slide">&#8594;</button><button id="tn" type="button">Notes (N)</button></nav>
+<script>{JS}</script></body></html>"""
+    open(out, 'w', encoding='utf-8').write(doc)
+    print(f'Saved {out}  ({len(D.slides)} slides, {os.path.getsize(out)/1e6:.2f} MB)')
+
+if __name__ == '__main__':
+    here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    root = os.path.dirname(here)
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--out', default=os.path.join(root, 'dist', 'html', 'index.html'))
+    ap.add_argument('--images', default=os.path.join(here, 'assets', 'images'))
+    ap.add_argument('--maxw', type=int, default=1100, help='max image edge in px (smaller = smaller file)')
+    a = ap.parse_args(); build(a.out, a.images, a.maxw)
