@@ -62,8 +62,7 @@ def slide_html(k, ops, img_dir, maxw):
             if o.get('line') and pr not in CLIP: st += f"box-shadow:inset 0 0 0 {max(1,o.get('lineWidth',12700)/PX):.1f}px #{o['line']};"
             inner = text_html(o) if 'text' in o else ''
             parts.append(f'<div class="a" style="{st}">{inner}</div>')
-    note = e(D.notes.get(k, ''))
-    return f'<section class="slide" data-n="{k+1}" aria-label="Slide {k+1}">{"".join(parts)}<aside class="note">{note}</aside></section>'
+    return f'<section class="slide" data-n="{k+1}" aria-label="Slide {k+1}">{"".join(parts)}</section>'
 
 CSS = """
 :root{--bg:#%s;--ink:#%s;--chrome:#2b2b2b;--chrome-ink:#f3eee4}
@@ -75,33 +74,22 @@ html,body{width:100%%;height:100%%;background:var(--bg);color:var(--ink);overflo
 .a{position:absolute}
 img.a{object-fit:cover}
 .t{position:absolute;inset:0;padding:4px 10px;display:flex;flex-direction:column;justify-content:center;line-height:1.2}
-.note{display:none}
-#bar{position:fixed;inset-block-end:8px;inset-inline-start:50%%;z-index:10;transform:translateX(-50%%);display:flex;gap:10px;align-items:center;justify-content:center;padding:6px 10px;color:var(--chrome-ink);background:rgba(27,27,27,.62);border-radius:8px;font:14px Calibri,Arial,sans-serif;opacity:.18;transition:opacity .2s;backdrop-filter:blur(6px)}
-#bar:hover,#bar:focus-within{opacity:1}
-#bar button{background:transparent;color:var(--chrome-ink);border:1px solid var(--chrome-ink);border-radius:4px;padding:4px 12px;font:inherit;cursor:pointer}
-#notes{position:fixed;inset-block-end:48px;inset-inline:5%%;max-height:32vh;overflow:auto;background:#fffdf8;color:#2b2b2b;border-radius:8px;padding:16px 20px;font:16px/1.6 "Microsoft YaHei","PingFang SC",Calibri,sans-serif;white-space:pre-wrap;display:none;box-shadow:0 6px 30px rgba(0,0,0,.4)}
-#notes.on{display:block}
 @media (prefers-color-scheme:dark){:root{--chrome:#1a1a1a}}
 @media print{@page{size:13.333in 7.5in;margin:0}
- html,body{overflow:visible;background:#fff}#bar,#notes{display:none!important}
+ html,body{overflow:visible;background:#fff}
  #stage{position:static;display:block}.slide{position:relative;display:block!important;transform:none!important;box-shadow:none;page-break-after:always;break-after:page}}
 """
 JS = """
 (function(){
-var S=[].slice.call(document.querySelectorAll('.slide')),i=0,N=document.getElementById('notes'),C=document.getElementById('count');
+var S=[].slice.call(document.querySelectorAll('.slide')),i=0;
 function fit(){var v=window.visualViewport,w=v?v.width:innerWidth,h=v?v.height:innerHeight,s=Math.max(w/1280,h/720);S.forEach(function(x){x.style.transform='scale('+s+')';});}
 function toggleFullscreen(){if(document.fullscreenElement){document.exitFullscreen();}else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}}
 function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(x,j){x.classList.toggle('on',j===i);});
- C.textContent=(i+1)+' / '+S.length;N.textContent=S[i].querySelector('.note').textContent||'(no notes)';
  if(history.replaceState)history.replaceState(null,'','#'+(i+1));}
-document.getElementById('prev').addEventListener('click',function(){go(i-1);});
-document.getElementById('next').addEventListener('click',function(){go(i+1);});
-document.getElementById('tn').addEventListener('click',function(){N.classList.toggle('on');});
-document.getElementById('fs').addEventListener('click',toggleFullscreen);
 document.getElementById('stage').addEventListener('click',function(ev){go(ev.clientX<innerWidth/3?i-1:i+1);});
 addEventListener('keydown',function(ev){var k=ev.key;
  if(k==='ArrowRight'||k==='PageDown'||k===' ')go(i+1);else if(k==='ArrowLeft'||k==='PageUp')go(i-1);
- else if(k==='Home')go(0);else if(k==='End')go(S.length-1);else if(k==='n'||k==='N')N.classList.toggle('on');
+ else if(k==='Home')go(0);else if(k==='End')go(S.length-1);
  else if(k==='f'||k==='F'){ev.preventDefault();toggleFullscreen();}});
 addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
 fit();go((parseInt(location.hash.slice(1),10)||1)-1);
@@ -119,10 +107,6 @@ def build(out, img_dir, maxw):
 <title>Guardrails with Sandboxing - Microsoft Execution Containers (MXC)</title>
 <style>{CSS % (D.BG, D.INK)}</style></head>
 <body><main id="stage">{body}</main>
-<div id="notes" lang="zh-CN" aria-live="polite"></div>
-<nav id="bar"><button id="prev" type="button" aria-label="Previous slide">&#8592;</button><span id="count"></span>
-<button id="next" type="button" aria-label="Next slide">&#8594;</button><button id="tn" type="button">Notes (N)</button>
-<button id="fs" type="button" aria-label="Toggle full screen">Full screen (F)</button></nav>
 <script>{JS}</script></body></html>"""
     open(out, 'w', encoding='utf-8').write(doc)
     print(f'Saved {out}  ({len(D.slides)} slides, {os.path.getsize(out)/1e6:.2f} MB)')
