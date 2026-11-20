@@ -5,6 +5,8 @@
 1. 只读 `demo/input/`，写入 `demo/output/report.txt`，预期成功。
 2. 尝试读取 `demo/protected/denied.txt`，预期被 MXC 拒绝。
 
+仓库还包含 Windows IsolationSession 示例：创建持久 Session Container，执行两次命令并验证共享状态，最后停止和删除会话。
+
 网络入站、出站和回环均默认拒绝，UI、剪贴板与输入注入也处于禁用状态。代码通过 `getPlatformSupport()` 和 Windows `probe(request)` 先验证宿主能力，再调用真实 `run(request)`；不会模拟容器结果。
 
 ## 平台要求
@@ -21,6 +23,8 @@
 npm --prefix demo ci
 npm --prefix demo run build
 npm --prefix demo run demo
+npm --prefix demo run demo:session
+npm --prefix demo run demo:all
 ```
 
 或在仓库根目录运行：
@@ -37,3 +41,9 @@ python build.py --target demo
 - `demo/src/main.ts` 对两个场景使用同一文件系统、网络与 UI Policy。
 - 允许场景验证 SDK 返回码，并从 Host 侧检查生成报告。
 - 拒绝场景在容器内尝试读取受保护文件；若读取成功，Workload 会以失败退出。
+
+## Session Container 边界
+
+`demo/src/session.ts` 使用 `provisionContainer()`、`startContainer()`、`runInContainer()`、`stopContainer()` 和 `deprovisionContainer()` 演示真实状态化生命周期。
+
+IsolationSession 是 Windows-only 的独立用户会话，不能等同于 ProcessContainer 的文件、网络过滤能力。MXC 1.1.0 的 Provision 请求必须明确声明 egress、ingress 和 host loopback 均为 `allow`；本示例只依赖会话隔离和共享的 `ephemeralWorkspacePath`。如果这些能力不适合当前威胁模型，应选择 ProcessContainer，而不是误用 Session Container。

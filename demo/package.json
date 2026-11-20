@@ -10,7 +10,9 @@
     "build": "tsc",
     "check": "tsc --noEmit",
     "test": "npm run check",
-    "demo": "npm run build && node dist/main.js"
+    "demo": "npm run build && node dist/main.js",
+    "demo:session": "npm run build && node dist/session.js",
+    "demo:all": "npm run demo && npm run demo:session"
   },
   "dependencies": {
     "@microsoft/mxc-sdk": "1.1.0"

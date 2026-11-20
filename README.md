@@ -36,7 +36,8 @@ python build.py --target demo
 
 - PPTX：`dist/pptx/Guardrails with Sandboxing - MXC.pptx`
 - HTML：`dist/html/index.html`，同时复制到 `docs/index.html`
-- Demo：`npm --prefix demo run demo`
+- ProcessContainer Demo：`npm --prefix demo run demo`
+- Session Container Demo：`npm --prefix demo run demo:session`
 - Lab：阅读 `labs/lab-01-least-privilege/README.md`
 
 ## GitHub Pages
