@@ -103,14 +103,13 @@ note(s,'AI Agent 已从内容生成工具演进为具备执行能力的系统，
 
 # ---------- 1 AGENDA
 s=1
-header(s,'AGENDA','Our 45-minute journey')
-items=[('01','5 min','Why sandboxing','Risks of agents that act'),('02','7 min','Meet MXC','What it is and how it works'),('03','10 min','Features & platforms','Backends, files, network, modes'),('04','5 min','Use cases','Coding, desktop and data agents'),('05','7 min','Integration','SDKs and reference architecture'),('06','8 min','Live demos','Files, network, operator PTY'),('07','3 min','Takeaways & Q&A','What to do next')]
+header(s,'AGENDA','Our journey today')
+items=[('01','Why sandboxing','Risks of agents that act'),('02','Meet MXC','What it is and how it works'),('03','Features & platforms','Backends, files, network, modes'),('04','Use cases','Coding, desktop and data agents'),('05','Integration','SDKs and reference architecture'),('06','Live demos','Files, network, operator PTY'),('07','Takeaways & Q&A','What to do next')]
 col=CW/7; ry=3150000
 rect(s,M,ry-19050,CW,38100,fill=EDGE)
-for i,(n,mins,t,d) in enumerate(items):
+for i,(n,t,d) in enumerate(items):
     cx0=M+col*i; bw=col-80000
     tb(s,cx0,1900000,bw,n,size=30,color=CY,font=HF,bold=True)
-    tb(s,cx0,2450000,bw,mins,size=14,color=MUTED)
     rect(s,cx0+60000,ry-120000,240000,240000,fill=CY,preset='ellipse')
     y=tb(s,cx0,3450000,bw,t,size=17,color=INK,bold=True,cy=hgt([{'text':'Features & platforms','sizePt':17,'bold':True}],bw,BF))
     tb(s,cx0,y+40000,bw,d,size=14,color=MUTED)
@@ -171,13 +170,12 @@ note(s,'系统提示词、内容过滤和工具规则属于 AI 层控制，用�
 s=5
 header(s,'01 · WHY SANDBOXING','Three pillars for agents on Windows')
 cw3=(CW-2*238800)/3; y0=1650000; ch=3900000
-pill=[('Containment','Limit what an agent can access and do','Microsoft Execution Containers (MXC). Windows 365 support for MXC is also generally available.','Generally available',True),('Identity','Tell agent activity apart from a person','Microsoft Entra Agent ID is GA; identity for supported local agents is in preview.','GA + preview',False),('Manageability','Govern access and monitor agents','Agent 365 is GA; Intune/MXC controls for local agents are in preview.','GA + preview',False)]
-for i,(t,sub,body,state,lift) in enumerate(pill):
+pill=[('Containment','Limit what an agent can access and do','Microsoft Execution Containers (MXC). Windows 365 support for MXC is also generally available.','Generally available'),('Identity','Tell agent activity apart from a person','Microsoft Entra Agent ID is GA; identity for supported local agents is in preview.','GA + preview'),('Manageability','Govern access and monitor agents','Agent 365 is GA; Intune/MXC controls for local agents are in preview.','GA + preview')]
+for i,(t,sub,body,state) in enumerate(pill):
     x=M+i*(cw3+238800)
-    if lift: rect(s,x,y0,cw3,ch,fill=CARD2,line=CY,lw=25400)
-    else: rect(s,x,y0,cw3,ch,fill=CARD)
-    pw=2100000 if lift else 1500000
-    rect(s,x+300000,y0+300000,pw,400000,fill=CY if lift else EDGE,preset='roundRect',text=state,size=13,color=BG if lift else INK,bold=True)
+    rect(s,x,y0,cw3,ch,fill=CARD)
+    pw=2100000 if t=='Containment' else 1500000
+    rect(s,x+300000,y0+300000,pw,400000,fill=EDGE,preset='roundRect',text=state,size=13,color=INK,bold=True)
     y=tb(s,x+300000,y0+900000,cw3-600000,t,size=26,bold=True,font=HF)
     y=tb(s,x+300000,y+60000,cw3-600000,sub,size=17,color=CY)
     tb(s,x+300000,y+150000,cw3-600000,body,size=15,color=MUTED)
@@ -207,8 +205,7 @@ gap=150000; cw5=(CW-4*gap)/5; y0=1650000; ch=3600000
 cons=[('Host app','Your trusted app or agent runtime. Picks permissions, supplies inputs, handles results.'),('Workload','The command, script or process that runs under containment.'),('Policy','The access you permit: readable files, writable folders, network destinations, UI.'),('Execution config','The policy plus command, working directory, runtime settings and containment choice.'),('Backend','The OS mechanism that enforces it: process sandbox, separate session or VM.')]
 for i,(t,d) in enumerate(cons):
     x=M+i*(cw5+gap)
-    if t=='Policy': rect(s,x,y0,cw5,ch,fill=CARD2,line=CY,lw=25400)
-    else: rect(s,x,y0,cw5,ch,fill=CARD)
+    rect(s,x,y0,cw5,ch,fill=CARD)
     y=tb(s,x+200000,y0+250000,cw5-400000,f'0{i+1}',size=28,color=CY,font=HF,bold=True)
     y=tb(s,x+200000,y+80000,cw5-400000,t,size=19,bold=True,cy=hgt([{'text':'Execution config','sizePt':19,'bold':True}],cw5-400000,BF))
     tb(s,x+200000,y+100000,cw5-400000,d,size=14,color=MUTED)
@@ -224,7 +221,7 @@ sw=2200000; step=(CW-sw)/4; yc=2150000
 for i,(who,t,d) in enumerate(steps):
     x=M+i*step
     tb(s,x+150000,1650000,sw-300000,who,size=13,color=CY,font=HF,bold=True,ls=2)
-    rect(s,x,yc,sw,850000,fill=CARD2 if i!=3 else CY,preset='chevron' if i else 'homePlate',text=t,size=18,bold=True,color=INK if i!=3 else BG)
+    rect(s,x,yc,sw,850000,fill=CY,preset='chevron' if i else 'homePlate',text=t,size=18,bold=True,color=BG)
     tb(s,x+150000,yc+1050000,sw-350000,d,size=15,color=MUTED)
 rect(s,M,4750000,CW,800000,fill=CARD,line=AMB,lw=19050)
 tb(s,M+300000,4750000,CW-600000,'Backends have different security properties. Always test both the allowed and the denied operations.',size=17,color=INK,cy=800000)
@@ -237,8 +234,7 @@ header(s,'02 · UNDERSTANDING MXC','Four layers, one boundary')
 lays=[('Host app / agent runtime','Classifies the task, chooses trusted policy defaults, handles output and approval.'),('MXC SDK & policy contract','Discovers support, turns intent into a versioned config, manages lifecycle.'),('MXC execution layer','Validates the config, resolves a backend, translates to platform operations.'),('Containment backend','Creates the environment and enforces what the platform supports.')]
 y=1600000; lh=820000; lw_=3400000
 for i,(t,d) in enumerate(lays):
-    if i==0: rect(s,M,y,lw_,lh,fill=CARD2,line=CY,lw=25400,text=t,size=17,bold=True,align='left')
-    else: rect(s,M,y,lw_,lh,fill=CARD2,text=t,size=17,bold=True,align='left')
+    rect(s,M,y,lw_,lh,fill=CARD2,text=t,size=17,bold=True,align='left')
     rect(s,M+lw_+100000,y,CW-lw_-100000,lh,fill=CARD)
     tb(s,M+lw_+400000,y,CW-lw_-700000,d,size=16,color=MUTED,cy=lh)
     y+=lh+110000
@@ -252,13 +248,12 @@ header(s,'03 · FEATURES & PLATFORMS','Pick the right box')
 ry=1900000
 tb(s,M,1550000,4000000,'Lighter and faster',size=14,color=MUTED)
 tb(s,W-M-4000000,1550000,4000000,'Stronger isolation',size=14,color=MUTED,align='right')
-rect(s,M,ry,CW-350000,38100,fill=EDGE)
-rect(s,W-M-400000,ry-150000,400000,340000,fill=EDGE,preset='rightArrow')
+rect(s,M,ry-80000,CW,220000,fill=EDGE,preset='rightArrow')
 gap=180000; cw4=(CW-3*gap)/4; y0=2350000; ch=3550000
 bx=[('Process container','Windows 11 · macOS · Linux','AppContainer, Seatbelt or Bubblewrap. Lightweight and responsive; the default for coding agents.',None),('Session container','Windows 11 only','Separate Windows account and OS session with session-local UI. No file or network filtering; SendInput is blocked.',None),('WSL container','Windows 11','Runs Linux workloads on a Windows host through WSL.',None),('MicroVM','Windows 11 · Linux','Hardware-enforced virtual machine boundary; the strongest option.','Experimental')]
 for i,(t,p,d,st) in enumerate(bx):
     x=M+i*(cw4+gap)
-    rect(s,x+cw4/2-110000,ry-110000+19050,220000,220000,fill=CY,preset='ellipse')
+    rect(s,x+cw4/2-110000,ry-80000,220000,220000,fill=CY,line=BG,lw=25400,preset='ellipse')
     rect(s,x,y0,cw4,ch,fill=CARD)
     yy=y0+250000
     if st:
@@ -279,8 +274,7 @@ for x,w,t in [(c1,w1,'HOST'),(c2,w2,'DEFAULT PROCESS BACKEND'),(c3,w3,'ALSO IN T
 rowsd=[('Windows 11','ProcessContainer','IsolationSession and WSLc; Learning Mode activity reports'),('Linux','Bubblewrap','LXC'),('macOS','Seatbelt','Check each release for other options'),('Windows 365 Cloud PC','ProcessContainer','Same as a physical PC; session or VM backends need nested virtualization')]
 y=1980000; rh=720000
 for i,(a,b,c) in enumerate(rowsd):
-    if i==0: rect(s,c1,y,CW,rh,fill=CARD2,line=CY,lw=19050)
-    else: rect(s,c1,y,CW,rh,fill=CARD)
+    rect(s,c1,y,CW,rh,fill=CARD)
     tb(s,c1+200000,y,w1-200000,a,size=18,bold=True,cy=rh)
     tb(s,c2+200000,y,w2-200000,b,size=17,color=CY,font=MF,bold=True,cy=rh)
     tb(s,c3+200000,y,w3-300000,c,size=15,color=MUTED,cy=rh)
@@ -352,8 +346,7 @@ header(s,'03 · FEATURES & PLATFORMS','Observe first, then enforce',cx=cxl)
 modes=[('Enforcement','Applies the policy; blocks anything not granted.'),('Learning','Blocks ungranted access and records each attempt in an activity report.'),('Permissive','Allows and records ungranted access, for diagnosis only.')]
 y=1600000; mh=900000
 for i,(t,d) in enumerate(modes):
-    if t=='Learning': rect(s,M,y,cxl,mh,fill=CARD2,line=CY,lw=25400)
-    else: rect(s,M,y,cxl,mh,fill=CARD)
+    rect(s,M,y,cxl,mh,fill=CARD)
     tb(s,M+250000,y,2100000,t,size=18,bold=True,color=CY if t=='Learning' else INK,cy=mh)
     tb(s,M+2400000,y,cxl-2600000,d,size=15,color=MUTED,cy=mh)
     y+=mh+110000
@@ -447,12 +440,10 @@ boxes=[('Agent planner','LLM decides the next step'),('Tool call','"run npm test
 g=382000; bw=(CW-4*g)/5; y0=1700000; bh=1250000
 for i,(t,d) in enumerate(boxes):
     x=M+i*(bw+g)
-    if i==2: rect(s,x,y0,bw,bh,fill=CARD2,line=CY,lw=28575)
-    elif i==4: rect(s,x,y0,bw,bh,fill=CARD2,line=CY,lw=38100)
-    else: rect(s,x,y0,bw,bh,fill=CARD)
+    rect(s,x,y0,bw,bh,fill=CARD)
     tb(s,x+120000,y0,bw-240000,None,paras=[{'text':t,'sizePt':16,'bold':True,'color':INK},{'text':d,'sizePt':13,'color':MUTED}],align='center',cy=bh)
-    if i<4: rect(s,x+bw+50000,y0+bh/2-130000,g-100000,260000,fill=CY,preset='rightArrow')
-rect(s,M+bw/2,3150000,CW-bw,520000,fill=EDGE,preset='leftArrow',text='Output, exit code and denials, validated by the host before the agent acts',size=14,color=INK)
+    if i<4: rect(s,x+bw+30000,y0+bh/2-170000,g-60000,340000,fill=CY,preset='chevron')
+rect(s,M+bw/2,3150000,CW-bw,520000,fill=CARD2,line=CY,lw=19050,preset='leftArrow',text='Output, exit code and denials, validated by the host before the agent acts',size=14,color=INK)
 g2=150000; cw3=(CW-2*g2)/3; y1=4000000; ch=1800000
 side=[('Egress proxy','Attaches credentials and enforces a domain allow-list, outside the box.'),('Learning Mode','Activity reports tighten the policy before enforcement.'),('Enterprise control','Entra Agent ID and Agent 365 are GA; local-agent and Intune/MXC controls are preview.')]
 for i,(t,d) in enumerate(side):
