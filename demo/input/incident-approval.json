@@ -1,0 +1,5 @@
+{
+  "ticket": "INC-1042",
+  "approvedBy": "on-call-operator",
+  "scope": "read-only-diagnostics"
+}

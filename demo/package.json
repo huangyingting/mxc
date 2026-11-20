@@ -12,7 +12,9 @@
     "test": "npm run check",
     "demo": "npm run build && node dist/main.js",
     "demo:session": "npm run build && node dist/session.js",
-    "demo:all": "npm run demo && npm run demo:session"
+    "demo:pty": "npm run build && node dist/pty.js",
+    "demo:pty:interactive": "npm run build && node dist/pty.js --interactive",
+    "demo:all": "npm run demo && npm run demo:session && npm run demo:pty"
   },
   "dependencies": {
     "@microsoft/mxc-sdk": "1.1.0"

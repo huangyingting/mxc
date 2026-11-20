@@ -103,7 +103,7 @@ note(s,'AI Agent 已从内容生成工具演进为具备执行能力的系统，
 # ---------- 1 AGENDA
 s=1
 header(s,'AGENDA','Our 45-minute journey')
-items=[('01','5 min','Why sandboxing','Risks of agents that act'),('02','7 min','Meet MXC','What it is and how it works'),('03','10 min','Features & platforms','Backends, files, network, modes'),('04','5 min','Use cases','Coding, desktop and data agents'),('05','7 min','Integration','SDKs and reference architecture'),('06','8 min','Live demos','Files, network, coding agent'),('07','3 min','Takeaways & Q&A','What to do next')]
+items=[('01','5 min','Why sandboxing','Risks of agents that act'),('02','7 min','Meet MXC','What it is and how it works'),('03','10 min','Features & platforms','Backends, files, network, modes'),('04','5 min','Use cases','Coding, desktop and data agents'),('05','7 min','Integration','SDKs and reference architecture'),('06','8 min','Live demos','Files, network, operator PTY'),('07','3 min','Takeaways & Q&A','What to do next')]
 col=CW/7; ry=3150000
 rect(s,M,ry-19050,CW,38100,fill=EDGE)
 for i,(n,mins,t,d) in enumerate(items):
@@ -543,18 +543,18 @@ note(s,'网络隔离验证将 egress 与 ingress 默认设置为拒绝，仅允�
 s=26
 img(s,'hd-blocked.jpg',W-PANEL,0,PANEL,H,'Hand-drawn sketch panel: a sneaky amber tentacle pulls a robot agent toward a door, but a force field blocks it')
 cxl=W-PANEL-2*M
-header(s,'06 · LIVE DEMO 3','A contained coding agent',cx=cxl)
-beats=[('Learn','Run npm test in Learning Mode; collect the activity report.'),('Tighten','Grant only the repo, toolchain and registry proxy.'),('Enforce','The agent builds, tests and commits as usual.'),('Attack','An injected README asks the agent to read ~/.ssh and send it out. Blocked, and the agent explains why.')]
+header(s,'06 · LIVE DEMO 3','Incident triage in an isolated operator session',cx=cxl)
+beats=[('Stage','Host places INC-1042 and its read-only approval in the shared workspace.'),('Open PTY','A dedicated Windows operator session launches PowerShell with MXC-owned I/O.'),('Triage','Check Spooler and W32Time, retain context, and write auditable evidence.'),('Close','Host validates the report, stops the session and deprovisions the operator.')]
 railx=M+150000; y=1650000
 ys=[]
 for i,(t,d) in enumerate(beats):
     ys.append(y)
-    y=tb(s,M+600000,y,cxl-600000,None,paras=[{'text':t,'sizePt':19,'bold':True,'color':AMB if i==3 else INK},{'text':d,'sizePt':15,'color':MUTED}])+200000
+    y=tb(s,M+600000,y,cxl-600000,None,paras=[{'text':t,'sizePt':19,'bold':True,'color':CY if i!=3 else AMB},{'text':d,'sizePt':15,'color':MUTED}])+200000
 rect(s,railx+100000-12700,ys[0]+200000,25400,ys[-1]-ys[0],fill=EDGE)
 for i,yy in enumerate(ys):
-    rect(s,railx,yy+100000,200000,200000,fill=AMB if i==3 else CY,preset='ellipse')
-footer(s,'Run with a coding agent that supports MXC; record a backup video',27,cx=cxl)
-note(s,'Coding Agent 验证分四步。先在 Learning Mode 执行正常构建和测试，收集文件与网络访问；再审核活动报告，仅授予仓库、必要工具链和包代理；随后切换到 Enforcement，确认业务流程仍可完成。\n注入测试可通过修改不可信仓库内容诱导读取 ~/.ssh 并外传。正确结果是文件和网络访问被拒绝，原因返回 Host。MXC 不能阻止 Agent 滥用已经授予的权限，因此仍需最小权限、操作审计和结果验证。')
+    rect(s,railx,yy+100000,200000,200000,fill=CY if i!=3 else AMB,preset='ellipse')
+footer(s,'npm --prefix demo run demo:pty  ·  real service diagnostics, no mutations',27,cx=cxl)
+note(s,'这个 Demo 对应常见的 L1/L2 运维事故处理。Host 先把 INC-1042 和“只读诊断”审批写入共享 workspace，然后在 IsolationSession 中以独立 Windows 操作员用户打开 PowerShell PTY。Agent 读取审批、检查 Spooler 与 W32Time 状态，并把工单号、操作员、Session ID 和服务结果写入证据文件；Host 在关闭 Session 前验证这份证据。\n业务价值是员工不需要把自己的 Windows Profile、Shell 历史或个人 Token 交给运维 Agent，多个诊断步骤仍能共享终端和上下文，人工可在 PTY 中接管。示例不执行重启或配置变更；生产变更必须增加 JIT 权限、独立审批和 Host-side 执行器。Session 不是凭据外置层，文件与网络也不是最小权限，真正不可信代码仍应使用 ProcessContainer。')
 
 # ---------- 27 CLOSER
 s=27

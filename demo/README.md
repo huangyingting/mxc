@@ -24,6 +24,7 @@ npm --prefix demo ci
 npm --prefix demo run build
 npm --prefix demo run demo
 npm --prefix demo run demo:session
+npm --prefix demo run demo:pty
 npm --prefix demo run demo:all
 ```
 
@@ -65,3 +66,15 @@ MXC 源码明确限制：IsolationSession 不接受文件 Policy；网络必须�
 IsolationSession 也不是凭据保险箱。独立 Agent 用户保护的是 Host 用户的 Profile、Registry、Cookie 和 Token 不被直接继承；一旦 ERP 在 Agent Session 内登录，Cookie 或 Token 就可能被以该 Agent 用户运行的代码访问。应使用专用低权限机器人账号，或由 Host/可信 Broker 持有短时凭据；不要复制员工浏览器 Profile、Cookie 或 Refresh Token。
 
 官方 `microsoft/mxc` 仓库当前提供两个直接示例：`samples/run-in-persisted-container` 对应状态化生命周期，`samples/run-with-io-pty-interactive` 对应交互式 PTY。本示例保留前者的生命周期，并增加独立 OS 用户、Session ID 和共享状态断言。公开仓库目前没有完整的 GUI Computer-use 自动化示例。
+
+## 通用 PTY 示例
+
+`demo/src/pty.ts` 是一个可复用的 Session PTY Host：
+
+- `npm --prefix demo run demo:pty`：自动处理 `INC-1042` 只读诊断工单，检查真实 Windows 服务状态，并让 Host 验证 `triage-evidence.txt`。
+- `npm --prefix demo run demo:pty:interactive`：必须在真实 TTY 中运行；将本机键盘与输出直接连接到隔离 Session。
+- `MXC_PTY_COMMAND`：交互模式可覆盖启动程序，例如 PowerShell、`cmd.exe` 或企业开发工具的命令行入口。
+
+这个示例对应常见的 **L1/L2 运维故障排查**：Host 将工单和审批放入共享 workspace；Operator Agent 在独立 Windows 用户/Session 的 PTY 中读取审批，只执行只读诊断；生成可审计证据后交回 Host。这样员工无需共享自己的 Profile、Registry 或 Shell 历史，且多个步骤可保持同一交互上下文。自动模式用于 CI/现场验证，交互模式用于人工介入；两种模式都在退出后停止和删除 Session。
+
+示例不会执行服务重启、凭据读取或其他变更。真正的生产变更应要求额外审批、JIT 权限和 Host-side 执行器，不能仅依赖 PTY 中的文本确认。

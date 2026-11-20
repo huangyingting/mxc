@@ -1,0 +1,9 @@
+{
+  "ticket": "INC-1042",
+  "symptom": "Print queue and time service checks after the maintenance window",
+  "serviceNames": [
+    "Spooler",
+    "W32Time"
+  ],
+  "allowMutation": false
+}
