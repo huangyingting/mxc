@@ -412,8 +412,22 @@ note(s,'Session container 适合需要独立 Windows 用户、应用状态和长
 
 # ---------- 19 ECOSYSTEM
 s=19
-img(s,'partners-building-on-mxc.png',0,0,W,H,'Partners building on MXC: Anthropic, Box, Egnyte, Heidi, LM Studio, manus, Nous, NVIDIA, OpenAI, OpenClaw, Perplexity, Raycast, Replit, Simular and Unsloth')
-note(s,'这张生态图汇总了正在基于 MXC 构建或集成的合作伙伴，覆盖模型与 Agent、企业应用、开发工具和自动化产品。NVIDIA OpenShell、OpenClaw、Replit、LM Studio 和 Unsloth 等项目体现了从运行时到开发工具的不同接入方向。\n合作关系和支持阶段会持续变化，Logo 出现不等同于每个产品都处于相同的 GA 状态。正式演讲前应核实具体产品是否已经支持、正在集成或仅已宣布。页面的核心信息是 MXC 正在成为跨产品、跨 Agent 的共享执行隔离层。')
+img(s,'partners-building-on-mxc.png',0,450000,8150000,4584375,'Partners building on MXC: Anthropic, Box, Egnyte, Heidi, LM Studio, manus, Nous, NVIDIA, OpenAI, OpenClaw, Perplexity, Raycast, Replit, Simular and Unsloth')
+rect(s,8290000,650000,24000,5240000,fill=EDGE)
+panel_x=8460000; panel_w=W-M-panel_x
+status_rows=[
+    ('SUPPORTS MXC TODAY','GitHub Copilot · OpenAI Codex\nOpenClaw · Replit\nLM Studio · Unsloth AI',1420000),
+    ('INTEGRATED / BUILDING','NVIDIA OpenShell\nOpenAI and Meta',1400000),
+    ('SUPPORT ANNOUNCED','Anthropic Claude Code · Box · Egnyte\nHeidi Health · Hermes Agent\nManus · Perplexity · Raycast · Simular',1960000),
+]
+y=650000
+for title,body,h in status_rows:
+    rect(s,panel_x,y,panel_w,h,fill=CARD)
+    tb(s,panel_x+220000,y+120000,panel_w-440000,title,size=11,color=CY,font=HF,bold=True,ls=1)
+    tb(s,panel_x+220000,y+470000,panel_w-440000,body,size=13,color=INK,cy=h-560000)
+    y+=h+180000
+footer(s,'Ecosystem image: partner logo reference  ·  Status: verify each product before presenting',20)
+note(s,'这张页把生态信息分成两部分。左侧伙伴 Logo 图用于展示 MXC 覆盖范围，右侧保留明确的支持状态，避免只看 Logo 产生误解。\n“Supports MXC today”包括 GitHub Copilot、OpenAI Codex、OpenClaw、Replit、LM Studio 和 Unsloth AI；NVIDIA OpenShell 已集成，OpenAI 和 Meta 正在基于新的隔离能力构建；其余产品属于已宣布支持或仍在推进的生态。支持阶段会持续变化，Logo 图用于说明广度，文字栏用于说明当前成熟度，正式演讲前仍应逐项核实。')
 
 # ---------- 20 SDKs
 s=20
