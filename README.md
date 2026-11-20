@@ -47,7 +47,7 @@ Session Container 解决的是独立 Windows 用户/Session 与状态隔离，�
 
 仓库中使用 GitHub Actions 发布 `docs/`。首次发布时，在仓库的 **Settings → Pages → Source** 中选择 **GitHub Actions**。`main` 分支更新后，工作流会重新生成 `docs/index.html` 并部署。
 
-HTML 为包含图片、样式和脚本的单文件，画面中不显示控件或演讲者备注。使用方向键、Space、点击切换幻灯片，`F` 全屏，`Ctrl+P` 可打印为 PDF；中文讲者备注仅保留在 PPTX 中。
+HTML 为包含图片、样式和脚本的单文件，画面中不显示控件或演讲者备注。使用方向键、Space、点击切换幻灯片；第 6、8 页会先逐项 Appear，再进入下一页。`F` 全屏，`Ctrl+P` 可打印为 PDF；中文讲者备注仅保留在 PPTX 中。
 
 `.gitignore` 已排除 `dist/`、生成的 `docs/index.html`、Demo 运行输出、Python 缓存、虚拟环境及本地 IDE 文件；源码、素材、Lab 和 Pages 配置仍会纳入版本控制。
 

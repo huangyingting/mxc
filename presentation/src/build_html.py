@@ -46,14 +46,30 @@ def text_html(o):
         out.append(f'<p style="{st}">' + '<br>'.join(e(l) for l in p['text'].split('\n')) + '</p>')
     return f'<div class="t" style="font-family:{e(font)};{ls}">' + ''.join(out) + '</div>'
 
+REVEAL_ITEMS = {
+    5: (2, 5, 3),
+    7: (2, 4, 5),
+}
+
+def reveal_attrs(slide_index, operation_index):
+    config = REVEAL_ITEMS.get(slide_index)
+    if config is None:
+        return 'a', ''
+    start, group_size, count = config
+    if start <= operation_index < start + group_size * count:
+        item = (operation_index - start) // group_size
+        return 'a reveal', f' data-reveal="{item}"'
+    return 'a', ''
+
 def slide_html(k, ops, img_dir, maxw):
     parts = []
-    for o in ops:
+    for operation_index, o in enumerate(ops):
+        classes, reveal = reveal_attrs(k, operation_index)
         if o['op'] == 'add_image':
             src = data_uri(os.path.join(img_dir, os.path.basename(o['path'])), maxw)
-            parts.append(f'<img class="a" style="{box(o)}" src="{src}" alt="{e(o.get("altText",""))}">')
+            parts.append(f'<img class="{classes}"{reveal} style="{box(o)}" src="{src}" alt="{e(o.get("altText",""))}">')
         elif o['op'] == 'add_text_box':
-            parts.append(f'<div class="a" style="{box(o)}">{text_html(o)}</div>')
+            parts.append(f'<div class="{classes}"{reveal} style="{box(o)}">{text_html(o)}</div>')
         elif o['op'] == 'add_shape':
             pr = o['preset']; st = box(o) + f"background:#{o['fill']};"
             if pr == 'ellipse': st += 'border-radius:50%;'
@@ -61,8 +77,9 @@ def slide_html(k, ops, img_dir, maxw):
             if pr in CLIP: st += f'clip-path:{CLIP[pr]};'
             if o.get('line') and pr not in CLIP: st += f"box-shadow:inset 0 0 0 {max(1,o.get('lineWidth',12700)/PX):.1f}px #{o['line']};"
             inner = text_html(o) if 'text' in o else ''
-            parts.append(f'<div class="a" style="{st}">{inner}</div>')
-    return f'<section class="slide" data-n="{k+1}" aria-label="Slide {k+1}">{"".join(parts)}</section>'
+            parts.append(f'<div class="{classes}"{reveal} style="{st}">{inner}</div>')
+    reveal_count = REVEAL_ITEMS[k][2] if k in REVEAL_ITEMS else 0
+    return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="Slide {k+1}">{"".join(parts)}</section>'
 
 CSS = """
 :root{--bg:#%s;--ink:#%s;--chrome:#2b2b2b;--chrome-ink:#f3eee4}
@@ -72,26 +89,33 @@ html,body{width:100%%;height:100%%;background:var(--bg);color:var(--ink);overflo
 .slide{position:absolute;width:1280px;height:720px;background:var(--bg);overflow:hidden;display:none;transform-origin:center center}
 .slide.on{display:block}
 .a{position:absolute}
+.reveal{visibility:hidden}
+.reveal.shown{visibility:visible}
 img.a{object-fit:cover}
 .t{position:absolute;inset:0;padding:4px 10px;display:flex;flex-direction:column;justify-content:center;line-height:1.2}
 @media (prefers-color-scheme:dark){:root{--chrome:#1a1a1a}}
 @media print{@page{size:13.333in 7.5in;margin:0}
  html,body{overflow:visible;background:#fff}
- #stage{position:static;display:block}.slide{position:relative;display:block!important;transform:none!important;box-shadow:none;page-break-after:always;break-after:page}}
+ #stage{position:static;display:block}.slide{position:relative;display:block!important;transform:none!important;box-shadow:none;page-break-after:always;break-after:page}.reveal{visibility:visible!important}}
 """
 JS = """
 (function(){
-var S=[].slice.call(document.querySelectorAll('.slide')),i=0;
+var S=[].slice.call(document.querySelectorAll('.slide')),i=0,steps=S.map(function(){return 0;});
 function fit(){var v=window.visualViewport,w=v?v.width:innerWidth,h=v?v.height:innerHeight,s=Math.max(w/1280,h/720);S.forEach(function(x){x.style.transform='scale('+s+')';});}
 function toggleFullscreen(){if(document.fullscreenElement){document.exitFullscreen();}else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}}
+function renderSteps(){var shown=steps[i];S[i].querySelectorAll('.reveal').forEach(function(x){x.classList.toggle('shown',Number(x.dataset.reveal)<shown);});}
 function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(x,j){x.classList.toggle('on',j===i);});
+ renderSteps();
  if(history.replaceState)history.replaceState(null,'','#'+(i+1));}
-document.getElementById('stage').addEventListener('click',function(ev){go(ev.clientX<innerWidth/3?i-1:i+1);});
+function next(){var total=Number(S[i].dataset.reveals||0);if(steps[i]<total){steps[i]++;renderSteps();}else{go(i+1);}}
+function previous(){if(steps[i]>0){steps[i]--;renderSteps();}else{go(i-1);}}
+document.getElementById('stage').addEventListener('click',function(ev){ev.clientX<innerWidth/3?previous():next();});
 addEventListener('keydown',function(ev){var k=ev.key;
- if(k==='ArrowRight'||k==='PageDown'||k===' ')go(i+1);else if(k==='ArrowLeft'||k==='PageUp')go(i-1);
+ if(k==='ArrowRight'||k==='PageDown'||k===' ')next();else if(k==='ArrowLeft'||k==='PageUp')previous();
  else if(k==='Home')go(0);else if(k==='End')go(S.length-1);
  else if(k==='f'||k==='F'){ev.preventDefault();toggleFullscreen();}});
 addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
+addEventListener('hashchange',function(){var n=(parseInt(location.hash.slice(1),10)||1)-1;if(n!==i)go(n);});
 fit();go((parseInt(location.hash.slice(1),10)||1)-1);
 })();
 """
