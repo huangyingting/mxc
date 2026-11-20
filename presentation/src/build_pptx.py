@@ -170,7 +170,7 @@ note(s,'系统提示词、内容过滤和工具规则属于 AI 层控制，用�
 s=5
 header(s,'01 · WHY SANDBOXING','Three pillars for agents on Windows')
 cw3=(CW-2*238800)/3; y0=1650000; ch=3900000
-pill=[('Containment','Limit what an agent can access and do','Microsoft Execution Containers (MXC). Windows 365 support for MXC is also generally available.','Generally available',True),('Identity','Tell agent activity apart from a person','Microsoft Entra will help distinguish agent activity from user activity.','Coming soon',False),('Manageability','Govern access and monitor agents','Agent 365 controls for on-device agents; Intune to manage MXC process containers.','Coming soon',False)]
+pill=[('Containment','Limit what an agent can access and do','Microsoft Execution Containers (MXC). Windows 365 support for MXC is also generally available.','Generally available',True),('Identity','Tell agent activity apart from a person','Microsoft Entra Agent ID is GA; identity for supported local agents is in preview.','GA + preview',False),('Manageability','Govern access and monitor agents','Agent 365 is GA; Intune/MXC controls for local agents are in preview.','GA + preview',False)]
 for i,(t,sub,body,state,lift) in enumerate(pill):
     x=M+i*(cw3+238800)
     if lift: rect(s,x,y0,cw3,ch,fill=CARD2,line=CY,lw=25400)
@@ -180,8 +180,8 @@ for i,(t,sub,body,state,lift) in enumerate(pill):
     y=tb(s,x+300000,y0+900000,cw3-600000,t,size=26,bold=True,font=HF)
     y=tb(s,x+300000,y+60000,cw3-600000,sub,size=17,color=CY)
     tb(s,x+300000,y+150000,cw3-600000,body,size=15,color=MUTED)
-footer(s,'Source: Windows Developer Blog, Oct 7, 2026  ·  Today\'s focus: Containment',6)
-note(s,'Windows Agent 安全模型包含三个支柱。Containment 限制 Agent 对文件、网络、进程和 UI 的访问；Identity 区分用户活动与 Agent 活动；Manageability 提供策略分发、审计和持续治理能力。\nMXC 及 Windows 365 对 MXC 的支持已经正式可用，属于 Containment 能力。Entra Agent 身份、Agent 365 和相关 Intune 管理能力需要按官方发布状态分别确认，不能将路线图能力视为当前可用功能。')
+footer(s,'Sources: Microsoft Ignite 2026 · Agent 365 · Entra Agent ID · Microsoft Intune',6)
+note(s,'Windows Agent 安全模型包含三个支柱。Containment 限制 Agent 对文件、网络、进程和 UI 的访问；Identity 区分 Agent 活动与用户活动；Manageability 提供发现、策略、审计和持续治理。\n发布状态需要分层说明。MXC 与 Windows 365 对 MXC 的支持已 GA。Microsoft Entra Agent ID 已 GA，但 Ignite 2026 宣布的受支持本地 Agent 自动身份仍处于 Preview；例如先覆盖 GitHub Copilot CLI 和 Claude Code。Microsoft Agent 365 已于 2026 年 5 月 GA；Agent 365 的本地/影子 Agent 治理以及 Intune 对 MXC ProcessContainer 的文件/网络边界策略仍是 Preview。不要把“产品 GA”误解成“所有本地 Agent 控制都已 GA”。')
 
 # ---------- 6 MEET MXC (image left)
 s=6
@@ -467,13 +467,13 @@ for i,(t,d) in enumerate(boxes):
     if i<4: rect(s,x+bw+50000,y0+bh/2-130000,g-100000,260000,fill=CY,preset='rightArrow')
 rect(s,M+bw/2,3150000,CW-bw,520000,fill=EDGE,preset='leftArrow',text='Output, exit code and denials, validated by the host before the agent acts',size=14,color=INK)
 g2=150000; cw3=(CW-2*g2)/3; y1=4000000; ch=1800000
-side=[('Egress proxy','Attaches credentials and enforces a domain allow-list, outside the box.'),('Learning Mode','Activity reports tighten the policy before enforcement.'),('Enterprise control','Entra agent identity, Intune and Agent 365 policies (coming soon).')]
+side=[('Egress proxy','Attaches credentials and enforces a domain allow-list, outside the box.'),('Learning Mode','Activity reports tighten the policy before enforcement.'),('Enterprise control','Entra Agent ID and Agent 365 are GA; local-agent and Intune/MXC controls are preview.')]
 for i,(t,d) in enumerate(side):
     x=M+i*(cw3+g2)
     rect(s,x,y1,cw3,ch,fill=CARD)
     tb(s,x+250000,y1,cw3-500000,None,paras=[{'text':t,'sizePt':18,'bold':True,'color':CY},{'text':d,'sizePt':15,'color':MUTED}],cy=ch)
 footer(s,'Architecture pattern based on Microsoft Learn and the Windows Developer Blog; adapt to your agent runtime',22)
-note(s,'Agent 规划器产生工具调用后，请求首先进入 Host 的可信策略引擎。Host 按任务类型选择预定义 Policy，通过 MXC SDK 创建容器，再由 Backend 在边界内执行。\n返回路径同样重要：Host 必须检查退出码、输出格式、拒绝事件和生成文件，验证通过后才允许 Agent 使用结果。出站代理负责网络和凭据，Learning Mode 用于权限收敛，企业控制面负责身份与治理。隔离解决未授权执行，结果可信度仍由应用层保证。')
+note(s,'Agent 规划器产生工具调用后，请求首先进入 Host 的可信策略引擎。Host 按任务类型选择预定义 Policy，通过 MXC SDK 创建容器，再由 Backend 在边界内执行。\n返回路径同样重要：Host 必须检查退出码、输出格式、拒绝事件和生成文件，验证通过后才允许 Agent 使用结果。出站代理负责网络和凭据，Learning Mode 用于权限收敛。企业控制面中，Entra Agent ID 和 Agent 365 已 GA；本地 Agent 自动身份、Agent 365 本地治理以及 Intune/MXC 容器边界仍处于 Preview。隔离解决未授权执行，结果可信度仍由应用层保证。')
 
 # ---------- 22 FIVE STEPS + CODE
 s=22
