@@ -77,4 +77,19 @@ IsolationSession 也不是凭据保险箱。独立 Agent 用户保护的是 Host
 
 这个示例对应常见的 **L1/L2 运维故障排查**：Host 将工单和审批放入共享 workspace；Operator Agent 在独立 Windows 用户/Session 的 PTY 中读取审批，只执行只读诊断；生成可审计证据后交回 Host。这样员工无需共享自己的 Profile、Registry 或 Shell 历史，且多个步骤可保持同一交互上下文。自动模式用于 CI/现场验证，交互模式用于人工介入；两种模式都在退出后停止和删除 Session。
 
+### 这个 Demo 在做什么
+
+1. `INC-1042` 是一个打印/时间服务异常工单。
+2. Host 把工单和“仅允许只读诊断”的审批交给 Agent。
+3. Agent 在独立 Windows Session 中打开 PowerShell PTY。
+4. Agent 校验审批，检查真实的 `Spooler` 和 `W32Time` 服务状态。
+5. Agent 生成包含工单、审批、操作员、Session ID 和服务状态的证据。
+6. Host 验证证据，随后停止并删除 Session。
+
+### 为什么需要 Session Isolation
+
+运维 Agent 常常需要持续终端、多个排查命令和可选人工接管，但不应共享员工当前会话的 Windows Profile、Registry、Shell 历史或个人登录环境。Session Container 为运维流程提供独立操作员身份、独立 Windows Session 和跨命令状态；ProcessContainer 仍更适合一次性脚本、构建、测试与精细文件/网络隔离。
+
+这个 Demo 中，Windows 服务状态、独立用户、不同 Session ID、PTY 以及证据文件是真实的；工单和审批是可替换的测试夹具。Demo 不读取凭据，不重启服务，也不修改配置。生产变更必须增加真实审批系统、JIT 权限和 Host-side 执行器。
+
 示例不会执行服务重启、凭据读取或其他变更。真正的生产变更应要求额外审批、JIT 权限和 Host-side 执行器，不能仅依赖 PTY 中的文本确认。

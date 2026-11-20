@@ -554,7 +554,7 @@ rect(s,railx+100000-12700,ys[0]+200000,25400,ys[-1]-ys[0],fill=EDGE)
 for i,yy in enumerate(ys):
     rect(s,railx,yy+100000,200000,200000,fill=CY if i!=3 else AMB,preset='ellipse')
 footer(s,'npm --prefix demo run demo:pty  ·  real service diagnostics, no mutations',27,cx=cxl)
-note(s,'这个 Demo 对应常见的 L1/L2 运维事故处理。Host 先把 INC-1042 和“只读诊断”审批写入共享 workspace，然后在 IsolationSession 中以独立 Windows 操作员用户打开 PowerShell PTY。Agent 读取审批、检查 Spooler 与 W32Time 状态，并把工单号、操作员、Session ID 和服务结果写入证据文件；Host 在关闭 Session 前验证这份证据。\n业务价值是员工不需要把自己的 Windows Profile、Shell 历史或个人 Token 交给运维 Agent，多个诊断步骤仍能共享终端和上下文，人工可在 PTY 中接管。示例不执行重启或配置变更；生产变更必须增加 JIT 权限、独立审批和 Host-side 执行器。Session 不是凭据外置层，文件与网络也不是最小权限，真正不可信代码仍应使用 ProcessContainer。')
+note(s,'这个 Demo 对应常见的 L1/L2 运维事故处理。INC-1042 表示打印和时间服务异常：Host 先把工单与“只读诊断”审批写入共享 workspace，再在 IsolationSession 中以独立 Windows 操作员用户打开 PowerShell PTY。Agent 校验审批，检查真实的 Spooler 与 W32Time 状态，并生成包含工单号、审批人、操作员、Session ID 和服务状态的证据文件；Host 验证证据后停止并删除 Session。\n为什么需要 Session：运维 Agent 通常需要持续终端、多步骤上下文和可选人工接管，但不应共享员工当前会话的 Windows Profile、Registry、Shell 历史或个人登录环境。Demo 中的服务状态、独立用户、Session ID、PTY 和证据都是真实的，工单与审批是可替换夹具。示例不读凭据、不重启服务、不改配置；生产变更必须增加 JIT 权限、独立审批和 Host-side 执行器。Session 不是凭据外置层，文件与网络也不是最小权限，不可信代码仍应优先使用 ProcessContainer。')
 
 # ---------- 27 CLOSER
 s=27
