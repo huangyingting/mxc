@@ -419,22 +419,8 @@ note(s,'Session container 适合需要独立 Windows 用户、应用状态和长
 
 # ---------- 19 ECOSYSTEM
 s=19
-header(s,'04 · USE CASES','Already in the ecosystem')
-tb(s,M,1600000,CW,'SUPPORTS MXC TODAY',size=12,color=CY,font=HF,bold=True,ls=2)
-names=['GitHub Copilot','OpenAI Codex','OpenClaw','Replit','LM Studio','Unsloth AI']
-g=120000; tw=(CW-5*g)/6
-for i,n in enumerate(names):
-    rect(s,M+i*(tw+g),1950000,tw,850000,fill=CARD2,text=n,size=17,bold=True)
-tb(s,M,3050000,CW,'INTEGRATED AND BUILDING ON MXC',size=12,color=CY,font=HF,bold=True,ls=2)
-tw2=(CW-g)/2
-for i,(t,d) in enumerate([('NVIDIA OpenShell','Integrated with MXC: network controls, credential management and audit logs.'),('OpenAI and Meta','Building on MXC\'s new containment capabilities (Microsoft Ignite 2026).')]):
-    x=M+i*(tw2+g)
-    rect(s,x,3400000,tw2,1150000,fill=CARD)
-    tb(s,x+250000,3400000,tw2-500000,None,paras=[{'text':t,'sizePt':19,'bold':True,'color':INK},{'text':d,'sizePt':15,'color':MUTED}],cy=1150000)
-tb(s,M,4800000,CW,'SUPPORT ANNOUNCED',size=12,color=CY,font=HF,bold=True,ls=2)
-tb(s,M,5100000,CW,'Anthropic Claude Code · Box · Egnyte · Heidi Health · Hermes Agent (Nous Research) · Manus · Perplexity · Raycast · Simular',size=16,color=INK)
-footer(s,'Sources: Windows Developer Blog, Oct 7, 2026 (via press coverage); Windows Experience Blog, Nov 17, 2026',20)
-note(s,'MXC 已被用于多个 Agent 与开发工具，其中包括 GitHub Copilot、OpenAI Codex、OpenClaw、Replit、LM Studio 和 Unsloth AI。NVIDIA OpenShell 将 MXC 用于网络控制、凭据管理和审计；其他合作方正在扩展相关能力。\n生态列表会随产品发布变化，应在正式发布前对支持状态进行核实。其架构意义在于，执行隔离可作为 Agent、工具和操作系统之间共享的安全层，而不绑定单一 Agent 产品。')
+img(s,'partners-building-on-mxc.png',0,0,W,H,'Partners building on MXC: Anthropic, Box, Egnyte, Heidi, LM Studio, manus, Nous, NVIDIA, OpenAI, OpenClaw, Perplexity, Raycast, Replit, Simular and Unsloth')
+note(s,'这张生态图汇总了正在基于 MXC 构建或集成的合作伙伴，覆盖模型与 Agent、企业应用、开发工具和自动化产品。NVIDIA OpenShell、OpenClaw、Replit、LM Studio 和 Unsloth 等项目体现了从运行时到开发工具的不同接入方向。\n合作关系和支持阶段会持续变化，Logo 出现不等同于每个产品都处于相同的 GA 状态。正式演讲前应核实具体产品是否已经支持、正在集成或仅已宣布。页面的核心信息是 MXC 正在成为跨产品、跨 Agent 的共享执行隔离层。')
 
 # ---------- 20 SDKs
 s=20
