@@ -21,7 +21,8 @@ from pptx.util import Emu, Pt
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
-from pptx.oxml.ns import qn
+from pptx.oxml import parse_xml
+from pptx.oxml.ns import nsdecls, qn
 from PIL import Image
 
 # ===================== THEME =====================
@@ -598,6 +599,62 @@ def add_picture(sl,o,img_dir):
     else:     c=(1-ir/fr)/2; pic.crop_top=pic.crop_bottom=c
     pic._element.nvPicPr.cNvPr.set('descr',o.get('altText',''))
 
+def add_appear_animation(sl,item_shapes):
+    next_id=3
+    item_nodes=[]
+    for shapes in item_shapes:
+        outer_id=next_id; inner_id=next_id+1; next_id+=2
+        effects=[]
+        for index,shape in enumerate(shapes):
+            effect_id=next_id; behavior_id=next_id+1; next_id+=2
+            node_type='clickEffect' if index==0 else 'withEffect'
+            effects.append(
+                f'<p:par><p:cTn id="{effect_id}" presetID="1" presetClass="entr" '
+                f'presetSubtype="0" fill="hold" grpId="0" nodeType="{node_type}">'
+                '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+                '<p:childTnLst><p:set><p:cBhvr>'
+                f'<p:cTn id="{behavior_id}" dur="1" fill="hold">'
+                '<p:stCondLst><p:cond delay="0"/></p:stCondLst></p:cTn>'
+                f'<p:tgtEl><p:spTgt spid="{shape.shape_id}"/></p:tgtEl>'
+                '<p:attrNameLst><p:attrName>style.visibility</p:attrName></p:attrNameLst>'
+                '</p:cBhvr><p:to><p:strVal val="visible"/></p:to></p:set>'
+                '</p:childTnLst></p:cTn></p:par>'
+            )
+        item_nodes.append(
+            f'<p:par><p:cTn id="{outer_id}" fill="hold">'
+            '<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>'
+            '<p:childTnLst><p:par>'
+            f'<p:cTn id="{inner_id}" fill="hold">'
+            '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+            f'<p:childTnLst>{"".join(effects)}</p:childTnLst>'
+            '</p:cTn></p:par></p:childTnLst></p:cTn></p:par>'
+        )
+    build_nodes=[]
+    for shapes in item_shapes:
+        for index,shape in enumerate(shapes):
+            anim_bg=' animBg="1"' if index==0 else ''
+            build_nodes.append(
+                f'<p:bldP spid="{shape.shape_id}" grpId="0"{anim_bg}/>'
+            )
+    timing=parse_xml(
+        f'<p:timing {nsdecls("p")}>'
+        '<p:tnLst><p:par>'
+        '<p:cTn id="1" dur="indefinite" restart="never" nodeType="tmRoot">'
+        '<p:childTnLst><p:seq concurrent="1" nextAc="seek">'
+        '<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
+        f'<p:childTnLst>{"".join(item_nodes)}</p:childTnLst>'
+        '</p:cTn>'
+        '<p:prevCondLst><p:cond evt="onPrev" delay="0">'
+        '<p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>'
+        '<p:nextCondLst><p:cond evt="onNext" delay="0">'
+        '<p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>'
+        '</p:seq></p:childTnLst></p:cTn>'
+        '</p:par></p:tnLst>'
+        f'<p:bldLst>{"".join(build_nodes)}</p:bldLst>'
+        '</p:timing>'
+    )
+    sl._element.insert_element_before(timing,'p:extLst')
+
 def build(out,img_dir):
     out_dir=os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir,exist_ok=True)
@@ -606,11 +663,13 @@ def build(out,img_dir):
     for k in sorted(slides):
         sl=prs.slides.add_slide(blank)
         sl.background.fill.solid(); sl.background.fill.fore_color.rgb=rgb(BG)
+        rendered=[]
         for o in slides[k]:
             op=o['op']
             if op=='add_image': add_picture(sl,o,img_dir)
             elif op=='add_text_box':
                 sh=sl.shapes.add_textbox(Emu(o['x']),Emu(o['y']),Emu(o['cx']),Emu(o['cy'])); write_text(sh.text_frame,o)
+                rendered.append(sh)
             elif op=='add_shape':
                 sh=sl.shapes.add_shape(PRESETS[o['preset']],Emu(o['x']),Emu(o['y']),Emu(o['cx']),Emu(o['cy']))
                 sh.shadow.inherit=False
@@ -619,6 +678,11 @@ def build(out,img_dir):
                 else: sh.line.fill.background()
                 if o.get('rot'): sh.rotation=o['rot']/60000
                 if 'text' in o: write_text(sh.text_frame,o)
+                rendered.append(sh)
+        if k==5:
+            add_appear_animation(sl,[rendered[start:start+5] for start in (2,7,12)])
+        elif k==7:
+            add_appear_animation(sl,[rendered[start:start+4] for start in (2,6,10,14,18)])
         if k in notes: sl.notes_slide.notes_text_frame.text=notes[k]
     prs.save(out); print(f'Saved {out}  ({len(prs.slides)} slides)')
 
