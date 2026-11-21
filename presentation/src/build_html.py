@@ -128,9 +128,8 @@ def slide_html(k, ops, img_dir, maxw):
     action = ''
     if k in DEMO_LAUNCHERS:
         demo_kind, demo_step, label = DEMO_LAUNCHERS[k]
-        pos_cls = ' trigger-side' if k == 25 else ' trigger-wide'
         action = (
-            f'<button class="live-demo-trigger{pos_cls}" type="button" '
+            f'<button class="live-demo-trigger" type="button" '
             f'data-demo="{demo_kind}" data-step="{demo_step}">'
             f'<span class="pulse-dot" aria-hidden="true"></span><span>{e(label)}</span>'
             f'<span class="trigger-arrow" aria-hidden="true">↗</span></button>'
@@ -274,9 +273,7 @@ img.a{object-fit:cover}
 
 #deck-progress{position:fixed;left:0;top:0;height:3px;width:0;z-index:40;background:linear-gradient(90deg,var(--accent),#5d8aa8);transition:width .25s ease;pointer-events:none}
 
-.live-demo-trigger{position:absolute;z-index:12;display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:11px 20px;background:linear-gradient(135deg,var(--accent) 0%%,#2c4963 100%%);color:#fbf8f2;font:600 14px/1 var(--font-sans);letter-spacing:.01em;cursor:pointer;box-shadow:0 10px 26px rgba(44,73,99,.28);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
-.live-demo-trigger.trigger-side{left:48px;top:594px}
-.live-demo-trigger.trigger-wide{right:48px;top:52px}
+.live-demo-trigger{position:absolute;right:48px;top:52px;z-index:12;display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:11px 20px;background:linear-gradient(135deg,var(--accent) 0%%,#2c4963 100%%);color:#fbf8f2;font:600 14px/1 var(--font-sans);letter-spacing:.01em;cursor:pointer;box-shadow:0 10px 26px rgba(44,73,99,.28);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
 .live-demo-trigger:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(44,73,99,.36);filter:brightness(1.05)}
 .pulse-dot{width:8px;height:8px;border-radius:50%%;background:#7ee2b8;box-shadow:0 0 0 4px rgba(126,226,184,.24);animation:pulseDot 1.8s infinite}
 @keyframes pulseDot{0%%,100%%{box-shadow:0 0 0 3px rgba(126,226,184,.28)}50%%{box-shadow:0 0 0 7px rgba(126,226,184,.06)}}
