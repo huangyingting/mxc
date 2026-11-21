@@ -36,8 +36,7 @@ python build.py --target demo
 
 - PPTX：`dist/pptx/Guardrails with Sandboxing - MXC.pptx`
 - HTML：`dist/html/index.html`，同时复制到 `docs/index.html`
-- ProcessContainer Demo：`npm --prefix demo run demo`
-- Session Container Demo：`npm --prefix demo run demo:session`，验证独立 Agent 用户、不同 Windows Session ID 与跨执行状态
+- ProcessContainer Demo：`npm --prefix demo run demo:process`
 - 通用 PTY Demo：`npm --prefix demo run demo:pty`；交互模式为 `npm --prefix demo run demo:pty:interactive`
 
 Session Container 解决的是独立 Windows 用户/Session 与状态隔离，不是凭据保险箱；文件策略不可用、网络必须全开放、`SendInput` 被阻止。ERP 凭据仍应由 Host/Broker 或专用低权限账号管理。

@@ -509,7 +509,7 @@ rect(s,M,y+100000,lw0,1000000,fill=CARD2,line=CY,lw=19050)
 tb(s,M+250000,y+100000,lw0-500000,'Point out: both scenarios use getPlatformSupport, probe and run.',size=16,bold=True,cy=1000000)
 tx=M+lw0+400000; tw=W-M-tx; ty=1650000; th=4250000
 rect(s,tx,ty,tw,th,fill=CODEBG,line=EDGE)
-term=[('PS> npm --prefix demo run demo',INK),('[mxc] @microsoft/mxc-sdk/v1',FOOT),('MXC ProcessContainer tier: base-container',FOOT),('ALLOW: input read and output write succeeded',CY),('DENY: protected file remained inaccessible',AMB),('MXC demo report: .\\demo\\output\\report.txt',CY)]
+term=[('PS> npm --prefix demo run demo:process',INK),('[mxc] @microsoft/mxc-sdk/v1',FOOT),('MXC ProcessContainer tier: base-container',FOOT),('ALLOW: input read and output write succeeded',CY),('DENY: protected file remained inaccessible',AMB),('MXC demo report: .\\demo\\output\\report.txt',CY)]
 tb(s,tx+250000,ty+500000,tw-400000,None,paras=[{'text':t,'color':c} for t,c in term],size=13,font=MF)
 footer(s,'Live host app uses the official @microsoft/mxc-sdk/v1',25)
 note(s,'文件隔离 Demo 使用官方 TypeScript SDK 的真实 MXC 容器。第一个请求仅允许读取 demo/input，并向 demo/output/report.txt 写入结果；第二个请求使用相同文件系统、网络和 UI Policy，尝试读取 demo/protected/denied.txt。\nHost 通过 getPlatformSupport 检查 Backend，Windows 环境还调用 probe 验证 ProcessContainer 能力，最终通过 run 执行请求。演示应确认允许场景成功生成报告，受保护文件场景由容器拒绝并保持零退出码。该 Demo 不包含普通进程降级路径。')
