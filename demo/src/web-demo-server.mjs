@@ -134,7 +134,8 @@ async function provisionPty() {
   const terminal = await spawnInContainerWithPty(
     provisioned.containerId,
     {
-      command: "powershell.exe -NoLogo -NoProfile",
+      command:
+        'powershell.exe -NoLogo -NoProfile -NoExit -Command "Remove-Module PSReadLine -ErrorAction SilentlyContinue"',
       workingDirectory: workspace,
       inheritDefaultEnvironment: true,
       timeoutMs: 0,
@@ -148,6 +149,7 @@ async function provisionPty() {
     started: true,
     ended: false,
   };
+  const promptReady = waitForMarker(/PS [^\r\n>]+>/, 15_000).catch(() => {});
   terminal.output.on("data", (chunk) => {
     send({ kind: "output", text: String(chunk) });
   });
@@ -158,6 +160,7 @@ async function provisionPty() {
     workspace,
     text: "PTY incident staged: INC-1042, read-only diagnostics, operator approval attached\nPTY connected to isolated session: powershell.exe -NoLogo -NoProfile; terminal=120x30\n",
   });
+  await promptReady;
   ptyStepIndex = 1;
   finishStep("pty", 1);
 }
@@ -212,9 +215,9 @@ async function runPtyStep(step) {
       '$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; '
       + '$approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; '
       + '$spooler=Get-Service Spooler;$time=Get-Service W32Time; '
-      + "$evidence=@('ticket='+$request.ticket,'scope='+$approval.scope,"
-      + "'operator='+$env:USERNAME,'session_id='+([Diagnostics.Process]::GetCurrentProcess().SessionId),"
-      + "'service=Spooler,status='+$spooler.Status,'service=W32Time,status='+$time.Status); "
+      + '$evidence=@("ticket=$($request.ticket)","scope=$($approval.scope)",'
+      + '"operator=$env:USERNAME","session_id=$([Diagnostics.Process]::GetCurrentProcess().SessionId)",'
+      + '"service=Spooler,status=$($spooler.Status)","service=W32Time,status=$($time.Status)"); '
       + "$evidence | Set-Content .\\triage-evidence.txt -Encoding utf8; "
       + 'Write-Output ("__WEB_EVIDENCE_" + "VAL__=written")',
     );
@@ -273,8 +276,8 @@ async function runProcessStep(step) {
 
 async function runStep(demo, step) {
   if (busy) throw new Error("A demo step is already running.");
-  if (currentDemo !== null && currentDemo !== demo) {
-    throw new Error(`Finish or cancel the ${currentDemo} demo before switching.`);
+  if (demo === "process" && ptyState !== null) {
+    throw new Error("Finish or reset the active PTY session before switching.");
   }
   if (!["process", "pty"].includes(demo)) {
     throw new Error(`Unknown demo: ${demo}`);
@@ -282,23 +285,21 @@ async function runStep(demo, step) {
   beginStep(demo, step);
   try {
     if (demo === "process") {
-      if (step !== processStepIndex + 1 && processStepIndex < processSteps.length) {
-        throw new Error(`Run ProcessContainer step ${processStepIndex + 1} next.`);
-      }
       await runProcessStep(step);
+      currentDemo = null;
+      processStepIndex = step === processSteps.length ? 0 : step;
     } else {
-      if (step !== ptyStepIndex + 1) {
-        throw new Error(`Run PTY step ${ptyStepIndex + 1} next.`);
+      if (step === 1 && ptyState !== null) {
+        throw new Error("PTY session is already active. Run Steps 2–6 or click Reset.");
+      }
+      if (step !== 1 && ptyState === null) {
+        throw new Error("Run PTY Step 1 first to provision the isolated session.");
       }
       await runPtyStep(step);
-    }
-    if (
-      (demo === "process" && processStepIndex === processSteps.length)
-      || (demo === "pty" && ptyStepIndex === 6)
-    ) {
-      currentDemo = null;
-      if (demo === "process") processStepIndex = 0;
-      else ptyStepIndex = 0;
+      if (step === 6) {
+        currentDemo = null;
+        ptyStepIndex = 0;
+      }
     }
   } catch (error) {
     busy = false;

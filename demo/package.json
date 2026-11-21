@@ -14,7 +14,8 @@
     "demo:pty": "npm run build && node dist/pty.js",
     "demo:pty:interactive": "npm run build && node dist/pty.js --interactive",
     "demo:all": "npm run demo:process && npm run demo:pty",
-    "demo:web": "npm run build && node src/web-demo-server.mjs"
+    "demo:web": "npm run build && node src/web-demo-server.mjs",
+    "demo:record": "npm run build && node src/record-web-demo.mjs"
   },
   "dependencies": {
     "@microsoft/mxc-sdk": "1.1.0"

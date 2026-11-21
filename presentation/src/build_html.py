@@ -197,6 +197,9 @@ LIVE_DEMO = """
           <span id="live-run-label">Send Step 1</span>
           <span aria-hidden="true">▶</span>
         </button>
+        <button id="live-demo-autoplay" class="ghost-btn autoplay-btn" type="button" title="Play all steps sequentially">
+          <span id="live-autoplay-label">Auto-Play All</span>
+        </button>
       </div>
       <div class="step-pills" id="live-step-pills" aria-label="Step sequence"></div>
       <div class="next-indicator" id="live-demo-next">Ready · Step 1</div>
@@ -210,9 +213,17 @@ LIVE_DEMO = """
           <div class="chrome-pill" id="terminal-conn-pill">loopback bridge · 127.0.0.1:8787</div>
         </div>
         <pre class="studio-terminal" id="live-demo-output" role="log" aria-live="polite"></pre>
+        <div class="quick-cmd-bar" id="live-quick-bar">
+          <span class="quick-kicker">TRY IN PTY:</span>
+          <button type="button" class="quick-chip" data-cmd="whoami">whoami</button>
+          <button type="button" class="quick-chip" data-cmd="pwd">pwd</button>
+          <button type="button" class="quick-chip" data-cmd="ls">ls</button>
+          <button type="button" class="quick-chip" data-cmd="Get-Service Spooler,W32Time">Get-Service Spooler,W32Time</button>
+          <button type="button" class="quick-chip" data-cmd="cat triage-evidence.txt">cat triage-evidence.txt</button>
+        </div>
         <form class="terminal-composer" id="live-pty-form">
           <span class="composer-prompt" id="composer-prompt">PS session&gt;</span>
-          <input id="live-pty-input" type="text" placeholder="After Step 1 provisions the session, type any PowerShell command (e.g. pwd, ls, Get-Date)..." autocomplete="off">
+          <input id="live-pty-input" type="text" placeholder="After Step 1 provisions the session, type or click a PowerShell command above..." autocomplete="off">
           <button type="submit" id="live-pty-send">Send to PTY</button>
         </form>
       </section>
@@ -367,6 +378,8 @@ img.a{object-fit:cover}
 .primary-run-btn{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:8px;background:linear-gradient(135deg,var(--accent) 0%%,#2a455d 100%%);color:#fff;padding:8px 15px;font:700 12px/1 var(--font-sans);cursor:pointer;box-shadow:0 5px 14px rgba(44,73,99,.24);transition:transform .14s ease,opacity .14s}
 .primary-run-btn:hover:not(:disabled){transform:translateY(-1px)}
 .primary-run-btn:disabled{opacity:.52;cursor:wait}
+.autoplay-btn{padding:7px 12px;border-radius:8px}
+.autoplay-btn.active{background:rgba(184,107,35,.14);border-color:#b86b23;color:#8f4e12}
 .step-pills{display:flex;align-items:center;gap:5px}
 .step-pill{width:24px;height:24px;border-radius:50%%;border:1px solid var(--edge);background:var(--bg);color:var(--muted);font:700 11px/1 var(--font-mono);display:grid;place-items:center;cursor:pointer;transition:all .16s ease}
 .step-pill.current{border-color:var(--accent);background:var(--accent);color:#fff;transform:scale(1.08)}
@@ -374,13 +387,19 @@ img.a{object-fit:cover}
 .next-indicator{font:600 11px var(--font-mono);color:var(--accent);margin-left:auto}
 
 .studio-grid{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(0,.98fr);gap:12px;min-height:0}
-.terminal-card{display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-height:0;min-width:0;background:#0d151d;border-radius:14px;border:1px solid #243442;overflow:hidden;box-shadow:0 16px 38px rgba(16,24,32,.22)}
-.terminal-chrome{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:#15212c;border-bottom:1px solid #233342;color:#b8cad8;font:500 11px var(--font-mono);min-width:0}
+.terminal-card{display:flex;flex-direction:column;min-height:0;min-width:0;background:#0d151d;border-radius:14px;border:1px solid #243442;overflow:hidden;box-shadow:0 16px 38px rgba(16,24,32,.22)}
+.terminal-chrome{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:#15212c;border-bottom:1px solid #233342;color:#b8cad8;font:500 11px var(--font-mono);min-width:0;flex-shrink:0}
 .chrome-dots{display:flex;gap:5px;flex-shrink:0}.chrome-dots span{width:9px;height:9px;border-radius:50%%;background:#3a4b59}.chrome-dots span:first-child{background:#d46a5e}.chrome-dots span:nth-child(2){background:#deb05b}.chrome-dots span:nth-child(3){background:#5fb384}
 .chrome-title{display:flex;align-items:center;gap:8px;min-width:0;flex:1;overflow:hidden}.chrome-title strong{color:#f2f7fb;font-weight:600;white-space:nowrap}.chrome-title span{color:#8fa4b5;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chrome-pill{border:1px solid #2d4254;border-radius:999px;padding:3px 8px;font-size:10px;color:#9ec5e2;background:#101a23;white-space:nowrap;flex-shrink:0}
-.studio-terminal{min-height:0;overflow:auto;margin:0;padding:13px 15px;color:#e5eff7;font:450 12px/1.46 var(--font-mono);white-space:pre-wrap;word-break:break-word;scrollbar-color:#445a6c #0d151d}
-.terminal-composer{display:flex;align-items:center;gap:7px;padding:7px 10px;background:#121d27;border-top:1px solid #223241}
+.chrome-pill[data-mode="replay"]{border-color:#3a5b4c;color:#9ce0be;background:#10211b}
+.studio-terminal{flex:1;min-height:0;overflow:auto;margin:0;padding:13px 15px;color:#e5eff7;font:450 12px/1.46 var(--font-mono);white-space:pre-wrap;word-break:break-word;scrollbar-color:#445a6c #0d151d}
+.quick-cmd-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 10px;background:#101a23;border-top:1px solid #1e2e3c;flex-shrink:0}
+.quick-kicker{color:#7d95a8;font:700 9.5px/1 var(--font-mono);letter-spacing:.08em;margin-right:2px}
+.quick-chip{border:1px solid #294053;border-radius:999px;background:#152330;color:#b9d7ee;padding:3px 9px;font:500 10.5px/1.2 var(--font-mono);cursor:pointer;transition:background .14s,border-color .14s}
+.quick-chip:hover:not(:disabled){background:#1f3548;border-color:#5da9dd;color:#fff}
+.quick-chip:disabled{opacity:.4;cursor:not-allowed}
+.terminal-composer{display:flex;align-items:center;gap:7px;padding:7px 10px;background:#121d27;border-top:1px solid #223241;flex-shrink:0}
 .composer-prompt{color:#7cc4f8;font:600 11.5px var(--font-mono);white-space:nowrap}
 .terminal-composer input{flex:1;min-width:0;border:1px solid #2a3d4f;border-radius:6px;background:#091017;color:#f3f8fc;padding:6px 9px;font:450 11.5px var(--font-mono);outline:none}
 .terminal-composer input:focus{border-color:#5da9dd}
@@ -461,7 +480,16 @@ addEventListener('hashchange',function(){var n=(parseInt(location.hash.slice(1),
 fit();go((parseInt(location.hash.slice(1),10)||1)-1);
 
 function byId(id){return document.getElementById(id);}
-function cleanLive(value){return value.replace(/\\x1b\\][^\\x07]*(?:\\x07|\\x1b\\\\)/g,'').replace(/\\x1b\\[[0-?]*[ -\\/]*[@-~]/g,'').replace(/\\r/g,'');}
+function cleanLive(value){
+ return value
+  .replace(/\\x1b\\[2J[\\s\\S]*?\\x1b\\[H/g,'')
+  .replace(/\\x1b\\[\\d+;1H/g,'\\n')
+  .replace(/\\x1b\\[(\\d*)C/g,function(_,n){return ' '.repeat(Math.min(8,Number(n||1)));})
+  .replace(/\\x1b\\][^\\x07]*(?:\\x07|\\x1b\\\\)/g,'')
+  .replace(/\\x1b\\[[0-?]*[ -\\/]*[@-~]/g,'')
+  .replace(/\\r/g,'')
+  .replace(/\\n{3,}/g,'\\n');
+}
 function setStatus(label,tone){var el=byId('live-demo-status');el.textContent=label;if(tone)el.dataset.tone=tone;else delete el.dataset.tone;}
 function markLiveStep(n){var node=byId('live-demo').querySelector('[data-step="'+n+'"]');if(node)node.classList.add('done');}
 
@@ -624,13 +652,20 @@ function renderExplain(kind,step){
 }
 
 function syncComposerState(){
- var kind=getKindVal(),inp=byId('live-pty-input'),btn=byId('live-pty-send'),form=byId('live-pty-form');
+ var kind=getKindVal(),inp=byId('live-pty-input'),btn=byId('live-pty-send'),form=byId('live-pty-form'),qbar=byId('live-quick-bar');
  if(kind==='process'){
   form.style.display='none';
+  if(qbar)qbar.style.display='none';
  }else{
   form.style.display='flex';
-  inp.disabled=!ptyReady;btn.disabled=!ptyReady;
-  inp.placeholder=ptyReady?'Session PTY is live — type any PowerShell command (e.g. whoami, pwd, ls) and press Enter':'Run Step 1 first to provision the live IsolationSession PowerShell PTY...';
+  if(qbar){
+   qbar.style.display='flex';
+   qbar.querySelectorAll('.quick-chip').forEach(function(c){c.disabled=!ptyReady||stepRunning;});
+  }
+  inp.disabled=!ptyReady||stepRunning;btn.disabled=!ptyReady||stepRunning;
+  inp.placeholder=ptyReady
+   ?(replayMode?'Session PTY ready — click a preset chip above or type whoami, pwd, ls...':'Session PTY is live — type any PowerShell command (e.g. whoami, pwd, ls) and press Enter')
+   :'Run Step 1 first to provision the IsolationSession PowerShell PTY...';
  }
 }
 
@@ -679,12 +714,38 @@ function updateLiveMode(){
  syncStepSelection();
 }
 
+function isLocalDemoHost(){return ['127.0.0.1','localhost'].includes(location.hostname)&&location.port==='8787';}
+var replayMode=!isLocalDemoHost(),replayTimers=[],autoPlaying=false,stepRunning=false,stepDoneWaiters=[],replayBannerShown=false;
+
+function clearReplayTimers(){
+ while(replayTimers.length)clearTimeout(replayTimers.pop());
+ stepRunning=false;
+}
+function syncAutoPlayBtn(){
+ var btn=byId('live-demo-autoplay'),lbl=byId('live-autoplay-label');
+ if(!btn||!lbl)return;
+ btn.classList.toggle('active',autoPlaying);
+ lbl.textContent=autoPlaying?'Stop Auto-Play':'Auto-Play All';
+}
+function stopAutoPlay(){
+ autoPlaying=false;
+ syncAutoPlayBtn();
+}
+function resolveStepWaiters(ok){
+ while(stepDoneWaiters.length){var fn=stepDoneWaiters.shift();fn(ok);}
+}
+
 function resetLive(){
+ stopAutoPlay();
+ clearReplayTimers();
+ resolveStepWaiters(false);
  ptyReady=false;
+ replayBannerShown=false;
  doneSet={pty:{},process:{}};
  liveNext={pty:1,process:1};
  byId('live-demo-output').textContent='';
- setStatus('READY');
+ setControlsDisabled(false);
+ setStatus(replayMode?'REPLAY READY':'READY');
  byId('live-demo').querySelectorAll('.ev-chip').forEach(function(x){x.classList.remove('on','denied');});
  byId('live-demo').querySelectorAll('.live-demo-lifecycle span.done').forEach(function(x){x.classList.remove('done');});
  updateLiveMode();
@@ -712,146 +773,304 @@ function inspectLive(value){
  }
 }
 
-function isLocalDemoHost(){return ['127.0.0.1','localhost'].includes(location.hostname)&&location.port==='8787';}
+function applyDemoEvent(data){
+ var out=byId('live-demo-output');
+ if(replayBannerShown&&data.kind==='step-start'){out.textContent='';replayBannerShown=false;}
+ if(data.kind==='phase'&&data.text){
+  out.textContent+=cleanLive(data.text);
+  if(data.user)byId('live-agent-user').textContent=data.user;
+  ptyReady=true;syncComposerState();
+ }else if(data.kind==='output'){
+  out.textContent+=cleanLive(data.text);out.scrollTop=out.scrollHeight;inspectLive(out.textContent);
+ }else if(data.kind==='identity'){
+  byId('live-agent-user').textContent=data.user;byId('live-agent-session').textContent=data.sessionId;
+ }else if(data.kind==='approval'){
+  byId('live-extra-chip').textContent='Approval: '+data.ticket+' ('+data.scope+')';byId('live-extra-chip').classList.add('on');
+ }else if(data.kind==='services'){
+  byId('live-spooler').textContent='Spooler: '+data.spooler;byId('live-spooler').classList.add('on');
+  byId('live-w32time').textContent='W32Time: '+data.w32time;byId('live-w32time').classList.add('on');
+ }else if(data.kind==='evidence'){
+  byId('live-extra-chip').textContent='Evidence: host-verified ✓';byId('live-extra-chip').classList.add('on');
+ }else if(data.kind==='step-start'){
+  stepRunning=true;
+  setStatus((replayMode?'REPLAYING STEP ':'RUNNING STEP ')+data.step,'running');
+  byId('live-demo-chapter').textContent=(replayMode?'Replaying captured Step ':'Executing Step ')+data.step+'…';
+  setControlsDisabled(true);syncComposerState();
+  out.textContent+=(out.textContent?'\\n':'')+'──▶ [Step '+data.step+'] '+STEP_GUIDES[data.demo][data.step-1].label+'\\n';
+  out.scrollTop=out.scrollHeight;
+ }else if(data.kind==='step-done'){
+  stepRunning=false;
+  var demo=data.demo,step=Number(data.step),defs=STEP_GUIDES[demo];
+  doneSet[demo][step]=true;
+  if(demo==='process'){if(step===1)markLiveStep(1);if(step===2||step===3)markLiveStep(2);if(step>=4)markLiveStep(3);if(step===5)markLiveStep(4);}
+  else{if(step===1){markLiveStep(1);ptyReady=true;}if(step===2)markLiveStep(2);if(step>=3&&step<=5)markLiveStep(3);if(step===6){markLiveStep(4);ptyReady=false;}}
+  liveNext[demo]=step>=defs.length?1:step+1;
+  setStepVal(liveNext[demo]);
+  setStatus(step===defs.length?'COMPLETE':'STEP '+step+' OK',step===defs.length?'ok':undefined);
+  byId('live-demo-chapter').textContent=step===defs.length?'All steps verified — ready to replay':'Step '+step+' verified · Next up: Step '+liveNext[demo];
+  setControlsDisabled(false);
+  syncComposerState();syncStepSelection();
+  resolveStepWaiters(true);
+ }else if(data.kind==='step-error'){
+  stepRunning=false;
+  setStatus('STEP ERROR','err');
+  byId('live-demo-chapter').textContent=data.error;
+  setControlsDisabled(false);
+  syncComposerState();
+  resolveStepWaiters(false);
+ }
+}
+
+function initReplayMode(){
+ replayMode=true;
+ var pill=byId('terminal-conn-pill');
+ pill.textContent='recorded MXC capture · Windows 11';
+ pill.dataset.mode='replay';
+ if(window.RECORDED_DEMO&&window.RECORDED_DEMO.hostMeta){
+  byId('live-host-user').textContent=window.RECORDED_DEMO.hostMeta.username;
+  byId('live-host-session').textContent=window.RECORDED_DEMO.hostMeta.sessionId;
+ }
+ setStatus('REPLAY READY');
+ byId('live-demo-chapter').textContent='Captured on Windows 11 · Click Send Step or Auto-Play All';
+ var out=byId('live-demo-output');
+ if(!out.textContent){
+  replayBannerShown=true;
+  out.textContent=[
+   '# Recorded @microsoft/mxc-sdk@1.1.0 execution trace (Windows 11 x64)',
+   '# Choose any step above and click "Send Step" (or "Auto-Play All") to replay real sandbox output.',
+   '# Local live bridge optional: npm --prefix demo run demo:web → http://127.0.0.1:8787'
+  ].join('\\n');
+ }
+ syncComposerState();
+}
+
+function expandReplayItems(items){
+ var expanded=[];
+ (items||[]).forEach(function(item){
+  var ev=item.event;
+  if(ev.kind==='output'&&typeof ev.text==='string'){
+   var nl=ev.text.indexOf('\\n');
+   if(nl>0&&nl<ev.text.length-1){
+    expanded.push({delayMs:Math.max(95,item.delayMs||0),event:{kind:'output',text:ev.text.slice(0,nl+1)}});
+    expanded.push({delayMs:190,event:{kind:'output',text:ev.text.slice(nl+1)}});
+    return;
+   }
+  }
+  var d=ev.kind==='step-start'?10:(ev.kind==='step-done'?110:Math.max(105,item.delayMs||0));
+  expanded.push({delayMs:d,event:ev});
+ });
+ return expanded;
+}
+
+function hydratePriorPtyState(targetStep){
+ if(!window.RECORDED_DEMO||!window.RECORDED_DEMO.steps||!window.RECORDED_DEMO.steps.pty)return;
+ for(var s=1;s<targetStep;s++){
+  if(doneSet.pty[s])continue;
+  var list=window.RECORDED_DEMO.steps.pty[String(s)]||[];
+  list.forEach(function(item){
+   var ev=item.event;
+   if(ev.kind==='phase'){if(ev.user)byId('live-agent-user').textContent=ev.user;ptyReady=true;}
+   else if(ev.kind==='identity'){byId('live-agent-user').textContent=ev.user;byId('live-agent-session').textContent=ev.sessionId;}
+   else if(ev.kind==='approval'){byId('live-extra-chip').textContent='Approval: '+ev.ticket+' ('+ev.scope+')';byId('live-extra-chip').classList.add('on');}
+   else if(ev.kind==='services'){
+    byId('live-spooler').textContent='Spooler: '+ev.spooler;byId('live-spooler').classList.add('on');
+    byId('live-w32time').textContent='W32Time: '+ev.w32time;byId('live-w32time').classList.add('on');
+   }
+  });
+ }
+}
+
+function playRecordedStep(kind,step){
+ if(!window.RECORDED_DEMO||!window.RECORDED_DEMO.steps||!window.RECORDED_DEMO.steps[kind]){
+  setStatus('NO RECORDING','err');return Promise.resolve(false);
+ }
+ if(kind==='pty'&&step===1&&doneSet.pty[6]){
+  doneSet.pty={};
+  byId('live-demo').querySelectorAll('.ev-chip').forEach(function(x){x.classList.remove('on','denied');});
+  byId('live-demo').querySelectorAll('.live-demo-lifecycle span.done').forEach(function(x){x.classList.remove('done');});
+ }
+ if(kind==='pty'&&step>1)hydratePriorPtyState(step);
+ var raw=window.RECORDED_DEMO.steps[kind][String(step)];
+ if(!raw||!raw.length){setStatus('MISSING STEP','err');return Promise.resolve(false);}
+ var seq=expandReplayItems(raw),elapsed=0;
+ return new Promise(function(resolve){
+  stepDoneWaiters.push(resolve);
+  seq.forEach(function(item){
+   elapsed+=item.delayMs;
+   var tid=setTimeout(function(){applyDemoEvent(item.event);},elapsed);
+   replayTimers.push(tid);
+  });
+ });
+}
 
 function closeLiveDemo(){
  closeAllSelects();
- if(liveOpen&&isLocalDemoHost())fetch('/api/cancel',{method:'POST',headers:{'X-MXC-Demo':'1'}}).catch(function(){});
+ stopAutoPlay();
+ clearReplayTimers();
+ resolveStepWaiters(false);
+ if(liveOpen&&!replayMode)fetch('/api/cancel',{method:'POST',headers:{'X-MXC-Demo':'1'}}).catch(function(){});
  if(liveSource){liveSource.close();liveSource=null;}
  ptyReady=false;
  byId('live-demo').hidden=true;liveOpen=false;
 }
 
-function showStaticInstructions(){
- setStatus('LOCAL BRIDGE REQUIRED');
- byId('terminal-conn-pill').textContent='static preview mode';
- byId('live-demo-chapter').textContent='Start demo:web on Windows to execute real MXC containers';
- byId('live-demo-output').textContent=[
-  '┌──────────────────────────────────────────────────────────────────────┐',
-  '│ Real MXC Execution Bridge (Local Windows Host)                      │',
-  '└──────────────────────────────────────────────────────────────────────┘',
-  '',
-  'Static HTML / GitHub Pages cannot spawn OS sandboxes directly from the browser.',
-  'To run every step live against @microsoft/mxc-sdk:',
-  '',
-  '  1. npm --prefix demo run demo:web',
-  '  2. Open http://127.0.0.1:8787/#25  (ProcessContainer: Files + Network)',
-  '     or   http://127.0.0.1:8787/#27  (IsolationSession: Interactive PTY)',
-  '',
-  'Tip: You can still switch tabs and browse every step explanation on the right →'
- ].join('\\n');
-}
-
 async function connectLive(){
- if(!isLocalDemoHost()){showStaticInstructions();return;}
- byId('terminal-conn-pill').textContent='connected · 127.0.0.1:8787';
+ if(!isLocalDemoHost()){initReplayMode();return;}
+ var pill=byId('terminal-conn-pill');
+ pill.textContent='live bridge · 127.0.0.1:8787';
+ delete pill.dataset.mode;
  try{
   var meta=await fetch('/api/meta').then(function(r){if(!r.ok)throw new Error('Local demo metadata unavailable');return r.json();});
+  replayMode=false;
   byId('live-host-user').textContent=meta.username;byId('live-host-session').textContent=meta.sessionId;
   if(liveSource)liveSource.close();
   liveSource=new EventSource('/api/events');
-  liveSource.onmessage=function(event){
-   var data=JSON.parse(event.data),out=byId('live-demo-output');
-   if(data.kind==='phase'&&data.text){
-    out.textContent+=cleanLive(data.text);
-    if(data.user)byId('live-agent-user').textContent=data.user;
-    ptyReady=true;syncComposerState();
-   }else if(data.kind==='output'){
-    out.textContent+=cleanLive(data.text);out.scrollTop=out.scrollHeight;inspectLive(out.textContent);
-   }else if(data.kind==='identity'){
-    byId('live-agent-user').textContent=data.user;byId('live-agent-session').textContent=data.sessionId;
-   }else if(data.kind==='approval'){
-    byId('live-extra-chip').textContent='Approval: '+data.ticket+' ('+data.scope+')';byId('live-extra-chip').classList.add('on');
-   }else if(data.kind==='services'){
-    byId('live-spooler').textContent='Spooler: '+data.spooler;byId('live-spooler').classList.add('on');
-    byId('live-w32time').textContent='W32Time: '+data.w32time;byId('live-w32time').classList.add('on');
-   }else if(data.kind==='evidence'){
-    byId('live-extra-chip').textContent='Evidence: host-verified ✓';byId('live-extra-chip').classList.add('on');
-   }else if(data.kind==='step-start'){
-    setStatus('RUNNING STEP '+data.step,'running');
-    byId('live-demo-chapter').textContent='Executing Step '+data.step+'…';
-    setControlsDisabled(true);
-    out.textContent+=(out.textContent?'\\n':'')+'──▶ [Step '+data.step+'] '+STEP_GUIDES[data.demo][data.step-1].label+'\\n';
-    out.scrollTop=out.scrollHeight;
-   }else if(data.kind==='step-done'){
-    var demo=data.demo,step=Number(data.step),defs=STEP_GUIDES[demo];
-    doneSet[demo][step]=true;
-    if(demo==='process'){if(step===1)markLiveStep(1);if(step===2||step===3)markLiveStep(2);if(step>=4)markLiveStep(3);if(step===5)markLiveStep(4);}
-    else{if(step===1){markLiveStep(1);ptyReady=true;}if(step===2)markLiveStep(2);if(step>=3&&step<=5)markLiveStep(3);if(step===6){markLiveStep(4);ptyReady=false;}}
-    liveNext[demo]=step>=defs.length?1:step+1;
-    setStepVal(liveNext[demo]);
-    setStatus(step===defs.length?'COMPLETE':'STEP '+step+' OK',step===defs.length?'ok':undefined);
-    byId('live-demo-chapter').textContent=step===defs.length?'All steps verified — ready to replay':'Step '+step+' verified · Next up: Step '+liveNext[demo];
-    setControlsDisabled(false);
-    syncComposerState();syncStepSelection();
-   }else if(data.kind==='step-error'){
-    setStatus('STEP ERROR','err');
-    byId('live-demo-chapter').textContent=data.error;
-    setControlsDisabled(false);
-    syncComposerState();
-   }
-  };
- }catch(error){
-  setStatus('OFFLINE','err');byId('live-demo-chapter').textContent='Local MXC bridge could not be reached';byId('live-demo-output').textContent=String(error);
+  liveSource.onmessage=function(event){applyDemoEvent(JSON.parse(event.data));};
+ }catch(_error){
+  initReplayMode();
  }
 }
 
 async function openLiveDemo(preferredKind,preferredStep){
  byId('live-demo').hidden=false;liveOpen=true;
+ replayMode=!isLocalDemoHost();
  if(preferredKind)setKindVal(preferredKind);
  resetLive();
  if(preferredKind){setKindVal(preferredKind);updateLiveMode();}
  if(preferredStep){setStepVal(preferredStep);syncStepSelection();}
- if(!isLocalDemoHost()){showStaticInstructions();return;}
+ if(replayMode){initReplayMode();return;}
  byId('live-demo-chapter').textContent='Choose Step 1 and click Send Step to execute live';
  await connectLive();
 }
 
-async function runSelectedLiveStep(){
- var kind=getKindVal(),step=getStepVal();
- if(!isLocalDemoHost()){showStaticInstructions();return;}
+async function runSingleStep(kind,step){
+ setStepVal(step);syncStepSelection();
+ if(replayMode){return await playRecordedStep(kind,step);}
  try{
+  var waitDone=new Promise(function(resolve){stepDoneWaiters.push(resolve);});
   var response=await fetch('/api/run-step?demo='+encodeURIComponent(kind)+'&step='+step,{method:'POST',headers:{'X-MXC-Demo':'1'}});
-  if(!response.ok){var payload=await response.json().catch(function(){return {error:'Step request rejected'};});throw new Error(payload.error||'Step request failed');}
- }catch(error){setStatus('BLOCKED','err');byId('live-demo-chapter').textContent=error.message||String(error);}
+  if(!response.ok){
+   var payload=await response.json().catch(function(){return {error:'Step request rejected'};});
+   resolveStepWaiters(false);
+   throw new Error(payload.error||'Step request failed');
+  }
+  return await waitDone;
+ }catch(error){
+  setStatus('BLOCKED','err');byId('live-demo-chapter').textContent=error.message||String(error);
+  return false;
+ }
+}
+
+async function runSelectedLiveStep(){
+ if(stepRunning)return;
+ stopAutoPlay();
+ await runSingleStep(getKindVal(),getStepVal());
+}
+
+async function toggleAutoPlay(){
+ if(autoPlaying){stopAutoPlay();return;}
+ if(stepRunning)return;
+ var kind=getKindVal(),total=STEP_GUIDES[kind].length;
+ var allDone=true;
+ for(var k=1;k<=total;k++){if(!doneSet[kind][k]){allDone=false;break;}}
+ if(allDone||(!replayMode&&kind==='pty'&&!ptyReady&&getStepVal()>1)){
+  if(!replayMode)await fetch('/api/cancel',{method:'POST',headers:{'X-MXC-Demo':'1'}}).catch(function(){});
+  resetLive();setKindVal(kind);updateLiveMode();
+  if(replayMode)initReplayMode();
+ }
+ autoPlaying=true;syncAutoPlayBtn();
+ var start=getStepVal();
+ if(kind==='pty'&&!ptyReady)start=1;
+ for(var s=start;s<=total;s++){
+  if(!autoPlaying)break;
+  var ok=await runSingleStep(kind,s);
+  if(!ok||!autoPlaying)break;
+  if(s<total){
+   await new Promise(function(r){var t=setTimeout(r,680);replayTimers.push(t);});
+  }
+ }
+ stopAutoPlay();
+}
+
+async function sendPtyCommand(rawCmd){
+ var cmd=(rawCmd||'').trim();
+ if(!cmd||!ptyReady||stepRunning)return;
+ if(!replayMode){
+  await fetch('/api/pty-input',{method:'POST',headers:{'X-MXC-Demo':'1','Content-Type':'text/plain;charset=utf-8'},body:cmd}).catch(function(){});
+  return;
+ }
+ var norm=cmd.toLowerCase().replace(/\\s+/g,' ');
+ var agentUser=byId('live-agent-user').textContent||'R4-C2';
+ var promptStr='PS C:\\\\Users\\\\'+agentUser+'\\\\Shared> ';
+ if(norm.indexOf('triage-evidence.txt')!==-1&&!doneSet.pty[5]){
+  applyDemoEvent({kind:'output',text:cmd+'\\n'});
+  var t1=setTimeout(function(){
+   applyDemoEvent({kind:'output',text:"Get-Content : Cannot find path 'C:\\\\Users\\\\"+agentUser+"\\\\Shared\\\\triage-evidence.txt' because it does not exist. (Run Step 5 first.)\\n"+promptStr});
+  },140);
+  replayTimers.push(t1);
+  return;
+ }
+ var presets=(window.RECORDED_DEMO&&window.RECORDED_DEMO.ptyCommands)||[];
+ var hit=presets.find(function(p){
+  return p.label.toLowerCase()===norm||p.command.toLowerCase()===norm||(p.aliases||[]).indexOf(norm)!==-1;
+ });
+ if(hit){
+  var seq=expandReplayItems(hit.events),wait=0;
+  seq.forEach(function(item){
+   wait+=item.delayMs;
+   var tid=setTimeout(function(){applyDemoEvent(item.event);},wait);
+   replayTimers.push(tid);
+  });
+ }else{
+  applyDemoEvent({kind:'output',text:cmd+'\\n'});
+  var t2=setTimeout(function(){
+   applyDemoEvent({kind:'output',text:'[Recorded Replay] Offline presets: whoami, pwd, ls, Get-Service Spooler,W32Time, cat triage-evidence.txt\\n(Start "npm --prefix demo run demo:web" on Windows for arbitrary live commands.)\\n'+promptStr});
+  },140);
+  replayTimers.push(t2);
+ }
 }
 
 async function switchScenario(newKind){
  if(getKindVal()===newKind)return;
+ stopAutoPlay();clearReplayTimers();resolveStepWaiters(false);
  setKindVal(newKind);
- if(liveOpen&&isLocalDemoHost())await fetch('/api/cancel',{method:'POST',headers:{'X-MXC-Demo':'1'}}).catch(function(){});
+ if(liveOpen&&!replayMode)await fetch('/api/cancel',{method:'POST',headers:{'X-MXC-Demo':'1'}}).catch(function(){});
  resetLive();
  setKindVal(newKind);
  updateLiveMode();
- if(isLocalDemoHost()){
+ if(!replayMode){
   var meta=await fetch('/api/meta').then(function(r){return r.json();}).catch(function(){return null;});
   if(meta){byId('live-host-user').textContent=meta.username;byId('live-host-session').textContent=meta.sessionId;}
- }else{showStaticInstructions();}
+ }else{initReplayMode();}
 }
 
 setupCustomSelect('cs-kind',function(val){
  if(!byId('cs-kind-btn').disabled)switchScenario(val);
 });
 setupCustomSelect('cs-step',function(val){
- if(!byId('cs-step-btn').disabled){setStepVal(val);syncStepSelection();}
+ if(!byId('cs-step-btn').disabled){stopAutoPlay();setStepVal(val);syncStepSelection();}
 });
 document.querySelectorAll('.mode-tab').forEach(function(tab){
  tab.addEventListener('click',function(){if(!byId('cs-kind-btn').disabled)switchScenario(tab.dataset.mode);});
 });
 byId('live-demo-run').addEventListener('click',runSelectedLiveStep);
+byId('live-demo-autoplay').addEventListener('click',toggleAutoPlay);
 byId('live-demo-reset').addEventListener('click',function(){
  var chosen=getKindVal();
- if(isLocalDemoHost())fetch('/api/cancel',{method:'POST',headers:{'X-MXC-Demo':'1'}}).catch(function(){});
+ if(!replayMode)fetch('/api/cancel',{method:'POST',headers:{'X-MXC-Demo':'1'}}).catch(function(){});
  resetLive();setKindVal(chosen);updateLiveMode();
- if(isLocalDemoHost()){fetch('/api/meta').then(function(r){return r.json();}).then(function(m){byId('live-host-user').textContent=m.username;byId('live-host-session').textContent=m.sessionId;}).catch(function(){});byId('live-demo-chapter').textContent='Session reset · Ready for Step 1';}
- else{showStaticInstructions();}
+ if(!replayMode){fetch('/api/meta').then(function(r){return r.json();}).then(function(m){byId('live-host-user').textContent=m.username;byId('live-host-session').textContent=m.sessionId;}).catch(function(){});byId('live-demo-chapter').textContent='Session reset · Ready for Step 1';}
+ else{initReplayMode();}
+});
+document.querySelectorAll('.quick-chip').forEach(function(chip){
+ chip.addEventListener('click',function(){sendPtyCommand(chip.dataset.cmd);});
 });
 byId('live-pty-form').addEventListener('submit',async function(ev){
  ev.preventDefault();
  var inp=byId('live-pty-input'),cmd=inp.value.trim();
- if(!cmd||!ptyReady||!isLocalDemoHost())return;
+ if(!cmd||!ptyReady||stepRunning)return;
  inp.value='';
- await fetch('/api/pty-input',{method:'POST',headers:{'X-MXC-Demo':'1','Content-Type':'text/plain;charset=utf-8'},body:cmd}).catch(function(){});
+ await sendPtyCommand(cmd);
 });
 document.querySelectorAll('.live-demo-trigger').forEach(function(button){
  button.addEventListener('click',function(event){
@@ -863,10 +1082,23 @@ byId('live-demo-close').addEventListener('click',closeLiveDemo);
 })();
 """
 
+def load_recorded_demo(img_dir):
+    candidates = [
+        os.path.join(os.path.dirname(os.path.abspath(img_dir)), 'demo-recordings.json'),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'assets', 'demo-recordings.json'),
+    ]
+    for path in candidates:
+        if os.path.exists(path):
+            with open(path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+    return 'null'
+
 def build(out, img_dir, maxw):
     out_dir = os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir, exist_ok=True)
     body = ''.join(slide_html(k, D.slides[k], img_dir, maxw) for k in sorted(D.slides))
+    recorded_json = load_recorded_demo(img_dir)
     doc = f"""<!DOCTYPE html>
 <html lang="en" dir="ltr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -875,6 +1107,7 @@ def build(out, img_dir, maxw):
 <style>{CSS % (D.BG, D.INK, D.CY, D.CARD, D.CODEBG, D.EDGE, D.MUTED, D.AMB)}</style></head>
 <body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>
 {LIVE_DEMO}
+<script>window.RECORDED_DEMO={recorded_json};</script>
 <script>{JS}</script></body></html>"""
     open(out, 'w', encoding='utf-8').write(doc)
     print(f'Saved {out}  ({len(D.slides)} slides, {os.path.getsize(out)/1e6:.2f} MB)')

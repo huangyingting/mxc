@@ -1,0 +1,516 @@
+{
+  "schemaVersion": 1,
+  "sdkPackage": "@microsoft/mxc-sdk@1.1.0",
+  "platform": "win32/x64 (10.0.26300)",
+  "hostMeta": {
+    "username": "employee-desktop",
+    "sessionId": "1"
+  },
+  "steps": {
+    "pty": {
+      "1": [
+        {
+          "delayMs": 13,
+          "event": {
+            "kind": "step-start",
+            "demo": "pty",
+            "step": 1
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "phase",
+            "name": "provisioned",
+            "user": "R4-C2",
+            "workspace": "C:\\Users\\R4-C2\\Shared",
+            "text": "PTY incident staged: INC-1042, read-only diagnostics, operator approval attached\nPTY connected to isolated session: powershell.exe -NoLogo -NoProfile; terminal=120x30\n"
+          }
+        },
+        {
+          "delayMs": 3,
+          "event": {
+            "kind": "output",
+            "text": "\n\n"
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "PS C:\\Users\\R4-C2\\Shared> "
+          }
+        },
+        {
+          "delayMs": 1,
+          "event": {
+            "kind": "step-done",
+            "demo": "pty",
+            "step": 1,
+            "code": 0
+          }
+        }
+      ],
+      "2": [
+        {
+          "delayMs": 2,
+          "event": {
+            "kind": "step-start",
+            "demo": "pty",
+            "step": 2
+          }
+        },
+        {
+          "delayMs": 0,
+          "event": {
+            "kind": "output",
+            "text": "Write-Output (\"__WEB_IDENTITY_\" + \"VAL__=$env:USERNAME|$((Get-Process -Id $PID).SessionId)\")\n"
+          }
+        },
+        {
+          "delayMs": 109,
+          "event": {
+            "kind": "output",
+            "text": "__WEB_IDENTITY_VAL__=R4-C2|5"
+          }
+        },
+        {
+          "delayMs": 1,
+          "event": {
+            "kind": "identity",
+            "user": "R4-C2",
+            "sessionId": "5"
+          }
+        },
+        {
+          "delayMs": 18,
+          "event": {
+            "kind": "output",
+            "text": "\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        },
+        {
+          "delayMs": 25,
+          "event": {
+            "kind": "step-done",
+            "demo": "pty",
+            "step": 2,
+            "code": 0
+          }
+        }
+      ],
+      "3": [
+        {
+          "delayMs": 2,
+          "event": {
+            "kind": "step-start",
+            "demo": "pty",
+            "step": 3
+          }
+        },
+        {
+          "delayMs": 0,
+          "event": {
+            "kind": "output",
+            "text": "$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; $approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; Write-Output (\"__WEB_APPROVAL_\" + \"VAL__=$($request.ticket)|$($approval.scope)\")\n"
+          }
+        },
+        {
+          "delayMs": 44,
+          "event": {
+            "kind": "output",
+            "text": "__WEB_APPROVAL_VAL__=INC-1042|read-only-diagnostics"
+          }
+        },
+        {
+          "delayMs": 1,
+          "event": {
+            "kind": "approval",
+            "ticket": "INC-1042",
+            "scope": "read-only-diagnostics"
+          }
+        },
+        {
+          "delayMs": 7,
+          "event": {
+            "kind": "output",
+            "text": "\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        },
+        {
+          "delayMs": 25,
+          "event": {
+            "kind": "step-done",
+            "demo": "pty",
+            "step": 3,
+            "code": 0
+          }
+        }
+      ],
+      "4": [
+        {
+          "delayMs": 1,
+          "event": {
+            "kind": "step-start",
+            "demo": "pty",
+            "step": 4
+          }
+        },
+        {
+          "delayMs": 0,
+          "event": {
+            "kind": "output",
+            "text": "$spooler=Get-Service Spooler;$time=Get-Service W32Time; Write-Output (\"__WEB_SERVICES_\" + \"VAL__=$($spooler.Status)|$($time.Status)\")\n__WEB_SERVICES_VAL__=Running|Stopped\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        },
+        {
+          "delayMs": 1,
+          "event": {
+            "kind": "services",
+            "spooler": "Running",
+            "w32time": "Stopped"
+          }
+        },
+        {
+          "delayMs": 0,
+          "event": {
+            "kind": "step-done",
+            "demo": "pty",
+            "step": 4,
+            "code": 0
+          }
+        }
+      ],
+      "5": [
+        {
+          "delayMs": 2,
+          "event": {
+            "kind": "step-start",
+            "demo": "pty",
+            "step": 5
+          }
+        },
+        {
+          "delayMs": 0,
+          "event": {
+            "kind": "output",
+            "text": "$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; $approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; $spooler=Get-Service Spooler;$time=Get-Service W32Time; $evidence=@(\"ticket=$($request.ticket)\",\"scope=$($approval.scope)\",\"operator=$env:USERNAME\",\"session_id=$([Diagnostics.Process]::GetCurrentProcess().SessionId)\",\"service=Spooler,status=$($spooler.Status)\",\"service=W32Time,status=$($time.Status)\"); $evidence | Set-Content .\\triage-evidence.txt -Encoding utf8; Write-Output (\"__WEB_EVIDENCE_\" + \"VAL__=written\")\n"
+          }
+        },
+        {
+          "delayMs": 65,
+          "event": {
+            "kind": "output",
+            "text": "__WEB_EVIDENCE_VAL__=written\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        },
+        {
+          "delayMs": 2,
+          "event": {
+            "kind": "evidence",
+            "verified": true,
+            "content": "ticket=INC-1042\r\nscope=read-only-diagnostics\r\noperator=R4-C2\r\nsession_id=5\r\nservice=Spooler,status=Running\r\nservice=W32Time,status=Stopped"
+          }
+        },
+        {
+          "delayMs": 0,
+          "event": {
+            "kind": "step-done",
+            "demo": "pty",
+            "step": 5,
+            "code": 0
+          }
+        }
+      ],
+      "6": [
+        {
+          "delayMs": 1,
+          "event": {
+            "kind": "step-start",
+            "demo": "pty",
+            "step": 6
+          }
+        },
+        {
+          "delayMs": 1,
+          "event": {
+            "kind": "output",
+            "text": "exit\n"
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "\nPTY session stopped\nPTY session deprovisioned\n"
+          }
+        },
+        {
+          "delayMs": 0,
+          "event": {
+            "kind": "step-done",
+            "demo": "pty",
+            "step": 6,
+            "code": 0
+          }
+        }
+      ]
+    },
+    "process": {
+      "1": [
+        {
+          "delayMs": 16,
+          "event": {
+            "kind": "step-start",
+            "demo": "process",
+            "step": 1
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\nSTEP 1 COMPLETE: platform and ProcessContainer policy discovered\n"
+          }
+        },
+        {
+          "delayMs": 12,
+          "event": {
+            "kind": "step-done",
+            "demo": "process",
+            "step": 1,
+            "code": 0
+          }
+        }
+      ],
+      "2": [
+        {
+          "delayMs": 15,
+          "event": {
+            "kind": "step-start",
+            "demo": "process",
+            "step": 2
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\n"
+          }
+        },
+        {
+          "delayMs": 133,
+          "event": {
+            "kind": "output",
+            "text": "ALLOW: input read and output write succeeded\nSTEP 2 COMPLETE: report written to C:\\mxc\\demo\\output\\report.txt\n"
+          }
+        },
+        {
+          "delayMs": 12,
+          "event": {
+            "kind": "step-done",
+            "demo": "process",
+            "step": 2,
+            "code": 0
+          }
+        }
+      ],
+      "3": [
+        {
+          "delayMs": 9,
+          "event": {
+            "kind": "step-start",
+            "demo": "process",
+            "step": 3
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\n"
+          }
+        },
+        {
+          "delayMs": 118,
+          "event": {
+            "kind": "output",
+            "text": "DENY: protected file remained inaccessible \nSTEP 3 COMPLETE: protected host file remained inaccessible\n"
+          }
+        },
+        {
+          "delayMs": 13,
+          "event": {
+            "kind": "step-done",
+            "demo": "process",
+            "step": 3,
+            "code": 0
+          }
+        }
+      ],
+      "4": [
+        {
+          "delayMs": 8,
+          "event": {
+            "kind": "step-start",
+            "demo": "process",
+            "step": 4
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\n"
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "ALLOW: approved loopback endpoint reached \nSTEP 4 COMPLETE: host loopback allow\n"
+          }
+        },
+        {
+          "delayMs": 15,
+          "event": {
+            "kind": "step-done",
+            "demo": "process",
+            "step": 4,
+            "code": 0
+          }
+        }
+      ],
+      "5": [
+        {
+          "delayMs": 10,
+          "event": {
+            "kind": "step-start",
+            "demo": "process",
+            "step": 5
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\n"
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "DENY: host loopback remained blocked \nSTEP 5 COMPLETE: host loopback deny\n"
+          }
+        },
+        {
+          "delayMs": 15,
+          "event": {
+            "kind": "step-done",
+            "demo": "process",
+            "step": 5,
+            "code": 0
+          }
+        }
+      ]
+    }
+  },
+  "ptyCommands": [
+    {
+      "label": "whoami",
+      "command": "whoami",
+      "aliases": [
+        "whoami"
+      ],
+      "events": [
+        {
+          "delayMs": 5,
+          "event": {
+            "kind": "output",
+            "text": "whoami\nWIN11-HOST\\r4-c2\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        }
+      ]
+    },
+    {
+      "label": "pwd",
+      "command": "pwd",
+      "aliases": [
+        "pwd",
+        "gl",
+        "get-location"
+      ],
+      "events": [
+        {
+          "delayMs": 2,
+          "event": {
+            "kind": "output",
+            "text": "pwd\n\nPath\n----\nC:\\Users\\R4-C2\\Shared\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        }
+      ]
+    },
+    {
+      "label": "ls",
+      "command": "Get-ChildItem -Name",
+      "aliases": [
+        "ls",
+        "dir",
+        "gci",
+        "get-childitem",
+        "get-childitem -name"
+      ],
+      "events": [
+        {
+          "delayMs": 3,
+          "event": {
+            "kind": "output",
+            "text": "Get-ChildItem -Name\nincident-approval.json\nincident-request.json\ntriage-evidence.txt\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        }
+      ]
+    },
+    {
+      "label": "Get-Service Spooler,W32Time",
+      "command": "Get-Service Spooler, W32Time | Format-Table -AutoSize",
+      "aliases": [
+        "get-service spooler,w32time",
+        "get-service spooler, w32time",
+        "get-service spooler, w32time | format-table -autosize"
+      ],
+      "events": [
+        {
+          "delayMs": 3,
+          "event": {
+            "kind": "output",
+            "text": "Get-Service Spooler, W32Time | Format-Table -AutoSize\n\nStatus  Name    DisplayName\n------  ----    -----------  \nRunning Spooler Print Spooler\nStopped W32Time Windows Time\n\n\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        }
+      ]
+    },
+    {
+      "label": "cat triage-evidence.txt",
+      "command": "Get-Content .\\triage-evidence.txt",
+      "aliases": [
+        "cat triage-evidence.txt",
+        "cat .\\triage-evidence.txt",
+        "cat ./triage-evidence.txt",
+        "type triage-evidence.txt",
+        "type .\\triage-evidence.txt",
+        "get-content .\\triage-evidence.txt",
+        "get-content triage-evidence.txt"
+      ],
+      "events": [
+        {
+          "delayMs": 2,
+          "event": {
+            "kind": "output",
+            "text": "Get-Content .\\triage-evidence.txt\nticket=INC-1042\nscope=read-only-diagnostics\noperator=R4-C2\nsession_id=5\nservice=Spooler,status=Running\nservice=W32Time,status=Stopped\nPS C:\\Users\\R4-C2\\Shared> "
+          }
+        }
+      ]
+    }
+  ]
+}

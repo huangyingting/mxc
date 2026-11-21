@@ -29,9 +29,14 @@ npm --prefix demo run demo:process
 npm --prefix demo run demo:pty
 npm --prefix demo run demo:pty:interactive
 npm --prefix demo run demo:web
+npm --prefix demo run demo:record
 ```
 
-自动模式处理只读事故工单 `INC-1042`，检查真实的 `Spooler` 和 `W32Time` 状态，并让 Host 验证 `triage-evidence.txt`。交互模式把真实键盘与输出连接到隔离 Session 中的 PowerShell，适合人工接管和现场演示。网页模式启动仅监听 `127.0.0.1` 的本机 Server；打开 `http://127.0.0.1:8787/#27` 后点击 **Open step-by-step MXC demo**，用下拉框选择 Demo 和步骤再逐步发送。
+自动模式处理只读事故工单 `INC-1042`，检查真实的 `Spooler` 和 `W32Time` 状态，并让 Host 验证 `triage-evidence.txt`。交互模式把真实键盘与输出连接到隔离 Session 中的 PowerShell，适合人工接管和现场演示。网页模式启动仅监听 `127.0.0.1` 的本机 Server；打开 `http://127.0.0.1:8787/#27` 后点击启动按钮（或按 `D`），用自定义下拉框选择 Demo 和步骤逐步发送。
+
+### 静态网页（GitHub Pages）录制与交互回放
+
+`demo:record` 会在支持 MXC 的 Windows 主机上真实运行 `IsolationSession`（6 个步骤 + 常用交互命令 `whoami`/`pwd`/`ls`/`Get-Service`/`cat triage-evidence.txt`）与 `ProcessContainer`（5 个步骤），脱敏本机用户名和路径后保存到 `presentation/assets/demo-recordings.json`。`python build.py --target html` 会将该录制数据内联进单文件 HTML，因此在 GitHub Pages 或离线静态打开时，同样可以逐步点击 **Send Step**、一键 **Auto-Play All** 或体验 PTY 快捷命令；而在 `http://127.0.0.1:8787` 下则自动切换为真实 OS 容器执行。
 
 ### 这个 Demo 在做什么
 
@@ -48,8 +53,6 @@ npm --prefix demo run demo:web
 ### 边界
 
 IsolationSession 不接受文件 Policy；网络必须声明为 egress、ingress、host loopback 全部 `allow`；窗口与 Session 自己的剪贴板可用，但 `SendInput` 被阻止。它不是凭据保险箱，也不能替代 ProcessContainer 的细粒度文件/网络隔离。工单审批是演示夹具，生产变更还需要真实审批、JIT 权限、Host-side Broker 和受控执行器。
-
-网页本身是静态页面，无法直接启动本机进程。GitHub Pages 点击按钮只会显示本地启动命令；只有通过 `demo:web` 提供的 loopback bridge 才会真实运行 MXC。
 
 ## 构建
 
