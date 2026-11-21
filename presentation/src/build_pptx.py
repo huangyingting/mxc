@@ -104,7 +104,7 @@ note(s,'AI Agent 已从内容生成工具演进为具备执行能力的系统，
 # ---------- 1 AGENDA
 s=1
 header(s,'AGENDA','Our journey today')
-items=[('01','Why sandboxing','Risks of agents that act'),('02','Meet MXC','What it is and how it works'),('03','Features & platforms','Backends, files, network, modes'),('04','Use cases','Coding, desktop and data agents'),('05','Integration','SDKs and reference architecture'),('06','Live demos','Files, network, PTY & MicroVM'),('07','Takeaways & Q&A','What to do next')]
+items=[('01','Why sandboxing','Risks of agents that act'),('02','Meet MXC','What it is and how it works'),('03','Features & platforms','Backends, files, network, modes'),('04','Use cases','Coding, desktop and data agents'),('05','Integration','SDKs and reference architecture'),('06','Live demos','Process, Session & MicroVM'),('07','Takeaways & Q&A','What to do next')]
 col=CW/7; ry=3150000
 rect(s,M,ry-19050,CW,38100,fill=EDGE)
 for i,(n,t,d) in enumerate(items):
@@ -498,45 +498,41 @@ for i,t in enumerate(items):
 footer(s,'Source: Microsoft Learn, MXC architecture (host responsibilities)',24)
 note(s,'Host 需要设置超时，并区分启动失败、Workload 失败、用户取消和清理失败。状态型容器即使在停止阶段失败，也应继续尝试 deprovision。\n权限设计应采用一次动作一份窄策略，避免长期容器累积宽权限。结果必须写入专用输出目录并在消费前验证。拒绝事件应返回结构化原因，Learning Mode 的权限建议必须经过人工审批。')
 
-# ---------- 24 DEMO 1
+# ---------- 24 DEMO 1 (PROCESSCONTAINER: FILES + NETWORK)
 s=24
-header(s,'06 · LIVE DEMO 1','Files stay fenced')
-lw0=5000000; y=1650000
-for i,t in enumerate(['Policy grants read-only input and one writable output directory.','The MXC workload writes a report: it succeeds.','The same workload reads a protected file: MXC denies it.']):
-    tb(s,M,y,700000,str(i+1),size=30,color=AMB if i==2 else CY,font=HF,bold=True)
-    y=tb(s,M+700000,y+60000,lw0-700000,t,size=18,color=INK)+330000
-rect(s,M,y+100000,lw0,1000000,fill=CARD2,line=CY,lw=19050)
-tb(s,M+250000,y+100000,lw0-500000,'Point out: both scenarios use getPlatformSupport, probe and run.',size=16,bold=True,cy=1000000)
-tx=M+lw0+400000; tw=W-M-tx; ty=1650000; th=4250000
-rect(s,tx,ty,tw,th,fill=CODEBG,line=EDGE)
-term=[('PS> npm --prefix demo run demo:process',INK),('[mxc] @microsoft/mxc-sdk/v1',FOOT),('MXC ProcessContainer tier: base-container',FOOT),('ALLOW: input read and output write succeeded',CY),('DENY: protected file remained inaccessible',AMB),('MXC demo report: .\\demo\\output\\report.txt',CY)]
-tb(s,tx+250000,ty+500000,tw-400000,None,paras=[{'text':t,'color':c} for t,c in term],size=13,font=MF)
-footer(s,'Live host app uses the official @microsoft/mxc-sdk/v1',25)
-note(s,'文件隔离 Demo 使用官方 TypeScript SDK 的真实 MXC 容器。第一个请求仅允许读取 demo/input，并向 demo/output/report.txt 写入结果；第二个请求使用相同文件系统、网络和 UI Policy，尝试读取 demo/protected/denied.txt。\nHost 通过 getPlatformSupport 检查 Backend，Windows 环境还调用 probe 验证 ProcessContainer 能力，最终通过 run 执行请求。演示应确认允许场景成功生成报告，受保护文件场景由容器拒绝并保持零退出码。该 Demo 不包含普通进程降级路径。')
+header(s,'06 · LIVE DEMO 1','ProcessContainer: files & network')
+cx_=5550000; cy0=1620000; chh=4300000
+rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
+tb(s,M+250000,cy0+140000,cx_-500000,'policy.json  ·  @microsoft/mxc-sdk/v1',size=12,color=FOOT,font=MF,cy=340000)
+pc_code='{\n  "containment": { "type": "processcontainer" },\n  "filesystem": {\n    "readonlyPaths": ["demo/input"],\n    "readwritePaths": ["demo/output"],\n    "deniedPaths": ["demo/protected/denied.txt"]\n  },\n  "network": {\n    "egress": { "default": "deny" },\n    "ingress": { "hostLoopback": "allow" }\n  }\n}'
+tb(s,M+250000,cy0+480000,cx_-500000,None,paras=[{'text':l} for l in pc_code.split('\n')],size=12.5,color=CODE,font=MF)
+rect(s,M+250000,cy0+3340000,cx_-500000,720000,fill=CARD2,line=CY,lw=12700)
+tb(s,M+420000,cy0+3340000,cx_-840000,None,paras=[
+    {'text':'PS> npm --prefix demo run demo:process','sizePt':12,'bold':True,'color':INK},
+    {'text':'getPlatformSupport() → probe() → run()','sizePt':12,'color':CY},
+],font=MF,cy=720000)
+rx=M+cx_+320000; rw=W-M-rx; ry0=1620000; rcard_h=1320000; rgap=170000
+pc_cards=[
+    ('✓  Scoped read-in / write-out','readonlyPaths + readwritePaths','Workload reads demo/input and writes report.txt into its dedicated output folder.',CY),
+    ('✕  Protected file denied','deniedPaths: ["protected/denied.txt"]','The same workload attempting to read a secret file is blocked by the OS kernel.',AMB),
+    ('⇄  Directional network leash','egress: deny · hostLoopback: allow / deny','Reaches an explicitly permitted loopback/proxy endpoint; blocks unapproved access.',CY),
+]
+for idx,(t,sub,desc,col_) in enumerate(pc_cards):
+    yy=ry0+idx*(rcard_h+rgap)
+    rect(s,rx,yy,rw,rcard_h,fill=CARD,line=col_,lw=19050)
+    tb(s,rx+240000,yy,rw-480000,None,paras=[
+        {'text':t,'sizePt':17,'bold':True,'color':INK},
+        {'text':sub,'sizePt':12.5,'bold':True,'color':col_},
+        {'text':desc,'sizePt':13.5,'color':MUTED},
+    ],cy=rcard_h)
+footer(s,'Live host app uses @microsoft/mxc-sdk/v1  ·  5 interactive steps in Demo Studio',25)
+note(s,'Demo 1 将文件最小权限与方向性网络控制合并为一个完整的 ProcessContainer 演示，共五个步骤。Host 首先调用 getPlatformSupport 与 Windows probe 校验 base-container 能力，确保所有访问控制可在内核层执行，绝不回退到普通进程。\n文件维度同时验证正向与负向路径：允许读取 demo/input 并向专用目录 demo/output/report.txt 写入结果，而同一策略下读取 demo/protected/denied.txt 则被操作系统直接拒绝。网络维度将 egress 默认设为拒绝，分别对比 hostLoopback 为 allow 与 deny 时对本地受控端点的连接结果；若需域名级白名单，可配合 runtimeConfig.networkProxy 与 allowedProxyPeer 交由可信代理执行。')
 
-# ---------- 25 DEMO 2
+# ---------- 25 DEMO 2 (SESSION PTY, image right)
 s=25
-header(s,'06 · LIVE DEMO 2','Network on a leash')
-cy0=1600000; chh=1650000
-rect(s,M,cy0,CW,chh,fill=CODEBG,line=EDGE)
-code=['"network": {','  "egress": { "default": "deny",','    "allow": [{ "to": [{ "cidr": "140.82.114.6/32" }],','                "ports": [{ "protocol": "tcp", "port": 443 }] }] },','  "ingress": { "default": "deny", "hostLoopback": "deny" }','}']
-tb(s,M+300000,cy0,CW-600000,None,paras=[{'text':l} for l in code],size=14,color=CODE,font=MF,cy=chh)
-g=150000; tw=(CW-2*g)/3; ty=3450000; th=2450000
-tiles=[('✓  140.82.114.6 : 443','Allowed destination reached','Exact IP and TCP 443 are on the allow list.',CY),('✕  Any other address','Connection blocked','Not on the list, so egress default "deny" applies.',AMB),('→  Proxy mode','runtimeConfig.networkProxy','Domain allow-list lives in a proxy outside the box.',CY)]
-for i,(t,m,d,c) in enumerate(tiles):
-    x=M+i*(tw+g)
-    rect(s,x,ty,tw,th,fill=CARD,line=c,lw=19050)
-    yy=tb(s,x+250000,ty+300000,tw-500000,t,size=19,bold=True)
-    yy=tb(s,x+250000,yy+150000,tw-500000,m,size=13,color=c,font=MF)
-    tb(s,x+250000,yy+150000,tw-500000,d,size=15,color=MUTED)
-footer(s,'Policy adapted from github.com/microsoft/mxc docs/examples.md',26)
-note(s,'网络隔离验证将 egress 与 ingress 默认设置为拒绝，仅允许指定 IP、TCP 协议和 443 端口的组合。访问白名单目标应成功，其他地址、端口或协议应被阻断。\n域名级控制通过 runtimeConfig.networkProxy 连接可信代理，由代理执行域名白名单和审计。生产配置还应限制代理进程身份，避免只验证回环地址而允许任意本地进程成为代理。')
-
-# ---------- 26 DEMO 3 (image right)
-s=26
 img(s,'hd-blocked.jpg',W-PANEL,0,PANEL,H,'Hand-drawn sketch panel: a sneaky amber tentacle pulls a robot agent toward a door, but a force field blocks it')
 cxl=W-PANEL-2*M
-header(s,'06 · LIVE DEMO 3','Incident triage in isolation',cx=cxl,title_cy=600000)
+header(s,'06 · LIVE DEMO 2','Incident triage in isolation',cx=cxl,title_cy=600000)
 beats=[('Stage','Host places INC-1042 and its read-only approval in the shared workspace.'),('Open PTY','A dedicated Windows operator session launches PowerShell with MXC-owned I/O.'),('Triage','Check Spooler and W32Time, retain context, and write auditable evidence.'),('Close','Host validates the report, stops the session and deprovisions the operator.')]
 railx=M+150000; y=1650000
 ys=[]
@@ -546,12 +542,12 @@ for i,(t,d) in enumerate(beats):
 rect(s,railx+100000-12700,ys[0]+200000,25400,ys[-1]-ys[0],fill=EDGE)
 for i,yy in enumerate(ys):
     rect(s,railx,yy+100000,200000,200000,fill=CY if i!=3 else AMB,preset='ellipse')
-footer(s,'Web demo: npm --prefix demo run demo:web  ·  open the step-by-step MXC demo on slide 27',27,cx=cxl)
-note(s,'这个 Demo 对应常见的 L1/L2 运维事故处理。INC-1042 表示打印和时间服务异常：Host 先把工单与“只读诊断”审批写入共享 workspace，再在 IsolationSession 中以独立 Windows 操作员用户打开 PowerShell PTY。Agent 校验审批，检查真实的 Spooler 与 W32Time 状态，并生成包含工单号、审批人、操作员、Session ID 和服务状态的证据文件；Host 验证证据后停止并删除 Session。\n本地网页模式先运行 npm --prefix demo run demo:web，再用下拉框选择 ProcessContainer、IsolationSession 或 MicroVM 步骤逐一发送。静态 GitHub Pages 则内联了在 Windows 11 真机录制的执行轨迹，可离线逐步交互回放。')
+footer(s,'PS> npm --prefix demo run demo:pty  ·  6 stateful PTY steps in Demo Studio',26,cx=cxl)
+note(s,'Demo 2 展示有状态的 IsolationSession 与交互式 PTY，对应常见的 L1/L2 运维事故排查。INC-1042 表示打印和时间服务异常：Host 先把工单与“只读诊断”审批写入共享 workspace，再创建独立 Windows 操作员账号与 Session ID，启动 120×30 PowerShell PTY。Agent 校验工单范围、查询真实 Spooler 与 W32Time 状态并生成审计证据；期间人工操作员可随时接管终端输入命令，最后由 Host 验证证据并停止、清理临时账号。\n在交互式 Demo Studio 中，观众可直观看到员工当前登录账号/Session ID 与隔离操作员账号/Session ID 的并排对比。')
 
-# ---------- 27 DEMO 4 (MICROVM)
-s=27
-header(s,'06 · LIVE DEMO 4','Untrusted code in a MicroVM')
+# ---------- 26 DEMO 3 (HYPERLIGHT MICROVM)
+s=26
+header(s,'06 · LIVE DEMO 3','Untrusted code in a MicroVM')
 cx_=5550000; cy0=1620000; chh=4300000
 rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
 rect(s,M+cx_-1700000,cy0+140000,1450000,340000,fill=AMB,preset='roundRect',text='Experimental',size=11,bold=True,color=BG)
@@ -577,11 +573,11 @@ for idx,(t,sub,desc,col_) in enumerate(vm_cards):
         {'text':sub,'sizePt':12.5,'bold':True,'color':col_},
         {'text':desc,'sizePt':13.5,'color':MUTED},
     ],cy=rcard_h)
-footer(s,'Experimental Hyperlight MicroVM backend via MXC 1.1.0-alpha contract',28)
-note(s,'第四个 Demo 展示最强的硬件虚拟化隔离边界——Hyperlight MicroVM。当 Agent 需要直接执行模型临时生成的 Python 代码、未知第三方插件或高风险解析逻辑时，仅靠进程级 ACL 可能仍共享宿主操作系统内核；而传统完整虚拟机启动又往往需要数秒。\nMXC 内置的实验性 hyperlight Backend 基于 Windows Hypervisor Platform 启动轻量级 Unikraft unikernel 微型虚拟机，并通过预热内存快照在约 90 毫秒内完成恢复与代码执行。演示依次验证五件事：探测并校验预热快照、确认 Guest 运行在独立 Unikraft Linux 内核而非 Windows 内核、在百毫秒内完成不可信 Python 对账计算、证明宿主机 C 盘与环境变量及网络套接字全部不可达，以及每次调用结束后内存状态彻底重置、不留任何跨次残留。该能力属于实验特性，必须通过 1.1.0-alpha 契约与 --experimental 显式启用。')
+footer(s,'Experimental Hyperlight MicroVM backend via MXC 1.1.0-alpha contract',27)
+note(s,'Demo 3 展示最强的硬件虚拟化隔离边界——Hyperlight MicroVM。当 Agent 需要直接执行模型临时生成的 Python 代码、未知第三方插件或高风险解析逻辑时，仅靠进程级 ACL 仍共享宿主操作系统内核；而传统完整虚拟机冷启动又往往需要数秒。\nMXC 内置的实验性 hyperlight Backend 基于 Windows Hypervisor Platform 启动轻量级 Unikraft unikernel 微型虚拟机，并通过预热内存快照在约 90 毫秒内完成恢复与代码执行。演示依次验证五件事：探测并校验预热快照、确认 Guest 运行在独立 Unikraft 内核而非 Windows 内核、在百毫秒内完成不可信 Python 对账计算、证明宿主机 C 盘与环境变量及网络套接字全部不可达，以及每次调用结束后内存状态彻底重置。该能力必须通过 1.1.0-alpha 契约与 --experimental 显式启用。')
 
-# ---------- 28 CLOSER
-s=28
+# ---------- 27 CLOSER
+s=27
 img(s,'hd-closer.jpg',0,0,W,H,'Hand-drawn sketch illustration: three robot agents in bubbles and an engineer giving a thumbs up at sunrise over a city')
 x=M+150000; cx=5900000
 tb(s,x,650000,cx,'KEY TAKEAWAYS',size=13,color=CY,font=HF,bold=True,ls=2)

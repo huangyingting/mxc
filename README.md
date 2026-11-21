@@ -36,12 +36,12 @@ python build.py --target demo
 
 - PPTX：`dist/pptx/Guardrails with Sandboxing - MXC.pptx`
 - HTML：`dist/html/index.html`，同时复制到 `docs/index.html`
-- ProcessContainer Demo：`npm --prefix demo run demo:process`
-- 通用 PTY Demo：`npm --prefix demo run demo:pty`；交互模式为 `npm --prefix demo run demo:pty:interactive`
-- Hyperlight MicroVM Demo（实验性硬件微虚拟机）：`npm --prefix demo run demo:microvm`
+- Demo 1（ProcessContainer 文件 + 网络护栏）：`npm --prefix demo run demo:process`
+- Demo 2（IsolationSession 有状态 PTY）：`npm --prefix demo run demo:pty`；交互模式为 `npm --prefix demo run demo:pty:interactive`
+- Demo 3（Hyperlight MicroVM 实验性硬件微虚拟机）：`npm --prefix demo run demo:microvm`
 - 网页集成交互式 Demo Studio：
-  - **GitHub Pages / 静态网页回放**：直接打开生成的 `dist/html/index.html` 或在线 Pages，在第 25–28 页点击按钮（或任意页按 `D`），即可逐步回放（或点击 `Auto-Play All` 自动连播）在 Windows 11 真机上录制的 `ProcessContainer`、`IsolationSession PTY` 与 `Hyperlight MicroVM` 完整执行轨迹
-  - **本机实时沙箱桥接**：运行 `npm --prefix demo run demo:web` 后打开 `http://127.0.0.1:8787/#25`、`#27` 或 `#28`，同一个界面会自动切换为 `live bridge`，驱动本机真实容器与 MicroVM（重新录制静态回放数据可运行 `npm --prefix demo run demo:record`）
+  - **GitHub Pages / 静态网页回放**：直接打开生成的 `dist/html/index.html` 或在线 Pages，在第 25、26、27 页点击按钮（或任意页按 `D`），即可逐步回放（或点击 `Auto-Play All` 自动连播）在 Windows 11 真机上录制的 Demo 1（`ProcessContainer`）、Demo 2（`IsolationSession PTY`）与 Demo 3（`Hyperlight MicroVM`）完整执行轨迹
+  - **本机实时沙箱桥接**：运行 `npm --prefix demo run demo:web` 后打开 `http://127.0.0.1:8787/#25`、`#26` 或 `#27`，同一个界面会自动切换为 `live bridge`，驱动本机真实容器与 MicroVM（重新录制静态回放数据可运行 `npm --prefix demo run demo:record`）
 
 Session Container 解决的是独立 Windows 用户/Session 与状态隔离，不是凭据保险箱；文件策略不可用、网络必须全开放、`SendInput` 被阻止。ERP 凭据仍应由 Host/Broker 或专用低权限账号管理。
 - Lab：阅读 `labs/lab-01-least-privilege/README.md`

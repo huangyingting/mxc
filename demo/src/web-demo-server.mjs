@@ -438,7 +438,7 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(port, "127.0.0.1", () => {
   console.log(`MXC web demo: http://127.0.0.1:${port}/`);
-  console.log("Open slide 27 and click Run live MXC demo.");
+  console.log("Open slides 25–27 (or press D) to launch Demo 1, Demo 2, or Demo 3.");
 });
 
 process.on("SIGINT", async () => {

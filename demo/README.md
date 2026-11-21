@@ -2,7 +2,7 @@
 
 这组 Demo 直接调用官方 `@microsoft/mxc-sdk/v1`，每个 Demo 都对应一个明确的 MXC 能力和可验证结果，不提供普通进程回退。
 
-## 1. ProcessContainer：文件最小权限
+## 1. Demo 1 · ProcessContainer：文件与网络护栏
 
 源码：`demo/src/process-container.ts`
 
@@ -12,14 +12,15 @@
 npm --prefix demo run demo:process
 ```
 
-该 Demo 使用 ProcessContainer 验证两件事：
+该 Demo 使用 ProcessContainer 分五步验证文件最小权限与方向性网络控制：
 
-1. Workload 只读 `demo/input/`，并向 `demo/output/report.txt` 成功写入报告。
-2. 同一 Host Policy 尝试读取 `demo/protected/denied.txt` 时，MXC 拒绝访问。
+1. 探测宿主机 Backend 与 `base-container` 隔离层级。
+2. Workload 只读 `demo/input/`，并向 `demo/output/report.txt` 成功写入报告。
+3. 同一 Host Policy 尝试读取 `demo/protected/denied.txt` 时，MXC 拒绝访问。
+4. 显式允许 `hostLoopback: "allow"` 时，成功访问本地受控回环端点（外网仍默认拒绝）。
+5. 切换为 `hostLoopback: "deny"` 时，同一回环请求被立即阻断。
 
-网络入站、出站和回环保持拒绝，UI、剪贴板与输入注入禁用。Host 在执行前调用 `getPlatformSupport()` 和 Windows `probe(request)`，然后通过真实 `run(request)` 启动容器。
-
-## 2. Session PTY：事故排查与人工接管
+## 2. Demo 2 · IsolationSession：有状态 PTY 事故排查与人工接管
 
 源码：`demo/src/pty.ts`
 
@@ -32,7 +33,7 @@ npm --prefix demo run demo:web
 npm --prefix demo run demo:record
 ```
 
-自动模式处理只读事故工单 `INC-1042`，检查真实的 `Spooler` 和 `W32Time` 状态，并让 Host 验证 `triage-evidence.txt`。交互模式把真实键盘与输出连接到隔离 Session 中的 PowerShell，适合人工接管和现场演示。网页模式启动仅监听 `127.0.0.1` 的本机 Server；打开 `http://127.0.0.1:8787/#27` 后点击启动按钮（或按 `D`），用自定义下拉框选择 Demo 和步骤逐步发送。
+自动模式处理只读事故工单 `INC-1042`，检查真实的 `Spooler` 和 `W32Time` 状态，并让 Host 验证 `triage-evidence.txt`。交互模式把真实键盘与输出连接到隔离 Session 中的 PowerShell，适合人工接管和现场演示。网页模式启动仅监听 `127.0.0.1` 的本机 Server；打开 `http://127.0.0.1:8787/#25`、`#26` 或 `#27` 后点击启动按钮（或按 `D`），用自定义下拉框选择 Demo 1 / Demo 2 / Demo 3 和具体步骤逐步发送。
 
 ### 静态网页（GitHub Pages）录制与交互回放
 
@@ -54,7 +55,7 @@ npm --prefix demo run demo:record
 
 IsolationSession 不接受文件 Policy；网络必须声明为 egress、ingress、host loopback 全部 `allow`；窗口与 Session 自己的剪贴板可用，但 `SendInput` 被阻止。它不是凭据保险箱，也不能替代 ProcessContainer 的细粒度文件/网络隔离。工单审批是演示夹具，生产变更还需要真实审批、JIT 权限、Host-side Broker 和受控执行器。
 
-## 3. Hyperlight MicroVM：百毫秒级硬件微虚拟机（Experimental）
+## 3. Demo 3 · Hyperlight MicroVM：百毫秒级硬件微虚拟机（Experimental）
 
 源码：`demo/src/microvm.ts`
 

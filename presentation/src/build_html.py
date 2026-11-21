@@ -70,10 +70,9 @@ REVEAL_ITEMS = {
 }
 
 DEMO_LAUNCHERS = {
-    24: ('process', '1', 'Launch Sandbox Studio · Files & Network'),
-    25: ('process', '4', 'Launch Sandbox Studio · Network Rules'),
-    26: ('pty', '1', 'Launch Interactive Session PTY Studio'),
-    27: ('microvm', '1', 'Launch MicroVM Studio · Hyperlight'),
+    24: ('process', '1', 'Launch Demo 1 · ProcessContainer'),
+    25: ('pty', '1', 'Launch Demo 2 · IsolationSession PTY'),
+    26: ('microvm', '1', 'Launch Demo 3 · Hyperlight MicroVM'),
 }
 
 def reveal_attrs(slide_index, operation_index):
@@ -129,7 +128,7 @@ def slide_html(k, ops, img_dir, maxw):
     action = ''
     if k in DEMO_LAUNCHERS:
         demo_kind, demo_step, label = DEMO_LAUNCHERS[k]
-        pos_cls = ' trigger-side' if k == 26 else ' trigger-wide'
+        pos_cls = ' trigger-side' if k == 25 else ' trigger-wide'
         action = (
             f'<button class="live-demo-trigger{pos_cls}" type="button" '
             f'data-demo="{demo_kind}" data-step="{demo_step}">'
@@ -148,16 +147,16 @@ LIVE_DEMO = """
       </div>
       <div class="studio-header-right">
         <div class="mode-tabs" role="tablist" aria-label="MXC Demo Scenarios">
-          <button type="button" class="mode-tab active" data-mode="pty" role="tab" aria-selected="true">
-            <span class="tab-kicker">Demo 3 · Stateful Session</span>
-            <strong>IsolationSession PTY</strong>
-          </button>
-          <button type="button" class="mode-tab" data-mode="process" role="tab" aria-selected="false">
-            <span class="tab-kicker">Demo 1 + 2 · One-Shot Policy</span>
+          <button type="button" class="mode-tab active" data-mode="process" role="tab" aria-selected="true">
+            <span class="tab-kicker">Demo 1 · One-Shot Policy</span>
             <strong>ProcessContainer</strong>
           </button>
+          <button type="button" class="mode-tab" data-mode="pty" role="tab" aria-selected="false">
+            <span class="tab-kicker">Demo 2 · Stateful Session</span>
+            <strong>IsolationSession PTY</strong>
+          </button>
           <button type="button" class="mode-tab" data-mode="microvm" role="tab" aria-selected="false">
-            <span class="tab-kicker">Demo 4 · Hardware VM</span>
+            <span class="tab-kicker">Demo 3 · Hardware VM</span>
             <strong>Hyperlight MicroVM</strong>
           </button>
         </div>
@@ -171,23 +170,23 @@ LIVE_DEMO = """
 
     <div class="studio-bar">
       <div class="bar-select-group">
-        <div class="custom-select" id="cs-kind" data-value="pty">
+        <div class="custom-select" id="cs-kind" data-value="process">
           <button type="button" class="cs-trigger" id="cs-kind-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Demo">
             <span class="cs-kicker">DEMO</span>
-            <span class="cs-label" id="cs-kind-label">IsolationSession · Operator PTY (6 steps)</span>
+            <span class="cs-label" id="cs-kind-label">Demo 1 · ProcessContainer (5 steps)</span>
             <svg class="cs-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <ul class="cs-menu" id="cs-kind-menu" role="listbox" tabindex="-1" hidden>
-            <li role="option" data-val="pty" aria-selected="true" class="cs-option selected">
-              <span class="cs-opt-main">IsolationSession · Stateful Operator PTY</span>
+            <li role="option" data-val="process" aria-selected="true" class="cs-option selected">
+              <span class="cs-opt-main">Demo 1 · ProcessContainer (Files &amp; Network)</span>
+              <span class="cs-opt-sub">5 one-shot steps · file ACLs + loopback rules</span>
+            </li>
+            <li role="option" data-val="pty" aria-selected="false" class="cs-option">
+              <span class="cs-opt-main">Demo 2 · IsolationSession (Operator PTY)</span>
               <span class="cs-opt-sub">6 interactive steps · persistent OS session</span>
             </li>
-            <li role="option" data-val="process" aria-selected="false" class="cs-option">
-              <span class="cs-opt-main">ProcessContainer · File &amp; Network Guardrails</span>
-              <span class="cs-opt-sub">5 one-shot steps · files + loopback rules</span>
-            </li>
             <li role="option" data-val="microvm" aria-selected="false" class="cs-option">
-              <span class="cs-opt-main">Hyperlight MicroVM · Hardware Unikernel Sandbox</span>
+              <span class="cs-opt-main">Demo 3 · Hyperlight MicroVM (Unikernel VM)</span>
               <span class="cs-opt-sub">5 VM steps · Unikraft kernel + ~90 ms snapshot</span>
             </li>
           </ul>
@@ -482,7 +481,7 @@ addEventListener('keydown',function(ev){var k=ev.key;
  }
  if(k==='ArrowRight'||k==='PageDown'||k===' ')next();else if(k==='ArrowLeft'||k==='PageUp')previous();
  else if(k==='Home')go(0);else if(k==='End')go(S.length-1);
- else if(k==='d'||k==='D'){ev.preventDefault();openLiveDemo('pty',1);}
+ else if(k==='d'||k==='D'){ev.preventDefault();openLiveDemo(i===25?'pty':(i===26?'microvm':'process'),1);}
  else if(k==='f'||k==='F'){ev.preventDefault();toggleFullscreen();}});
 addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
 addEventListener('hashchange',function(){var n=(parseInt(location.hash.slice(1),10)||1)-1;if(n!==i)go(n);});
@@ -577,12 +576,12 @@ var STEP_GUIDES={
 
 var liveNext={pty:1,process:1,microvm:1},doneSet={pty:{},process:{},microvm:{}},liveSource=null,ptyReady=false;
 var KIND_LABELS={
- pty:'IsolationSession · Operator PTY (6 steps)',
- process:'ProcessContainer · Files & Network (5 steps)',
- microvm:'Hyperlight MicroVM · Unikernel VM (5 steps)'
+ process:'Demo 1 · ProcessContainer (5 steps)',
+ pty:'Demo 2 · IsolationSession PTY (6 steps)',
+ microvm:'Demo 3 · Hyperlight MicroVM (5 steps)'
 };
 
-function getKindVal(){return byId('cs-kind').dataset.value||'pty';}
+function getKindVal(){return byId('cs-kind').dataset.value||'process';}
 function getStepVal(){return Number(byId('cs-step').dataset.value)||1;}
 function setControlsDisabled(flag){
  byId('live-demo-run').disabled=flag;
@@ -719,8 +718,8 @@ function updateLiveMode(){
  setStepVal(liveNext[kind]);
  var metaLbl=byId('agent-meta-label');
  if(kind==='pty'){
-  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 3 · STATEFUL SESSION ISOLATION';
-  byId('live-demo-title').textContent='Session PTY — Stateful Incident Triage';
+  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 2 · STATEFUL SESSION ISOLATION';
+  byId('live-demo-title').textContent='Demo 2 · Session PTY — Incident Triage';
   byId('terminal-mode-title').textContent='REAL MXC PTY · PowerShell';
   byId('terminal-mode-sub').textContent='120 × 30 · persistent isolated operator session';
   byId('agent-role-label').textContent='MXC ISOLATIONSESSION';
@@ -732,8 +731,8 @@ function updateLiveMode(){
   byId('live-extra-chip').textContent='Approval: INC-1042 staged';
   byId('live-demo').querySelectorAll('.live-demo-lifecycle span').forEach(function(x,idx){x.textContent=['1 · PROVISION','2 · IDENTITY','3–5 · TRIAGE','6 · CLEAN UP'][idx];});
  }else if(kind==='process'){
-  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 1 + 2 · PROCESSCONTAINER GUARDRAILS';
-  byId('live-demo-title').textContent='ProcessContainer — Files & Network on a Leash';
+  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 1 · PROCESSCONTAINER GUARDRAILS';
+  byId('live-demo-title').textContent='Demo 1 · ProcessContainer — Files & Network';
   byId('terminal-mode-title').textContent='MXC PROCESSCONTAINER · One-Shot Sandboxes';
   byId('terminal-mode-sub').textContent='base-container · file allow/deny + loopback allow/deny';
   byId('agent-role-label').textContent='PROCESSCONTAINER SANDBOX';
@@ -745,8 +744,8 @@ function updateLiveMode(){
   byId('live-extra-chip').textContent='Protected secret: locked';
   byId('live-demo').querySelectorAll('.live-demo-lifecycle span').forEach(function(x,idx){x.textContent=['1 · PROBE','2–3 · FILES','4–5 · NETWORK','VERIFIED'][idx];});
  }else{
-  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 4 · HARDWARE MICROVM (EXPERIMENTAL)';
-  byId('live-demo-title').textContent='Hyperlight MicroVM — Untrusted Code in <100 ms';
+  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 3 · HARDWARE MICROVM (EXPERIMENTAL)';
+  byId('live-demo-title').textContent='Demo 3 · Hyperlight MicroVM — Untrusted Code';
   byId('terminal-mode-title').textContent='MXC HYPERLIGHT · Unikraft MicroVM';
   byId('terminal-mode-sub').textContent='hardware hypervisor partition · bash & python 3.12 snapshots';
   byId('agent-role-label').textContent='HYPERLIGHT MICROVM';
