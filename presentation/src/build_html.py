@@ -138,56 +138,28 @@ def slide_html(k, ops, img_dir, maxw):
     return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="Slide {k+1}">{"".join(parts)}{action}</section>'
 
 LIVE_DEMO = """
-<section id="live-demo" class="live-demo" role="dialog" aria-modal="true" aria-labelledby="live-demo-title" hidden>
+<section id="live-demo" class="live-demo" role="dialog" aria-modal="true" aria-label="Interactive MXC Demo" hidden>
   <div class="studio-shell">
-    <header class="studio-header">
-      <div class="studio-brand">
-        <div class="studio-eyebrow"><span class="studio-spark"></span><span id="live-demo-eyebrow">INTERACTIVE MXC LIVE LAB</span></div>
-        <h2 id="live-demo-title">Session PTY — Stateful Incident Triage</h2>
-      </div>
-      <div class="studio-header-right">
-        <div class="mode-tabs" role="tablist" aria-label="MXC Demo Scenarios">
-          <button type="button" class="mode-tab active" data-mode="process" role="tab" aria-selected="true">
-            <span class="tab-kicker">Demo 1 · One-Shot Policy</span>
-            <strong>ProcessContainer</strong>
-          </button>
-          <button type="button" class="mode-tab" data-mode="pty" role="tab" aria-selected="false">
-            <span class="tab-kicker">Demo 2 · Stateful Session</span>
-            <strong>IsolationSession PTY</strong>
-          </button>
-          <button type="button" class="mode-tab" data-mode="microvm" role="tab" aria-selected="false">
-            <span class="tab-kicker">Demo 3 · Hardware VM</span>
-            <strong>Hyperlight MicroVM</strong>
-          </button>
-        </div>
-        <div class="studio-status-group">
-          <span class="status-badge" id="live-demo-status">READY</span>
-          <button id="live-demo-reset" class="ghost-btn" type="button" title="Reset session & clear terminal">Reset</button>
-          <button id="live-demo-close" class="close-btn" type="button" aria-label="Close live demo">✕</button>
-        </div>
-      </div>
-    </header>
-
-    <div class="studio-bar">
+    <header class="studio-top">
       <div class="bar-select-group">
         <div class="custom-select" id="cs-kind" data-value="process">
           <button type="button" class="cs-trigger" id="cs-kind-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Demo">
             <span class="cs-kicker">DEMO</span>
-            <span class="cs-label" id="cs-kind-label">Demo 1 · ProcessContainer (5 steps)</span>
+            <span class="cs-label" id="cs-kind-label">Demo 1 · ProcessContainer</span>
             <svg class="cs-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <ul class="cs-menu" id="cs-kind-menu" role="listbox" tabindex="-1" hidden>
             <li role="option" data-val="process" aria-selected="true" class="cs-option selected">
-              <span class="cs-opt-main">Demo 1 · ProcessContainer (Files &amp; Network)</span>
-              <span class="cs-opt-sub">5 one-shot steps · file ACLs + loopback rules</span>
+              <span class="cs-opt-main">Demo 1 · ProcessContainer</span>
+              <span class="cs-opt-sub">Files &amp; network guardrails · 5 steps</span>
             </li>
             <li role="option" data-val="pty" aria-selected="false" class="cs-option">
-              <span class="cs-opt-main">Demo 2 · IsolationSession (Operator PTY)</span>
-              <span class="cs-opt-sub">6 interactive steps · persistent OS session</span>
+              <span class="cs-opt-main">Demo 2 · IsolationSession PTY</span>
+              <span class="cs-opt-sub">Stateful operator session · 6 steps</span>
             </li>
             <li role="option" data-val="microvm" aria-selected="false" class="cs-option">
-              <span class="cs-opt-main">Demo 3 · Hyperlight MicroVM (Unikernel VM)</span>
-              <span class="cs-opt-sub">5 VM steps · Unikraft kernel + ~90 ms snapshot</span>
+              <span class="cs-opt-main">Demo 3 · Hyperlight MicroVM</span>
+              <span class="cs-opt-sub">Hardware unikernel sandbox · 5 steps</span>
             </li>
           </ul>
         </div>
@@ -195,100 +167,77 @@ LIVE_DEMO = """
         <div class="custom-select cs-step-select" id="cs-step" data-value="1">
           <button type="button" class="cs-trigger" id="cs-step-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Step">
             <span class="cs-kicker cs-kicker-accent">STEP</span>
-            <span class="cs-label" id="cs-step-label">1 · Provision Session &amp; Open PTY</span>
+            <span class="cs-label" id="cs-step-label">1 · Discover Backends &amp; Probe Tier</span>
             <svg class="cs-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <ul class="cs-menu cs-step-menu" id="cs-step-menu" role="listbox" tabindex="-1" hidden></ul>
         </div>
 
         <button id="live-demo-run" class="primary-run-btn" type="button">
-          <span id="live-run-label">Send Step 1</span>
+          <span id="live-run-label">Run Step 1</span>
           <span aria-hidden="true">▶</span>
         </button>
         <button id="live-demo-autoplay" class="ghost-btn autoplay-btn" type="button" title="Play all steps sequentially">
-          <span id="live-autoplay-label">Auto-Play All</span>
+          <span id="live-autoplay-label">Auto-Play</span>
         </button>
       </div>
-      <div class="step-pills" id="live-step-pills" aria-label="Step sequence"></div>
-      <div class="next-indicator" id="live-demo-next">Ready · Step 1</div>
-    </div>
+
+      <div class="studio-status-group">
+        <span class="status-badge" id="live-demo-status">Replay · Win11</span>
+        <button id="live-demo-reset" class="ghost-btn" type="button" title="Reset current demo">Reset</button>
+        <button id="live-demo-close" class="close-btn" type="button" aria-label="Close demo">✕</button>
+      </div>
+    </header>
 
     <div class="studio-grid">
       <section class="terminal-card">
         <div class="terminal-chrome">
           <div class="chrome-dots" aria-hidden="true"><span></span><span></span><span></span></div>
-          <div class="chrome-title"><strong id="terminal-mode-title">REAL MXC PTY · PowerShell</strong><span id="terminal-mode-sub">120 × 30 · persistent isolated session</span></div>
-          <div class="chrome-pill" id="terminal-conn-pill">loopback bridge · 127.0.0.1:8787</div>
+          <div class="chrome-title"><strong id="terminal-mode-title">ProcessContainer</strong><span id="terminal-mode-sub">base-container · one-shot policy</span></div>
         </div>
         <pre class="studio-terminal" id="live-demo-output" role="log" aria-live="polite"></pre>
-        <div class="quick-cmd-bar" id="live-quick-bar">
-          <span class="quick-kicker">TRY IN PTY:</span>
-          <button type="button" class="quick-chip" data-cmd="whoami">whoami</button>
-          <button type="button" class="quick-chip" data-cmd="pwd">pwd</button>
-          <button type="button" class="quick-chip" data-cmd="ls">ls</button>
-          <button type="button" class="quick-chip" data-cmd="Get-Service Spooler,W32Time">Get-Service Spooler,W32Time</button>
-          <button type="button" class="quick-chip" data-cmd="cat triage-evidence.txt">cat triage-evidence.txt</button>
-        </div>
-        <form class="terminal-composer" id="live-pty-form">
-          <span class="composer-prompt" id="composer-prompt">PS session&gt;</span>
-          <input id="live-pty-input" type="text" placeholder="After Step 1 provisions the session, type or click a PowerShell command above..." autocomplete="off">
-          <button type="submit" id="live-pty-send">Send to PTY</button>
+        <form class="terminal-composer" id="live-pty-form" hidden>
+          <span class="composer-prompt">PS session&gt;</span>
+          <input id="live-pty-input" type="text" placeholder="Type a live PowerShell command (e.g. whoami, pwd, ls) and press Enter..." autocomplete="off">
+          <button type="submit" id="live-pty-send">Send</button>
         </form>
       </section>
 
       <aside class="explainer-rail">
         <article class="narrative-card" id="narrative-card">
           <div class="narrative-top">
-            <span class="step-badge" id="explain-step-badge">STEP 1 OF 6</span>
-            <span class="boundary-tag" id="explain-boundary-tag">OS Session Boundary</span>
+            <span class="step-badge" id="explain-step-badge">STEP 1 / 5</span>
+            <span class="boundary-tag" id="explain-boundary-tag">Capability Discovery</span>
           </div>
-          <h3 id="explain-title">Provision Dedicated Operator Session &amp; PTY</h3>
-          <p class="explain-summary" id="explain-what">MXC calls Windows IsolationSession APIs to create a fresh local agent user, boot an isolated OS session, stage ticket INC-1042 into the shared workspace, and attach a live PowerShell pseudo-terminal.</p>
-          <div class="explain-callout">
-            <div class="callout-label" id="explain-why-label">WHY THIS STEP MATTERS</div>
-            <p id="explain-why">Unlike one-shot process sandboxes, this shell stays alive across steps 1–6: variables, working directory, and operator context persist without touching the employee desktop or profile.</p>
-          </div>
+          <h3 id="explain-title">Runtime Discovery &amp; Probe</h3>
+          <p class="explain-summary" id="explain-what"></p>
           <div class="explain-code-wrap">
-            <span class="code-kicker">UNDER THE HOOD</span>
-            <code id="explain-code">provisionContainer({ containment: 'isolation_session' }) → spawnInContainerWithPty()</code>
+            <code id="explain-code"></code>
           </div>
         </article>
 
         <section class="compare-card">
           <div class="section-head">
-            <strong id="compare-heading">Live Boundary Comparison</strong>
-            <span id="compare-sub">Host vs. Contained Runtime</span>
+            <strong id="compare-heading">Isolation Boundary</strong>
+            <span id="compare-sub">Host vs. Contained</span>
           </div>
           <div class="identity-versus">
             <div class="id-box host">
-              <div class="id-role">HOST USER SESSION</div>
+              <div class="id-role">HOST</div>
               <div class="id-name" id="live-host-user">—</div>
-              <div class="id-meta">Session ID <strong id="live-host-session">—</strong></div>
+              <div class="id-meta">Session <strong id="live-host-session">—</strong></div>
             </div>
             <div class="vs-medallion" aria-hidden="true">≠</div>
             <div class="id-box agent">
-              <div class="id-role" id="agent-role-label">MXC ISOLATIONSESSION</div>
-              <div class="id-name" id="live-agent-user">Not provisioned</div>
-              <div class="id-meta"><span id="agent-meta-label">Session ID </span><strong id="live-agent-session">—</strong></div>
+              <div class="id-role" id="agent-role-label">SANDBOX</div>
+              <div class="id-name" id="live-agent-user">—</div>
+              <div class="id-meta"><span id="agent-meta-label">Session </span><strong id="live-agent-session">—</strong></div>
             </div>
           </div>
-        </section>
-
-        <section class="telemetry-card">
-          <div class="section-head">
-            <strong>Verified Runtime Evidence</strong>
-            <span id="live-demo-chapter">Select Step 1 to begin</span>
-          </div>
           <div class="evidence-chips">
-            <span class="ev-chip" id="live-spooler">Spooler: pending</span>
-            <span class="ev-chip" id="live-w32time">W32Time: pending</span>
-            <span class="ev-chip" id="live-extra-chip">Approval: INC-1042 staged</span>
-          </div>
-          <div class="live-demo-lifecycle" id="live-lifecycle-bar">
-            <span data-step="1">1 · PROVISION</span>
-            <span data-step="2">2 · IDENTITY</span>
-            <span data-step="3">3 · DIAGNOSE</span>
-            <span data-step="4">4 · CLEAN UP</span>
+            <span class="ev-chip" id="live-spooler">Files: pending</span>
+            <span class="ev-chip" id="live-w32time">Network: pending</span>
+            <span class="ev-chip" id="live-extra-chip">Secret: locked</span>
           </div>
         </section>
       </aside>
@@ -333,49 +282,37 @@ img.a{object-fit:cover}
 @keyframes pulseDot{0%%,100%%{box-shadow:0 0 0 3px rgba(126,226,184,.28)}50%%{box-shadow:0 0 0 7px rgba(126,226,184,.06)}}
 .trigger-arrow{font-size:15px;opacity:.85}
 
-.live-demo{position:fixed;inset:0;z-index:120;background:radial-gradient(circle at 12%% 0%%,#faf7f0 0%%,var(--bg) 58%%);color:var(--ink);font-family:var(--font-sans);padding:clamp(10px,1.3vw,20px)}
+.live-demo{position:fixed;inset:0;z-index:120;background:radial-gradient(circle at 12%% 0%%,#faf7f0 0%%,var(--bg) 58%%);color:var(--ink);font-family:var(--font-sans);padding:clamp(14px,1.8vw,24px)}
 .live-demo[hidden]{display:none!important}
-.studio-shell{height:100%%;max-width:1680px;margin:0 auto;display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:9px}
-.studio-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.studio-eyebrow{display:inline-flex;align-items:center;gap:7px;color:var(--accent);font:700 10.5px/1 var(--font-sans);letter-spacing:.15em;text-transform:uppercase}
-.studio-spark{width:7px;height:7px;border-radius:2px;background:var(--accent);transform:rotate(45deg)}
-.studio-brand h2{font:700 clamp(20px,2vw,30px)/1.08 var(--font-display);margin-top:3px;letter-spacing:-.02em;color:var(--ink)}
-.studio-header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.mode-tabs{display:flex;gap:4px;background:var(--card);padding:4px;border-radius:10px;border:1px solid var(--edge)}
-.mode-tab{border:0;background:transparent;color:var(--muted);padding:5px 11px;border-radius:7px;text-align:left;cursor:pointer;transition:all .16s ease;font-family:var(--font-sans)}
-.mode-tab .tab-kicker{display:block;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.8}
-.mode-tab strong{display:block;font-size:12px;font-weight:700;margin-top:1px;color:var(--ink)}
-.mode-tab.active{background:var(--surface);box-shadow:0 2px 8px rgba(32,28,22,.08);color:var(--accent)}
-.mode-tab.active strong{color:var(--accent)}
-.studio-status-group{display:flex;align-items:center;gap:7px}
-.status-badge{border-radius:999px;padding:6px 11px;font:700 10.5px/1 var(--font-mono);letter-spacing:.07em;background:var(--accent);color:#fbf8f2}
-.status-badge[data-tone="running"]{background:#b86b23;color:#fff}
-.status-badge[data-tone="ok"]{background:#286b4b;color:#fff}
-.status-badge[data-tone="err"]{background:var(--warn);color:#fff}
-.ghost-btn{border:1px solid var(--edge);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 11px;font:600 11.5px/1 var(--font-sans);cursor:pointer}
-.ghost-btn:hover{background:var(--card)}
-.close-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--edge);background:var(--surface);color:var(--ink);font-size:14px;cursor:pointer;display:grid;place-items:center}
+.studio-shell{height:100%%;max-width:1540px;margin:0 auto;display:grid;grid-template-rows:auto minmax(0,1fr);gap:14px}
+.studio-top{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--surface);border:1px solid var(--edge);border-radius:14px;padding:8px 11px;box-shadow:0 6px 20px rgba(35,30,22,.05);flex-wrap:nowrap;position:relative;z-index:30}
+.bar-select-group{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.studio-status-group{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.status-badge{border-radius:999px;padding:6px 11px;font:600 11px/1 var(--font-mono);background:var(--card);color:var(--muted);border:1px solid var(--edge)}
+.status-badge[data-tone="running"]{background:#fef4ea;border-color:#d48a42;color:#9a5313}
+.status-badge[data-tone="ok"]{background:#e7f4ed;border-color:#286b4b;color:#1f583d}
+.status-badge[data-tone="err"]{background:#faece8;border-color:var(--warn);color:var(--warn)}
+.ghost-btn{border:1px solid var(--edge);background:#fff;color:var(--ink);border-radius:9px;padding:8px 13px;font:600 12px/1 var(--font-sans);cursor:pointer;transition:background .14s,border-color .14s}
+.ghost-btn:hover{background:var(--card);border-color:var(--accent)}
+.close-btn{width:32px;height:32px;border-radius:9px;border:1px solid var(--edge);background:#fff;color:var(--ink);font-size:14px;cursor:pointer;display:grid;place-items:center;transition:all .14s}
 .close-btn:hover{background:var(--warn);color:#fff;border-color:var(--warn)}
 
-.studio-bar{display:flex;align-items:center;justify-content:space-between;gap:9px;background:var(--surface);border:1px solid var(--edge);border-radius:12px;padding:7px 11px;box-shadow:0 4px 16px rgba(35,30,22,.04);flex-wrap:wrap;position:relative;z-index:30}
-.bar-select-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
-.custom-select{position:relative;min-width:200px;max-width:300px}
-.cs-step-select{min-width:220px;max-width:290px}
-.cs-trigger{width:100%%;display:flex;align-items:center;gap:8px;border:1px solid var(--edge);border-radius:9px;background:#fff;color:var(--ink);padding:5px 10px 5px 6px;font:600 12px/1.2 var(--font-sans);cursor:pointer;box-shadow:0 2px 5px rgba(32,28,22,.04);transition:border-color .16s ease,box-shadow .16s ease}
-.cs-step-select .cs-trigger{border-color:rgba(63,96,126,.48)}
-.cs-trigger:hover:not(:disabled){border-color:var(--accent);box-shadow:0 4px 12px rgba(63,96,126,.12)}
-.cs-trigger[aria-expanded="true"]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(63,96,126,.15)}
+.custom-select{position:relative;min-width:185px;max-width:245px;flex:1 1 215px}
+.cs-step-select{min-width:210px;max-width:290px;flex:1.2 1 260px}
+.cs-trigger{width:100%%;display:flex;align-items:center;gap:8px;border:1px solid var(--edge);border-radius:9px;background:#fff;color:var(--ink);padding:6px 10px 6px 7px;font:600 12.5px/1.2 var(--font-sans);cursor:pointer;transition:border-color .16s ease,box-shadow .16s ease}
+.cs-step-select .cs-trigger{border-color:rgba(63,96,126,.45)}
+.cs-trigger:hover:not(:disabled){border-color:var(--accent);box-shadow:0 3px 10px rgba(63,96,126,.10)}
+.cs-trigger[aria-expanded="true"]{border-color:var(--accent);box-shadow:0 0 0 3px rgba(63,96,126,.14)}
 .cs-trigger:disabled{opacity:.52;cursor:wait}
-.cs-kicker{background:var(--card);color:var(--muted);border-radius:5px;padding:4px 6px;font:800 9px/1 var(--font-mono);letter-spacing:.09em;flex-shrink:0}
+.cs-kicker{background:var(--card);color:var(--muted);border-radius:5px;padding:4px 6px;font:800 9px/1 var(--font-mono);letter-spacing:.08em;flex-shrink:0}
 .cs-kicker-accent{background:rgba(63,96,126,.13);color:var(--accent)}
 .cs-label{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cs-chevron{width:14px;height:14px;color:var(--muted);flex-shrink:0;transition:transform .18s ease}
 .cs-trigger[aria-expanded="true"] .cs-chevron{transform:rotate(180deg);color:var(--accent)}
-.cs-menu{position:absolute;left:0;top:calc(100%% + 6px);min-width:100%%;width:max-content;max-width:390px;max-height:310px;overflow-y:auto;list-style:none;background:#fffdf9;border:1px solid var(--edge);border-radius:11px;padding:5px;box-shadow:0 18px 40px rgba(24,32,40,.16);z-index:80;animation:menuPop .15s cubic-bezier(.2,.8,.2,1)}
+.cs-menu{position:absolute;left:0;top:calc(100%% + 6px);min-width:100%%;width:max-content;max-width:380px;max-height:320px;overflow-y:auto;list-style:none;background:#fffdf9;border:1px solid var(--edge);border-radius:11px;padding:5px;box-shadow:0 18px 40px rgba(24,32,40,.16);z-index:80;animation:menuPop .14s cubic-bezier(.2,.8,.2,1)}
 .cs-menu[hidden]{display:none!important}
-@keyframes menuPop{from{opacity:0;transform:translateY(-5px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
-.cs-option{display:flex;flex-direction:column;gap:2px;padding:7px 10px;border-radius:8px;cursor:pointer;transition:background .12s ease}
+@keyframes menuPop{from{opacity:0;transform:translateY(-4px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.cs-option{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:8px;cursor:pointer;transition:background .12s ease}
 .cs-option:hover,.cs-option.focused{background:var(--bg)}
 .cs-option.selected{background:rgba(63,96,126,.11)}
 .cs-opt-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -383,79 +320,59 @@ img.a{object-fit:cover}
 .cs-option.selected .cs-opt-main{color:var(--accent);font-weight:700}
 .cs-opt-sub{font:500 10.5px/1.25 var(--font-mono);color:var(--muted)}
 .cs-opt-check{font:700 10.5px/1 var(--font-mono);color:#286b4b}
-.primary-run-btn{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:8px;background:linear-gradient(135deg,var(--accent) 0%%,#2a455d 100%%);color:#fff;padding:8px 15px;font:700 12px/1 var(--font-sans);cursor:pointer;box-shadow:0 5px 14px rgba(44,73,99,.24);transition:transform .14s ease,opacity .14s}
+.primary-run-btn{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:9px;background:linear-gradient(135deg,var(--accent) 0%%,#2a455d 100%%);color:#fff;padding:8px 16px;font:700 12.5px/1 var(--font-sans);cursor:pointer;box-shadow:0 5px 14px rgba(44,73,99,.22);transition:transform .14s ease,opacity .14s}
 .primary-run-btn:hover:not(:disabled){transform:translateY(-1px)}
 .primary-run-btn:disabled{opacity:.52;cursor:wait}
-.autoplay-btn{padding:7px 12px;border-radius:8px}
-.autoplay-btn.active{background:rgba(184,107,35,.14);border-color:#b86b23;color:#8f4e12}
-.step-pills{display:flex;align-items:center;gap:5px}
-.step-pill{width:24px;height:24px;border-radius:50%%;border:1px solid var(--edge);background:var(--bg);color:var(--muted);font:700 11px/1 var(--font-mono);display:grid;place-items:center;cursor:pointer;transition:all .16s ease}
-.step-pill.current{border-color:var(--accent);background:var(--accent);color:#fff;transform:scale(1.08)}
-.step-pill.done{border-color:#286b4b;background:rgba(40,107,75,.14);color:#286b4b}
-.next-indicator{font:600 11px var(--font-mono);color:var(--accent);margin-left:auto}
+.autoplay-btn.active{background:#fef4ea;border-color:#d48a42;color:#9a5313}
 
-.studio-grid{display:grid;grid-template-columns:minmax(0,1.22fr) minmax(0,.98fr);gap:12px;min-height:0}
-.terminal-card{display:flex;flex-direction:column;min-height:0;min-width:0;background:#0d151d;border-radius:14px;border:1px solid #243442;overflow:hidden;box-shadow:0 16px 38px rgba(16,24,32,.22)}
-.terminal-chrome{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:#15212c;border-bottom:1px solid #233342;color:#b8cad8;font:500 11px var(--font-mono);min-width:0;flex-shrink:0}
-.chrome-dots{display:flex;gap:5px;flex-shrink:0}.chrome-dots span{width:9px;height:9px;border-radius:50%%;background:#3a4b59}.chrome-dots span:first-child{background:#d46a5e}.chrome-dots span:nth-child(2){background:#deb05b}.chrome-dots span:nth-child(3){background:#5fb384}
-.chrome-title{display:flex;align-items:center;gap:8px;min-width:0;flex:1;overflow:hidden}.chrome-title strong{color:#f2f7fb;font-weight:600;white-space:nowrap}.chrome-title span{color:#8fa4b5;font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chrome-pill{border:1px solid #2d4254;border-radius:999px;padding:3px 8px;font-size:10px;color:#9ec5e2;background:#101a23;white-space:nowrap;flex-shrink:0}
-.chrome-pill[data-mode="replay"]{border-color:#3a5b4c;color:#9ce0be;background:#10211b}
-.studio-terminal{flex:1;min-height:0;overflow:auto;margin:0;padding:13px 15px;color:#e5eff7;font:450 12px/1.46 var(--font-mono);white-space:pre-wrap;word-break:break-word;scrollbar-color:#445a6c #0d151d}
-.quick-cmd-bar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 10px;background:#101a23;border-top:1px solid #1e2e3c;flex-shrink:0}
-.quick-kicker{color:#7d95a8;font:700 9.5px/1 var(--font-mono);letter-spacing:.08em;margin-right:2px}
-.quick-chip{border:1px solid #294053;border-radius:999px;background:#152330;color:#b9d7ee;padding:3px 9px;font:500 10.5px/1.2 var(--font-mono);cursor:pointer;transition:background .14s,border-color .14s}
-.quick-chip:hover:not(:disabled){background:#1f3548;border-color:#5da9dd;color:#fff}
-.quick-chip:disabled{opacity:.4;cursor:not-allowed}
-.terminal-composer{display:flex;align-items:center;gap:7px;padding:7px 10px;background:#121d27;border-top:1px solid #223241;flex-shrink:0}
+.studio-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr);gap:14px;min-height:0}
+.terminal-card{display:flex;flex-direction:column;min-height:0;min-width:0;background:#0d151d;border-radius:14px;border:1px solid #243442;overflow:hidden;box-shadow:0 16px 38px rgba(16,24,32,.20)}
+.terminal-chrome{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#15212c;border-bottom:1px solid #233342;color:#b8cad8;font:500 11.5px var(--font-mono);min-width:0;flex-shrink:0}
+.chrome-dots{display:flex;gap:6px;flex-shrink:0}.chrome-dots span{width:9px;height:9px;border-radius:50%%;background:#3a4b59}.chrome-dots span:first-child{background:#d46a5e}.chrome-dots span:nth-child(2){background:#deb05b}.chrome-dots span:nth-child(3){background:#5fb384}
+.chrome-title{display:flex;align-items:baseline;gap:10px;min-width:0;flex:1;overflow:hidden}.chrome-title strong{color:#f2f7fb;font-weight:600;white-space:nowrap}.chrome-title span{color:#8fa4b5;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.studio-terminal{flex:1;min-height:0;overflow:auto;margin:0;padding:16px 18px;color:#e5eff7;font:450 12.5px/1.55 var(--font-mono);white-space:pre-wrap;word-break:break-word;scrollbar-color:#445a6c #0d151d}
+.terminal-composer{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#121d27;border-top:1px solid #223241;flex-shrink:0}
+.terminal-composer[hidden]{display:none!important}
 .composer-prompt{color:#7cc4f8;font:600 11.5px var(--font-mono);white-space:nowrap}
-.terminal-composer input{flex:1;min-width:0;border:1px solid #2a3d4f;border-radius:6px;background:#091017;color:#f3f8fc;padding:6px 9px;font:450 11.5px var(--font-mono);outline:none}
+.terminal-composer input{flex:1;min-width:0;border:1px solid #2a3d4f;border-radius:7px;background:#091017;color:#f3f8fc;padding:7px 10px;font:450 12px var(--font-mono);outline:none}
 .terminal-composer input:focus{border-color:#5da9dd}
 .terminal-composer input:disabled{opacity:.48}
-.terminal-composer button{border:0;border-radius:6px;background:#2e5b7d;color:#fff;padding:6px 11px;font:600 11.5px var(--font-sans);cursor:pointer}
+.terminal-composer button{border:0;border-radius:7px;background:#2e5b7d;color:#fff;padding:7px 13px;font:600 12px var(--font-sans);cursor:pointer}
 .terminal-composer button:disabled{opacity:.42;cursor:not-allowed}
 
-.explainer-rail{display:grid;grid-template-rows:auto auto minmax(0,1fr);grid-template-columns:minmax(0,1fr);gap:9px;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;padding-right:2px}
-.narrative-card,.compare-card,.telemetry-card{background:var(--surface);border:1px solid var(--edge);border-radius:13px;padding:11px 13px;box-shadow:0 6px 18px rgba(35,30,22,.04);min-width:0;max-width:100%%}
-.narrative-card{border-top:3px solid var(--accent)}
-.narrative-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;min-width:0}
-.step-badge{background:rgba(63,96,126,.12);color:var(--accent);border-radius:999px;padding:3px 9px;font:800 9.5px/1 var(--font-mono);letter-spacing:.08em;flex-shrink:0}
-.boundary-tag{color:var(--muted);font:600 10.5px/1 var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.narrative-card h3{font:700 17px/1.18 var(--font-display);color:var(--ink);margin-bottom:5px}
-.explain-summary{color:var(--ink-soft);font-size:12px;line-height:1.42;margin-bottom:8px}
-.explain-callout{background:var(--card);border-left:3px solid var(--accent);border-radius:7px;padding:7px 10px;margin-bottom:8px}
-.callout-label{color:var(--accent);font:800 9.5px/1 var(--font-mono);letter-spacing:.1em;margin-bottom:3px}
-.explain-callout p{color:var(--ink);font-size:11.5px;line-height:1.38}
-.explain-code-wrap{display:flex;align-items:center;gap:7px;background:var(--codebg);border:1px solid var(--edge);border-radius:7px;padding:5px 9px;overflow:hidden;min-width:0}
-.code-kicker{color:var(--muted);font:700 9px/1 var(--font-mono);letter-spacing:.08em;white-space:nowrap;flex-shrink:0}
-.explain-code-wrap code{font:600 10.5px/1.25 var(--font-mono);color:var(--accent);white-space:normal;word-break:break-word;min-width:0}
+.explainer-rail{display:flex;flex-direction:column;gap:14px;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden}
+.narrative-card,.compare-card{background:var(--surface);border:1px solid var(--edge);border-radius:14px;padding:16px 18px;box-shadow:0 6px 20px rgba(35,30,22,.04);min-width:0}
+.narrative-card{border-top:3px solid var(--accent);display:flex;flex-direction:column;gap:9px}
+.narrative-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.step-badge{background:rgba(63,96,126,.12);color:var(--accent);border-radius:999px;padding:4px 10px;font:800 10px/1 var(--font-mono);letter-spacing:.08em;flex-shrink:0}
+.boundary-tag{color:var(--muted);font:600 11px/1 var(--font-mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.narrative-card h3{font:700 19px/1.2 var(--font-display);color:var(--ink)}
+.explain-summary{color:var(--ink-soft);font-size:13.5px;line-height:1.5}
+.explain-code-wrap{background:var(--codebg);border:1px solid var(--edge);border-radius:9px;padding:9px 12px;margin-top:2px;min-width:0}
+.explain-code-wrap code{font:600 11.5px/1.38 var(--font-mono);color:var(--accent);white-space:normal;word-break:break-word;display:block}
 
-.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:7px;min-width:0}
-.section-head strong{font:700 13.5px var(--font-sans);color:var(--ink);flex-shrink:0}
-.section-head span{font:500 10.5px var(--font-mono);color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.identity-versus{display:grid;grid-template-columns:1fr 30px 1fr;gap:7px;align-items:stretch}
-.id-box{background:var(--card);border-radius:10px;padding:8px 10px;min-width:0;border-top:3px solid var(--ink)}
+.compare-card{display:flex;flex-direction:column;gap:14px}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0}
+.section-head strong{font:700 14px var(--font-sans);color:var(--ink)}
+.section-head span{font:500 11px var(--font-mono);color:var(--muted)}
+.identity-versus{display:grid;grid-template-columns:1fr 32px 1fr;gap:10px;align-items:stretch}
+.id-box{background:var(--card);border-radius:11px;padding:12px 14px;min-width:0;border-top:3px solid var(--ink)}
 .id-box.agent{border-top-color:var(--accent);background:linear-gradient(180deg,#f2f6f9 0%%,var(--card) 100%%)}
-.id-role{color:var(--muted);font:700 9px/1 var(--font-mono);letter-spacing:.08em}
-.id-name{font:800 16px/1.15 var(--font-sans);color:var(--ink);margin:4px 0 2px;overflow-wrap:anywhere}
+.id-role{color:var(--muted);font:700 9.5px/1 var(--font-mono);letter-spacing:.08em}
+.id-name{font:800 17px/1.2 var(--font-sans);color:var(--ink);margin:6px 0 3px;overflow-wrap:anywhere}
 .id-box.agent .id-name{color:var(--accent)}
-.id-meta{color:var(--muted);font-size:11px}
-.vs-medallion{align-self:center;justify-self:center;width:28px;height:28px;border-radius:50%%;background:var(--accent);color:#fff;font:700 16px/1 var(--font-sans);display:grid;place-items:center}
+.id-meta{color:var(--muted);font-size:12px}
+.vs-medallion{align-self:center;justify-self:center;width:30px;height:30px;border-radius:50%%;background:var(--accent);color:#fff;font:700 16px/1 var(--font-sans);display:grid;place-items:center}
 
-.telemetry-card{display:flex;flex-direction:column;justify-content:space-between;gap:8px}
-.evidence-chips{display:flex;gap:6px;flex-wrap:wrap}
-.ev-chip{border:1px solid var(--edge);border-radius:999px;background:var(--bg);padding:4px 9px;color:var(--muted);font:600 10.5px/1 var(--font-mono)}
+.evidence-chips{display:flex;gap:7px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--edge)}
+.ev-chip{border:1px solid var(--edge);border-radius:999px;background:var(--bg);padding:5px 11px;color:var(--muted);font:600 11px/1 var(--font-mono)}
 .ev-chip.on{background:#e7f4ed;border-color:#286b4b;color:#1f583d}
 .ev-chip.denied{background:#faece8;border-color:var(--warn);color:var(--warn)}
-.live-demo-lifecycle{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.live-demo-lifecycle span{border-top:3px solid var(--edge);padding-top:4px;color:var(--muted);font:700 9.5px/1.2 var(--font-mono);text-align:center;letter-spacing:.03em}
-.live-demo-lifecycle span.done{border-color:#286b4b;color:#1f583d}
 
-@media(max-width:860px){
+@media(max-width:960px){
+  .studio-top,.bar-select-group{flex-wrap:wrap}
   .studio-grid{grid-template-columns:1fr;overflow:auto}
-  .terminal-card{min-height:280px}
-  .custom-select,.cs-step-select{min-width:190px}
-  .step-pills{display:none}
+  .terminal-card{min-height:300px}
 }
 @media print{@page{size:13.333in 7.5in;margin:0}
  html,body{overflow:visible;background:#fff}#deck-progress,.live-demo,.live-demo-trigger{display:none!important}
@@ -503,82 +420,66 @@ function markLiveStep(n){var node=byId('live-demo').querySelector('[data-step="'
 
 var STEP_GUIDES={
  pty:[
-  {label:'1 · Provision Session & Open PTY',boundary:'OS Session Boundary',title:'Step 1 · Provision Isolated Operator Session & PTY',
-   what:'Host calls provisionContainer() + startContainer() to create a temporary Windows agent account, stages INC-1042 & read-only approval into the shared workspace, and opens an interactive 120×30 PowerShell PTY.',
-   why:'Proves real OS session creation: the operator shell starts in its own user profile and session while keeping a bidirectional pseudo-terminal open for all subsequent steps.',
+  {label:'1 · Provision Session & Open PTY',boundary:'OS Session',title:'Provision Isolated Operator Session',
+   what:'Creates a fresh local Windows operator account, stages ticket INC-1042 into the shared workspace, and opens a persistent PowerShell PTY.',
    code:"provisionContainer({ containment: 'isolation_session' }) → spawnInContainerWithPty()"},
-  {label:'2 · Verify Distinct User & Session ID',boundary:'Identity & Session Separation',title:'Step 2 · Prove Agent Identity ≠ Host Employee',
-   what:'Sends a live PowerShell query over the open PTY stdin to inspect $env:USERNAME and the current process Windows SessionId, comparing them side-by-side against your host login.',
-   why:'Demonstrates why Session Isolation exists: the agent cannot touch the employee desktop, clipboard, registry hive, or shell history because it runs in a separate Windows logon session.',
-   code:'Write-Output "$env:USERNAME | SessionId=$((Get-Process -Id $PID).SessionId)"'},
-  {label:'3 · Validate Staged Ticket & Scope',boundary:'Shared Workspace Handoff',title:'Step 3 · Inspect INC-1042 & Enforce Read-Only Scope',
-   what:'Inside the same running PowerShell PTY, reads incident-request.json and incident-approval.json from ephemeralWorkspacePath and verifies ticket matching + read-only-diagnostics scope.',
-   why:'Shows controlled host-to-session staging: inputs enter only through the explicit shared workspace, and context variables stay in memory for the next command.',
-   code:'Get-Content .\\incident-request.json, .\\incident-approval.json | ConvertFrom-Json'},
-  {label:'4 · Diagnose Live Windows Services',boundary:'Stateful Interactive Triage',title:'Step 4 · Query Real Spooler & W32Time Status',
-   what:'Queries live Windows service health (Spooler and W32Time) inside the isolated session without restarting services or mutating machine configuration.',
-   why:'Illustrates real L1/L2 troubleshooting: multi-step diagnostics share one live terminal session, and a human operator can also type custom commands in the prompt below at any time.',
+  {label:'2 · Verify User & Session ID',boundary:'Identity Separation',title:'Prove Operator ≠ Host Employee',
+   what:'Queries $env:USERNAME and Windows SessionId inside the PTY—proving the agent cannot touch the employee desktop, clipboard, or profile.',
+   code:'$env:USERNAME · (Get-Process -Id $PID).SessionId'},
+  {label:'3 · Check Ticket & Scope',boundary:'Workspace Handoff',title:'Validate INC-1042 Read-Only Approval',
+   what:'Reads staged JSON files from the shared workspace and confirms read-only-diagnostics scope while keeping shell state alive.',
+   code:'Get-Content .\\\\incident-request.json, .\\\\incident-approval.json'},
+  {label:'4 · Diagnose Windows Services',boundary:'Stateful Triage',title:'Inspect Live Spooler & W32Time Health',
+   what:'Checks real Windows service status inside the ongoing PowerShell session without mutating machine configuration.',
    code:'Get-Service Spooler, W32Time | Select-Object Name, Status'},
-  {label:'5 · Write Host-Verified Audit Evidence',boundary:'Untrusted-to-Trusted Verification',title:'Step 5 · Persist Triage Evidence & Validate on Host',
-   what:'Writes structured triage-evidence.txt inside the session workspace, then the trusted Host independently reads and validates ticket, operator identity, session ID, and service states.',
-   why:'Containment is not blind trust: the Host validates structured output from the workspace before accepting the result.',
-   code:'Set-Content .\\triage-evidence.txt → Host verifies ticket=INC-1042'},
-  {label:'6 · Exit Shell & Deprovision Account',boundary:'Deterministic Teardown',title:'Step 6 · Close PTY, Stop Session & Deprovision User',
-   what:'Sends exit to PowerShell, stops the active Windows session, and deprovisions the temporary OS agent account.',
-   why:'Leaves zero lingering operator state or orphan accounts once the incident workflow finishes.',
-   code:'terminal.input.end("exit") → stopContainer() → deprovisionContainer()'}
+  {label:'5 · Write Host-Verified Evidence',boundary:'Output Validation',title:'Persist Audit Evidence & Verify on Host',
+   what:'Writes triage-evidence.txt in the workspace; the trusted Host independently validates ticket, operator, and service fields before accepting it.',
+   code:'Set-Content .\\\\triage-evidence.txt → Host verifies INC-1042'},
+  {label:'6 · Exit & Deprovision Account',boundary:'Clean Teardown',title:'Close PTY & Remove Temporary User',
+   what:'Exits PowerShell, stops the isolated Windows session, and deletes the temporary OS operator account.',
+   code:'stopContainer(id) → deprovisionContainer(id)'}
  ],
  process:[
-  {label:'1 · Discover Backends & Probe Tier',boundary:'Capability Discovery',title:'Step 1 · Runtime Discovery & ProcessContainer Probe',
-   what:'Calls getPlatformSupport() and Windows probe(request) before launching any workload to confirm native BaseContainer / ProcessContainer availability.',
-   why:'Host apps never assume sandbox capabilities blindly—preflight probing verifies that path deny rules and loopback controls are enforceable on this machine.',
-   code:'getPlatformSupport() + probe(request) → tier: base-container'},
-  {label:'2 · Allowed Read-In / Write-Out',boundary:'Filesystem Least Privilege',title:'Step 2 · Read Approved Input & Write Dedicated Report',
-   what:'Runs a one-shot ProcessContainer granted read-only access to demo/input and read-write access only to demo/output, producing report.txt.',
-   why:'Validates the positive path: narrow, task-scoped file grants let legitimate agent work succeed cleanly.',
+  {label:'1 · Discover & Probe Tier',boundary:'Capability Probe',title:'Verify Native ProcessContainer Tier',
+   what:'Calls getPlatformSupport() and probe(request) to verify path deny rules and loopback controls are enforceable before running anything.',
+   code:'getPlatformSupport() + probe(request) → base-container'},
+  {label:'2 · Allowed File Read / Write',boundary:'Least Privilege',title:'Read Approved Input & Write Report',
+   what:'Grants read-only access to demo/input and write access only to demo/output; legitimate report generation succeeds.',
    code:'filesystem: { readonlyPaths: ["input"], readwritePaths: ["output"] }'},
-  {label:'3 · Block Protected Secret File',boundary:'OS-Enforced Deny Rule',title:'Step 3 · Attempt to Read Protected File → Denied',
-   what:'Runs the workload under the exact same policy while attempting to read demo/protected/denied.txt; the Windows kernel blocks access.',
-   why:'Prompts persuade, the OS enforces: even if prompt injection tricks the model into reading secrets, the file ACL/container boundary denies it.',
-   code:'deniedPaths: ["protected/denied.txt"] → Access is denied'},
-  {label:'4 · Reach Approved Loopback Endpoint',boundary:'Directional Network Control',title:'Step 4 · Connect to Explicitly Allowed Endpoint',
-   what:'Starts a local HTTP verification listener and launches a ProcessContainer with hostLoopback: "allow" while internet egress stays default-deny.',
-   why:'Shows how agents reach a trusted local proxy or broker without opening raw internet access.',
+  {label:'3 · Block Protected Secret',boundary:'Kernel ACL Deny',title:'Attempt to Read Secret File → Denied',
+   what:'Runs under the same policy while attempting to read demo/protected/denied.txt; the Windows kernel blocks access.',
+   code:'deniedPaths: ["protected/denied.txt"] → Access denied'},
+  {label:'4 · Allow Loopback Endpoint',boundary:'Network Allow Rule',title:'Reach Explicitly Permitted Endpoint',
+   what:'Connects to a local verification listener with hostLoopback: "allow" while outbound internet remains denied by default.',
    code:'network: { egress: { default: "deny" }, ingress: { hostLoopback: "allow" } }'},
-  {label:'5 · Block Unapproved Network Access',boundary:'Default-Deny Network Leash',title:'Step 5 · Same Workload with Loopback Denied → Blocked',
-   what:'Runs against the exact same local HTTP listener with hostLoopback: "deny" and egress: "deny"; curl fails immediately.',
-   why:'Proves data exfiltration is cut off at the OS network stack whenever a destination is not explicitly permitted.',
+  {label:'5 · Block Unapproved Network',boundary:'Default-Deny Leash',title:'Same Endpoint with Loopback Denied → Blocked',
+   what:'Switches hostLoopback to "deny" against the exact same listener; the OS network stack cuts off the connection immediately.',
    code:'network: { egress: { default: "deny" }, ingress: { hostLoopback: "deny" } }'}
  ],
  microvm:[
-  {label:'1 · Discover Hyperlight & Warm Snapshot',boundary:'Experimental Opt-In',title:'Step 1 · Verify Hyperlight Backend & Warmed VM Snapshots',
-   what:'Calls getPlatformSupport() to confirm native hyperlight support, checks pre-warmed Unikraft initrd memory snapshots (bash + python), and dry-runs the 1.1.0-alpha contract.',
-   why:'MicroVMs require explicit experimental opt-in and pre-warmed snapshots so subsequent untrusted code launches skip cold OS boot.',
-   code:'getPlatformSupport() + wxc-exec --experimental --dry-run (containment: "hyperlight")'},
-  {label:'2 · Boot Unikraft Kernel (<100 ms)',boundary:'Hardware Hypervisor Boundary',title:'Step 2 · Prove Separate Unikraft Kernel Inside VM Partition',
-   what:'Restores a hardware-virtualized Unikraft 5.15 x86_64 guest on Windows Hypervisor Platform and inspects uname + rootfs in ~90 ms.',
-   why:'Unlike process containers that share the host OS kernel, a kernel bug or syscall exploit inside Hyperlight hits a dedicated unikernel VM boundary.',
-   code:'containment: "hyperlight" → Unikraft 5.15.148-Ijiraq (Windows Hypervisor Platform)'},
-  {label:'3 · Evaluate Untrusted AI Python Code',boundary:'Sub-100ms Code Sandbox',title:'Step 3 · Run AI-Generated Python 3.12 Analytics Safely',
-   what:'Executes untrusted model-authored Python reconciliation logic inside the MicroVM and returns structured JSON anomalies to the host.',
-   why:'Gives AI coding and data agents near-process responsiveness (~90 ms) with hardware-level virtual machine isolation.',
-   code:'hyperlight: { runtime: "python" } → Python 3.12.15 JSON stdout'},
-  {label:'4 · Block Host FS, Env & Socket Escape',boundary:'Zero-Surface Air Gap',title:'Step 4 · Adversarial Probe: Host C:\\, Env & TCP Blocked',
-   what:'Runs an adversarial script attempting to read C:\\Windows, inspect host environment variables, and open a loopback TCP socket.',
-   why:'Zero host mounts, zero inherited host env vars, and zero guest NIC (Errno 13 Permission denied) eliminate exfiltration paths by construction.',
-   code:'HOST_FS=UNREACHABLE · HOST_ENV=ISOLATED · GUEST_NET=BLOCKED (Errno 13)'},
-  {label:'5 · Verify Stateless Snapshot Reset',boundary:'Deterministic Memory Wipe',title:'Step 5 · Write /tmp Marker in Run A → Gone in Run B',
-   what:'Writes /tmp/agent-residue.txt in MicroVM Run A, then immediately launches Run B from the warmed snapshot and checks if the file exists.',
-   why:'Every invocation starts from an identical, clean memory image—preventing cross-tenant or cross-prompt poisoning.',
-   code:'Run A: /tmp/agent-residue=True → Run B: /tmp/agent-residue=False'}
+  {label:'1 · Verify Warm Snapshots',boundary:'Experimental Opt-In',title:'Check Hyperlight & Warmed Snapshots',
+   what:'Verifies native hyperlight availability, pre-warmed Unikraft memory snapshots (bash + python), and 1.1.0-alpha policy validation.',
+   code:'wxc-exec --experimental --dry-run (containment: "hyperlight")'},
+  {label:'2 · Boot Unikraft Kernel',boundary:'Hardware Hypervisor',title:'Restore Separate Unikraft Kernel (<100 ms)',
+   what:'Restores a hardware-virtualized Unikraft 5.15 x86_64 guest on Windows Hypervisor Platform—never sharing the Windows NT kernel.',
+   code:'containment: "hyperlight" → Unikraft 5.15.148-Ijiraq'},
+  {label:'3 · Run Untrusted Python',boundary:'Fast VM Compute',title:'Evaluate AI-Generated Python 3.12 Safely',
+   what:'Executes untrusted invoice-reconciliation Python inside the MicroVM in ~90 ms and returns structured JSON stdout to the host.',
+   code:'hyperlight: { runtime: "python" } → JSON stdout'},
+  {label:'4 · Block Host & Socket Escape',boundary:'Zero-Surface Air Gap',title:'Probe Host C:\\\\, Env & TCP → All Blocked',
+   what:'Adversarial Python finds zero host mounts, zero host environment variables, and no guest network stack (Errno 13 Permission denied).',
+   code:'HOST_FS=UNREACHABLE · HOST_ENV=ISOLATED · GUEST_NET=BLOCKED'},
+  {label:'5 · Verify Snapshot Reset',boundary:'Memory Wipe',title:'Write /tmp in Run A → Gone in Run B',
+   what:'Writes /tmp/agent-residue.txt in Run A, then restores Run B from the clean memory snapshot—zero state survives across runs.',
+   code:'Run A: /tmp marker=True → Run B: /tmp marker=False'}
  ]
 };
 
 var liveNext={pty:1,process:1,microvm:1},doneSet={pty:{},process:{},microvm:{}},liveSource=null,ptyReady=false;
 var KIND_LABELS={
- process:'Demo 1 · ProcessContainer (5 steps)',
- pty:'Demo 2 · IsolationSession PTY (6 steps)',
- microvm:'Demo 3 · Hyperlight MicroVM (5 steps)'
+ process:'Demo 1 · ProcessContainer',
+ pty:'Demo 2 · IsolationSession PTY',
+ microvm:'Demo 3 · Hyperlight MicroVM'
 };
 
 function getKindVal(){return byId('cs-kind').dataset.value||'process';}
@@ -661,101 +562,70 @@ function setStepVal(val){
 
 function renderExplain(kind,step){
  var list=STEP_GUIDES[kind],idx=Math.max(0,Math.min(list.length-1,(Number(step)||1)-1)),g=list[idx];
- byId('explain-step-badge').textContent='STEP '+(idx+1)+' OF '+list.length;
+ byId('explain-step-badge').textContent='STEP '+(idx+1)+' / '+list.length;
  byId('explain-boundary-tag').textContent=g.boundary;
  byId('explain-title').textContent=g.title;
  byId('explain-what').textContent=g.what;
- byId('explain-why').textContent=g.why;
  byId('explain-code').textContent=g.code;
- var pills=byId('live-step-pills');
- pills.innerHTML=list.map(function(_,k){
-  var n=k+1,cls='step-pill'+(n===idx+1?' current':'')+(doneSet[kind][n]?' done':'');
-  return '<button type="button" class="'+cls+'" data-pick="'+n+'" title="'+list[k].label+'">'+n+'</button>';
- }).join('');
- pills.querySelectorAll('button').forEach(function(b){
-  b.addEventListener('click',function(){
-   if(byId('cs-step-btn').disabled)return;
-   setStepVal(b.dataset.pick);
-   syncStepSelection();
-  });
- });
- byId('live-run-label').textContent='Send Step '+(idx+1);
+ byId('live-run-label').textContent='Run Step '+(idx+1);
 }
 
 function syncComposerState(){
- var kind=getKindVal(),inp=byId('live-pty-input'),btn=byId('live-pty-send'),form=byId('live-pty-form'),qbar=byId('live-quick-bar');
- if(kind!=='pty'){
-  form.style.display='none';
-  if(qbar)qbar.style.display='none';
+ var kind=getKindVal(),inp=byId('live-pty-input'),btn=byId('live-pty-send'),form=byId('live-pty-form');
+ if(kind!=='pty'||replayMode){
+  form.hidden=true;
  }else{
-  form.style.display='flex';
-  if(qbar){
-   qbar.style.display='flex';
-   qbar.querySelectorAll('.quick-chip').forEach(function(c){c.disabled=!ptyReady||stepRunning;});
-  }
+  form.hidden=false;
   inp.disabled=!ptyReady||stepRunning;btn.disabled=!ptyReady||stepRunning;
   inp.placeholder=ptyReady
-   ?(replayMode?'Session PTY ready — click a preset chip above or type whoami, pwd, ls...':'Session PTY is live — type any PowerShell command (e.g. whoami, pwd, ls) and press Enter')
-   :'Run Step 1 first to provision the IsolationSession PowerShell PTY...';
+   ?'Live PTY active — type any PowerShell command (e.g. whoami, pwd, ls) and press Enter'
+   :'Run Step 1 first to provision the live IsolationSession PowerShell PTY...';
  }
 }
 
 function syncStepSelection(){
  var kind=getKindVal(),step=getStepVal();
  setStepVal(step);
- byId('live-demo-next').textContent=(step===liveNext[kind]?'Recommended · Step ':'Selected · Step ')+step;
  renderExplain(kind,step);
 }
+
+function idleModeLabel(){return replayMode?'Replay · Win11':'Live · 127.0.0.1:8787';}
 
 function updateLiveMode(){
  var kind=getKindVal();
  setKindVal(kind);
- document.querySelectorAll('.mode-tab').forEach(function(t){
-  var active=t.dataset.mode===kind;
-  t.classList.toggle('active',active);
-  t.setAttribute('aria-selected',active?'true':'false');
- });
  setStepVal(liveNext[kind]);
  var metaLbl=byId('agent-meta-label');
  if(kind==='pty'){
-  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 2 · STATEFUL SESSION ISOLATION';
-  byId('live-demo-title').textContent='Demo 2 · Session PTY — Incident Triage';
-  byId('terminal-mode-title').textContent='REAL MXC PTY · PowerShell';
-  byId('terminal-mode-sub').textContent='120 × 30 · persistent isolated operator session';
-  byId('agent-role-label').textContent='MXC ISOLATIONSESSION';
-  if(metaLbl)metaLbl.textContent='Session ID ';
-  byId('compare-heading').textContent='Host Login vs. Isolated Agent Session';
-  byId('compare-sub').textContent='Separate OS account & session';
-  byId('live-agent-user').textContent='Awaiting Step 1';byId('live-agent-session').textContent='—';
-  byId('live-spooler').textContent='Spooler: pending';byId('live-w32time').textContent='W32Time: pending';
-  byId('live-extra-chip').textContent='Approval: INC-1042 staged';
-  byId('live-demo').querySelectorAll('.live-demo-lifecycle span').forEach(function(x,idx){x.textContent=['1 · PROVISION','2 · IDENTITY','3–5 · TRIAGE','6 · CLEAN UP'][idx];});
+  byId('terminal-mode-title').textContent='IsolationSession · PowerShell PTY';
+  byId('terminal-mode-sub').textContent='120 × 30 persistent session';
+  byId('agent-role-label').textContent='ISOLATED SESSION';
+  if(metaLbl)metaLbl.textContent='Session ';
+  byId('compare-heading').textContent='Identity & Session Boundary';
+  byId('compare-sub').textContent='Host vs. Operator';
+  byId('live-agent-user').textContent='Pending';byId('live-agent-session').textContent='—';
+  byId('live-spooler').textContent='Spooler: —';byId('live-w32time').textContent='W32Time: —';
+  byId('live-extra-chip').textContent='INC-1042: staged';
  }else if(kind==='process'){
-  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 1 · PROCESSCONTAINER GUARDRAILS';
-  byId('live-demo-title').textContent='Demo 1 · ProcessContainer — Files & Network';
-  byId('terminal-mode-title').textContent='MXC PROCESSCONTAINER · One-Shot Sandboxes';
-  byId('terminal-mode-sub').textContent='base-container · file allow/deny + loopback allow/deny';
-  byId('agent-role-label').textContent='PROCESSCONTAINER SANDBOX';
-  if(metaLbl)metaLbl.textContent='Session ID ';
-  byId('compare-heading').textContent='Trusted Host vs. One-Shot Sandbox';
-  byId('compare-sub').textContent='Deny-by-default policy';
-  byId('live-agent-user').textContent='base-container';byId('live-agent-session').textContent='ephemeral';
-  byId('live-spooler').textContent='Files: pending';byId('live-w32time').textContent='Network: pending';
-  byId('live-extra-chip').textContent='Protected secret: locked';
-  byId('live-demo').querySelectorAll('.live-demo-lifecycle span').forEach(function(x,idx){x.textContent=['1 · PROBE','2–3 · FILES','4–5 · NETWORK','VERIFIED'][idx];});
+  byId('terminal-mode-title').textContent='ProcessContainer · One-Shot Policy';
+  byId('terminal-mode-sub').textContent='base-container · files & loopback';
+  byId('agent-role-label').textContent='PROCESS SANDBOX';
+  if(metaLbl)metaLbl.textContent='Tier ';
+  byId('compare-heading').textContent='Least-Privilege Boundary';
+  byId('compare-sub').textContent='Deny by default';
+  byId('live-agent-user').textContent='AppContainer';byId('live-agent-session').textContent='base-container';
+  byId('live-spooler').textContent='Files: —';byId('live-w32time').textContent='Loopback: —';
+  byId('live-extra-chip').textContent='Secret: locked';
  }else{
-  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 3 · HARDWARE MICROVM (EXPERIMENTAL)';
-  byId('live-demo-title').textContent='Demo 3 · Hyperlight MicroVM — Untrusted Code';
-  byId('terminal-mode-title').textContent='MXC HYPERLIGHT · Unikraft MicroVM';
-  byId('terminal-mode-sub').textContent='hardware hypervisor partition · bash & python 3.12 snapshots';
-  byId('agent-role-label').textContent='HYPERLIGHT MICROVM';
+  byId('terminal-mode-title').textContent='Hyperlight · Unikraft MicroVM';
+  byId('terminal-mode-sub').textContent='hardware hypervisor · bash & python 3.12';
+  byId('agent-role-label').textContent='MICROVM GUEST';
   if(metaLbl)metaLbl.textContent='Warm boot ';
-  byId('compare-heading').textContent='Windows Host vs. Hardware MicroVM';
-  byId('compare-sub').textContent='Separate Unikraft kernel';
-  byId('live-agent-user').textContent='Unikraft VM';byId('live-agent-session').textContent='standby';
-  byId('live-spooler').textContent='VM Kernel: pending';byId('live-w32time').textContent='Host/Net escape: pending';
-  byId('live-extra-chip').textContent='Snapshot reset: pending';
-  byId('live-demo').querySelectorAll('.live-demo-lifecycle span').forEach(function(x,idx){x.textContent=['1 · SNAPSHOT','2 · VM KERNEL','3–4 · ISOLATE','5 · RESET'][idx];});
+  byId('compare-heading').textContent='Hardware VM Boundary';
+  byId('compare-sub').textContent='Separate kernel';
+  byId('live-agent-user').textContent='Unikraft VM';byId('live-agent-session').textContent='~90 ms';
+  byId('live-spooler').textContent='Kernel: —';byId('live-w32time').textContent='Escape: —';
+  byId('live-extra-chip').textContent='Reset: —';
  }
  syncComposerState();
  syncStepSelection();
@@ -772,7 +642,7 @@ function syncAutoPlayBtn(){
  var btn=byId('live-demo-autoplay'),lbl=byId('live-autoplay-label');
  if(!btn||!lbl)return;
  btn.classList.toggle('active',autoPlaying);
- lbl.textContent=autoPlaying?'Stop Auto-Play':'Auto-Play All';
+ lbl.textContent=autoPlaying?'Stop':'Auto-Play';
 }
 function stopAutoPlay(){
  autoPlaying=false;
@@ -782,19 +652,20 @@ function resolveStepWaiters(ok){
  while(stepDoneWaiters.length){var fn=stepDoneWaiters.shift();fn(ok);}
 }
 
+var rawLog='';
 function resetLive(){
  stopAutoPlay();
  clearReplayTimers();
  resolveStepWaiters(false);
  ptyReady=false;
  replayBannerShown=false;
+ rawLog='';
  doneSet={pty:{},process:{},microvm:{}};
  liveNext={pty:1,process:1,microvm:1};
  byId('live-demo-output').textContent='';
  setControlsDisabled(false);
- setStatus(replayMode?'REPLAY READY':'READY');
+ setStatus(idleModeLabel());
  byId('live-demo').querySelectorAll('.ev-chip').forEach(function(x){x.classList.remove('on','denied');});
- byId('live-demo').querySelectorAll('.live-demo-lifecycle span.done').forEach(function(x){x.classList.remove('done');});
  updateLiveMode();
 }
 
@@ -810,13 +681,13 @@ function inspectLive(value){
    byId('live-spooler').textContent='Spooler: '+svc[1].trim();byId('live-spooler').classList.add('on');
    byId('live-w32time').textContent='W32Time: '+svc[2].trim();byId('live-w32time').classList.add('on');
   }
-  if(/__WEB_APPROVAL_VAL__=/.test(value)){byId('live-extra-chip').textContent='Approval: verified read-only';byId('live-extra-chip').classList.add('on');}
-  if(/__WEB_EVIDENCE_VAL__=written/.test(value)){byId('live-extra-chip').textContent='Evidence: host-verified ✓';byId('live-extra-chip').classList.add('on');}
+  if(/__WEB_APPROVAL_VAL__=/.test(value)){byId('live-extra-chip').textContent='INC-1042: read-only ✓';byId('live-extra-chip').classList.add('on');}
+  if(/__WEB_EVIDENCE_VAL__=written/.test(value)){byId('live-extra-chip').textContent='Evidence: verified ✓';byId('live-extra-chip').classList.add('on');}
  }else if(kind==='process'){
-  if(value.includes('STEP 2 COMPLETE')){byId('live-spooler').textContent='Write output: ALLOWED ✓';byId('live-spooler').classList.add('on');}
-  if(value.includes('STEP 3 COMPLETE')){byId('live-extra-chip').textContent='Secret read: DENIED ✕';byId('live-extra-chip').classList.add('denied');}
-  if(value.includes('STEP 4 COMPLETE')){byId('live-w32time').textContent='Loopback allow: REACHED ✓';byId('live-w32time').classList.add('on');}
-  if(value.includes('STEP 5 COMPLETE')){byId('live-w32time').textContent='Loopback deny: BLOCKED ✕';byId('live-w32time').classList.remove('on');byId('live-w32time').classList.add('denied');}
+  if(value.includes('STEP 2 COMPLETE')){byId('live-spooler').textContent='Files: ALLOWED ✓';byId('live-spooler').classList.add('on');}
+  if(value.includes('STEP 3 COMPLETE')){byId('live-extra-chip').textContent='Secret: DENIED ✕';byId('live-extra-chip').classList.add('denied');}
+  if(value.includes('STEP 4 COMPLETE')){byId('live-w32time').textContent='Loopback: ALLOWED ✓';byId('live-w32time').classList.add('on');}
+  if(value.includes('STEP 5 COMPLETE')){byId('live-w32time').textContent='Loopback: BLOCKED ✕';byId('live-w32time').classList.remove('on');byId('live-w32time').classList.add('denied');}
  }else if(kind==='microvm'){
   var gk=value.match(/GUEST_KERNEL=([^\\r\\n]+)/);
   if(gk){
@@ -827,39 +698,52 @@ function inspectLive(value){
   var bms=value.match(/MICROVM_BOOT_MS=(\\d+)/);
   if(bms)byId('live-agent-session').textContent=bms[1]+' ms';
   if(value.includes('MICROVM STEP 3 COMPLETE')&&!gk){
-   byId('live-spooler').textContent='Python 3.12 eval: OK ✓';byId('live-spooler').classList.add('on');
+   byId('live-spooler').textContent='Python 3.12: OK ✓';byId('live-spooler').classList.add('on');
   }
   if(value.includes('MICROVM STEP 4 COMPLETE')){
-   byId('live-w32time').textContent='FS/Env/Net: BLOCKED ✕';byId('live-w32time').classList.add('denied');
+   byId('live-w32time').textContent='Escape: BLOCKED ✕';byId('live-w32time').classList.add('denied');
   }
   if(value.includes('MICROVM STEP 5 COMPLETE')){
-   byId('live-extra-chip').textContent='Snapshot reset: CLEAN ✓';byId('live-extra-chip').classList.add('on');
+   byId('live-extra-chip').textContent='Snapshot: CLEAN ✓';byId('live-extra-chip').classList.add('on');
   }
  }
 }
 
+function formatDisplayChunk(text){
+ return text
+  .replace(/Write-Output \\("__WEB_IDENTITY_" \\+ "VAL__=[^"]*"\\)/g,'Write-Output "$env:USERNAME | SessionId=$((Get-Process -Id $PID).SessionId)"')
+  .replace(/; Write-Output \\("__WEB_APPROVAL_" \\+ "VAL__=[^"]*"\\)/g,'; "$($request.ticket) | $($approval.scope)"')
+  .replace(/; Write-Output \\("__WEB_SERVICES_" \\+ "VAL__=[^"]*"\\)/g,'; "Spooler=$($spooler.Status) | W32Time=$($time.Status)"')
+  .replace(/; Write-Output \\("__WEB_EVIDENCE_" \\+ "VAL__=written"\\)/g,'')
+  .replace(/__WEB_IDENTITY_VAL__=([^|\\n]+)\\|(\\d+)/g,'$1 | SessionId=$2')
+  .replace(/__WEB_APPROVAL_VAL__=([^|\\n]+)\\|([^\\n]+)/g,'$1 | $2')
+  .replace(/__WEB_SERVICES_VAL__=([^|\\n]+)\\|([^\\n]+)/g,'Spooler=$1 | W32Time=$2')
+  .replace(/__WEB_EVIDENCE_VAL__=written/g,'Saved .\\\\triage-evidence.txt (verified by host)');
+}
+
 function applyDemoEvent(data){
  var out=byId('live-demo-output');
- if(replayBannerShown&&data.kind==='step-start'){out.textContent='';replayBannerShown=false;}
+ if(replayBannerShown&&data.kind==='step-start'){out.textContent='';rawLog='';replayBannerShown=false;}
  if(data.kind==='phase'&&data.text){
-  out.textContent+=cleanLive(data.text);
+  var ptxt=cleanLive(data.text);rawLog+=ptxt;
+  out.textContent+=formatDisplayChunk(ptxt);
   if(data.user)byId('live-agent-user').textContent=data.user;
   ptyReady=true;syncComposerState();
  }else if(data.kind==='output'){
-  out.textContent+=cleanLive(data.text);out.scrollTop=out.scrollHeight;inspectLive(out.textContent);
+  var ctxt=cleanLive(data.text);rawLog+=ctxt;
+  out.textContent+=formatDisplayChunk(ctxt);out.scrollTop=out.scrollHeight;inspectLive(rawLog);
  }else if(data.kind==='identity'){
   byId('live-agent-user').textContent=data.user;byId('live-agent-session').textContent=data.sessionId;
  }else if(data.kind==='approval'){
-  byId('live-extra-chip').textContent='Approval: '+data.ticket+' ('+data.scope+')';byId('live-extra-chip').classList.add('on');
+  byId('live-extra-chip').textContent='INC-1042: read-only ✓';byId('live-extra-chip').classList.add('on');
  }else if(data.kind==='services'){
   byId('live-spooler').textContent='Spooler: '+data.spooler;byId('live-spooler').classList.add('on');
   byId('live-w32time').textContent='W32Time: '+data.w32time;byId('live-w32time').classList.add('on');
  }else if(data.kind==='evidence'){
-  byId('live-extra-chip').textContent='Evidence: host-verified ✓';byId('live-extra-chip').classList.add('on');
+  byId('live-extra-chip').textContent='Evidence: verified ✓';byId('live-extra-chip').classList.add('on');
  }else if(data.kind==='step-start'){
   stepRunning=true;
-  setStatus((replayMode?'REPLAYING STEP ':'RUNNING STEP ')+data.step,'running');
-  byId('live-demo-chapter').textContent=(replayMode?'Replaying captured Step ':'Executing Step ')+data.step+'…';
+  setStatus('Running Step '+data.step+'…','running');
   setControlsDisabled(true);syncComposerState();
   out.textContent+=(out.textContent?'\\n':'')+'──▶ [Step '+data.step+'] '+STEP_GUIDES[data.demo][data.step-1].label+'\\n';
   out.scrollTop=out.scrollHeight;
@@ -867,20 +751,17 @@ function applyDemoEvent(data){
   stepRunning=false;
   var demo=data.demo,step=Number(data.step),defs=STEP_GUIDES[demo];
   doneSet[demo][step]=true;
-  if(demo==='process'){if(step===1)markLiveStep(1);if(step===2||step===3)markLiveStep(2);if(step>=4)markLiveStep(3);if(step===5)markLiveStep(4);}
-  else if(demo==='microvm'){if(step===1)markLiveStep(1);if(step===2)markLiveStep(2);if(step===3||step===4)markLiveStep(3);if(step===5)markLiveStep(4);}
-  else{if(step===1){markLiveStep(1);ptyReady=true;}if(step===2)markLiveStep(2);if(step>=3&&step<=5)markLiveStep(3);if(step===6){markLiveStep(4);ptyReady=false;}}
+  if(demo==='pty'){if(step===1)ptyReady=true;if(step===6)ptyReady=false;}
   liveNext[demo]=step>=defs.length?1:step+1;
   setStepVal(liveNext[demo]);
-  setStatus(step===defs.length?'COMPLETE':'STEP '+step+' OK',step===defs.length?'ok':undefined);
-  byId('live-demo-chapter').textContent=step===defs.length?'All steps verified — ready to replay':'Step '+step+' verified · Next up: Step '+liveNext[demo];
+  setStatus(step===defs.length?'All Verified ✓':'Step '+step+' ✓','ok');
   setControlsDisabled(false);
   syncComposerState();syncStepSelection();
   resolveStepWaiters(true);
  }else if(data.kind==='step-error'){
   stepRunning=false;
-  setStatus('STEP ERROR','err');
-  byId('live-demo-chapter').textContent=data.error;
+  setStatus('Error','err');
+  out.textContent+='\\n[Error] '+data.error+'\\n';
   setControlsDisabled(false);
   syncComposerState();
   resolveStepWaiters(false);
@@ -889,23 +770,15 @@ function applyDemoEvent(data){
 
 function initReplayMode(){
  replayMode=true;
- var pill=byId('terminal-conn-pill');
- pill.textContent='recorded MXC capture · Windows 11';
- pill.dataset.mode='replay';
  if(window.RECORDED_DEMO&&window.RECORDED_DEMO.hostMeta){
   byId('live-host-user').textContent=window.RECORDED_DEMO.hostMeta.username;
   byId('live-host-session').textContent=window.RECORDED_DEMO.hostMeta.sessionId;
  }
- setStatus('REPLAY READY');
- byId('live-demo-chapter').textContent='Captured on Windows 11 · Click Send Step or Auto-Play All';
+ setStatus(idleModeLabel());
  var out=byId('live-demo-output');
  if(!out.textContent){
   replayBannerShown=true;
-  out.textContent=[
-   '# Recorded @microsoft/mxc-sdk@1.1.0 execution trace (Windows 11 x64)',
-   '# Choose any step above and click "Send Step" (or "Auto-Play All") to replay real sandbox output.',
-   '# Local live bridge optional: npm --prefix demo run demo:web → http://127.0.0.1:8787'
-  ].join('\\n');
+  out.textContent='# Click "Run Step 1" (or "Auto-Play") above to replay captured Windows 11 MXC output.';
  }
  syncComposerState();
 }
@@ -937,7 +810,7 @@ function hydratePriorPtyState(targetStep){
    var ev=item.event;
    if(ev.kind==='phase'){if(ev.user)byId('live-agent-user').textContent=ev.user;ptyReady=true;}
    else if(ev.kind==='identity'){byId('live-agent-user').textContent=ev.user;byId('live-agent-session').textContent=ev.sessionId;}
-   else if(ev.kind==='approval'){byId('live-extra-chip').textContent='Approval: '+ev.ticket+' ('+ev.scope+')';byId('live-extra-chip').classList.add('on');}
+   else if(ev.kind==='approval'){byId('live-extra-chip').textContent='INC-1042: read-only ✓';byId('live-extra-chip').classList.add('on');}
    else if(ev.kind==='services'){
     byId('live-spooler').textContent='Spooler: '+ev.spooler;byId('live-spooler').classList.add('on');
     byId('live-w32time').textContent='W32Time: '+ev.w32time;byId('live-w32time').classList.add('on');
@@ -948,16 +821,15 @@ function hydratePriorPtyState(targetStep){
 
 function playRecordedStep(kind,step){
  if(!window.RECORDED_DEMO||!window.RECORDED_DEMO.steps||!window.RECORDED_DEMO.steps[kind]){
-  setStatus('NO RECORDING','err');return Promise.resolve(false);
+  setStatus('No Recording','err');return Promise.resolve(false);
  }
  if(kind==='pty'&&step===1&&doneSet.pty[6]){
   doneSet.pty={};
   byId('live-demo').querySelectorAll('.ev-chip').forEach(function(x){x.classList.remove('on','denied');});
-  byId('live-demo').querySelectorAll('.live-demo-lifecycle span.done').forEach(function(x){x.classList.remove('done');});
  }
  if(kind==='pty'&&step>1)hydratePriorPtyState(step);
  var raw=window.RECORDED_DEMO.steps[kind][String(step)];
- if(!raw||!raw.length){setStatus('MISSING STEP','err');return Promise.resolve(false);}
+ if(!raw||!raw.length){setStatus('Missing Step','err');return Promise.resolve(false);}
  var seq=expandReplayItems(raw),elapsed=0;
  return new Promise(function(resolve){
   stepDoneWaiters.push(resolve);
@@ -982,13 +854,12 @@ function closeLiveDemo(){
 
 async function connectLive(){
  if(!isLocalDemoHost()){initReplayMode();return;}
- var pill=byId('terminal-conn-pill');
- pill.textContent='live bridge · 127.0.0.1:8787';
- delete pill.dataset.mode;
  try{
   var meta=await fetch('/api/meta').then(function(r){if(!r.ok)throw new Error('Local demo metadata unavailable');return r.json();});
   replayMode=false;
+  setStatus(idleModeLabel());
   byId('live-host-user').textContent=meta.username;byId('live-host-session').textContent=meta.sessionId;
+  syncComposerState();
   if(liveSource)liveSource.close();
   liveSource=new EventSource('/api/events');
   liveSource.onmessage=function(event){applyDemoEvent(JSON.parse(event.data));};
@@ -1005,7 +876,6 @@ async function openLiveDemo(preferredKind,preferredStep){
  if(preferredKind){setKindVal(preferredKind);updateLiveMode();}
  if(preferredStep){setStepVal(preferredStep);syncStepSelection();}
  if(replayMode){initReplayMode();return;}
- byId('live-demo-chapter').textContent='Choose Step 1 and click Send Step to execute live';
  await connectLive();
 }
 
@@ -1022,7 +892,8 @@ async function runSingleStep(kind,step){
   }
   return await waitDone;
  }catch(error){
-  setStatus('BLOCKED','err');byId('live-demo-chapter').textContent=error.message||String(error);
+  setStatus('Blocked','err');
+  byId('live-demo-output').textContent+='\\n[Blocked] '+(error.message||String(error))+'\\n';
   return false;
  }
 }
@@ -1058,44 +929,6 @@ async function toggleAutoPlay(){
  stopAutoPlay();
 }
 
-async function sendPtyCommand(rawCmd){
- var cmd=(rawCmd||'').trim();
- if(!cmd||!ptyReady||stepRunning)return;
- if(!replayMode){
-  await fetch('/api/pty-input',{method:'POST',headers:{'X-MXC-Demo':'1','Content-Type':'text/plain;charset=utf-8'},body:cmd}).catch(function(){});
-  return;
- }
- var norm=cmd.toLowerCase().replace(/\\s+/g,' ');
- var agentUser=byId('live-agent-user').textContent||'R4-C2';
- var promptStr='PS C:\\\\Users\\\\'+agentUser+'\\\\Shared> ';
- if(norm.indexOf('triage-evidence.txt')!==-1&&!doneSet.pty[5]){
-  applyDemoEvent({kind:'output',text:cmd+'\\n'});
-  var t1=setTimeout(function(){
-   applyDemoEvent({kind:'output',text:"Get-Content : Cannot find path 'C:\\\\Users\\\\"+agentUser+"\\\\Shared\\\\triage-evidence.txt' because it does not exist. (Run Step 5 first.)\\n"+promptStr});
-  },140);
-  replayTimers.push(t1);
-  return;
- }
- var presets=(window.RECORDED_DEMO&&window.RECORDED_DEMO.ptyCommands)||[];
- var hit=presets.find(function(p){
-  return p.label.toLowerCase()===norm||p.command.toLowerCase()===norm||(p.aliases||[]).indexOf(norm)!==-1;
- });
- if(hit){
-  var seq=expandReplayItems(hit.events),wait=0;
-  seq.forEach(function(item){
-   wait+=item.delayMs;
-   var tid=setTimeout(function(){applyDemoEvent(item.event);},wait);
-   replayTimers.push(tid);
-  });
- }else{
-  applyDemoEvent({kind:'output',text:cmd+'\\n'});
-  var t2=setTimeout(function(){
-   applyDemoEvent({kind:'output',text:'[Recorded Replay] Offline presets: whoami, pwd, ls, Get-Service Spooler,W32Time, cat triage-evidence.txt\\n(Start "npm --prefix demo run demo:web" on Windows for arbitrary live commands.)\\n'+promptStr});
-  },140);
-  replayTimers.push(t2);
- }
-}
-
 async function switchScenario(newKind){
  if(getKindVal()===newKind)return;
  stopAutoPlay();clearReplayTimers();resolveStepWaiters(false);
@@ -1116,27 +949,21 @@ setupCustomSelect('cs-kind',function(val){
 setupCustomSelect('cs-step',function(val){
  if(!byId('cs-step-btn').disabled){stopAutoPlay();setStepVal(val);syncStepSelection();}
 });
-document.querySelectorAll('.mode-tab').forEach(function(tab){
- tab.addEventListener('click',function(){if(!byId('cs-kind-btn').disabled)switchScenario(tab.dataset.mode);});
-});
 byId('live-demo-run').addEventListener('click',runSelectedLiveStep);
 byId('live-demo-autoplay').addEventListener('click',toggleAutoPlay);
 byId('live-demo-reset').addEventListener('click',function(){
  var chosen=getKindVal();
  if(!replayMode)fetch('/api/cancel',{method:'POST',headers:{'X-MXC-Demo':'1'}}).catch(function(){});
  resetLive();setKindVal(chosen);updateLiveMode();
- if(!replayMode){fetch('/api/meta').then(function(r){return r.json();}).then(function(m){byId('live-host-user').textContent=m.username;byId('live-host-session').textContent=m.sessionId;}).catch(function(){});byId('live-demo-chapter').textContent='Session reset · Ready for Step 1';}
+ if(!replayMode){fetch('/api/meta').then(function(r){return r.json();}).then(function(m){byId('live-host-user').textContent=m.username;byId('live-host-session').textContent=m.sessionId;}).catch(function(){});}
  else{initReplayMode();}
-});
-document.querySelectorAll('.quick-chip').forEach(function(chip){
- chip.addEventListener('click',function(){sendPtyCommand(chip.dataset.cmd);});
 });
 byId('live-pty-form').addEventListener('submit',async function(ev){
  ev.preventDefault();
  var inp=byId('live-pty-input'),cmd=inp.value.trim();
- if(!cmd||!ptyReady||stepRunning)return;
+ if(!cmd||!ptyReady||stepRunning||replayMode)return;
  inp.value='';
- await sendPtyCommand(cmd);
+ await fetch('/api/pty-input',{method:'POST',headers:{'X-MXC-Demo':'1','Content-Type':'text/plain;charset=utf-8'},body:cmd}).catch(function(){});
 });
 document.querySelectorAll('.live-demo-trigger').forEach(function(button){
  button.addEventListener('click',function(event){
