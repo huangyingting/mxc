@@ -13,7 +13,8 @@
     "demo:process": "npm run build && node dist/process-container.js",
     "demo:pty": "npm run build && node dist/pty.js",
     "demo:pty:interactive": "npm run build && node dist/pty.js --interactive",
-    "demo:all": "npm run demo:process && npm run demo:pty",
+    "demo:microvm": "npm run build && node dist/microvm.js",
+    "demo:all": "npm run demo:process && npm run demo:pty && npm run demo:microvm",
     "demo:web": "npm run build && node src/web-demo-server.mjs",
     "demo:record": "npm run build && node src/record-web-demo.mjs"
   },

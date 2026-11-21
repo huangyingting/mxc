@@ -10,7 +10,7 @@
     "pty": {
       "1": [
         {
-          "delayMs": 13,
+          "delayMs": 9,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -22,13 +22,13 @@
           "event": {
             "kind": "phase",
             "name": "provisioned",
-            "user": "R4-C2",
-            "workspace": "C:\\Users\\R4-C2\\Shared",
+            "user": "G6-A5",
+            "workspace": "C:\\Users\\G6-A5\\Shared",
             "text": "PTY incident staged: INC-1042, read-only diagnostics, operator approval attached\nPTY connected to isolated session: powershell.exe -NoLogo -NoProfile; terminal=120x30\n"
           }
         },
         {
-          "delayMs": 3,
+          "delayMs": 0,
           "event": {
             "kind": "output",
             "text": "\n\n"
@@ -38,7 +38,7 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "PS C:\\Users\\R4-C2\\Shared> "
+            "text": "PS C:\\Users\\G6-A5\\Shared> "
           }
         },
         {
@@ -53,7 +53,7 @@
       ],
       "2": [
         {
-          "delayMs": 2,
+          "delayMs": 1,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -61,32 +61,32 @@
           }
         },
         {
-          "delayMs": 0,
+          "delayMs": 1,
           "event": {
             "kind": "output",
             "text": "Write-Output (\"__WEB_IDENTITY_\" + \"VAL__=$env:USERNAME|$((Get-Process -Id $PID).SessionId)\")\n"
           }
         },
         {
-          "delayMs": 109,
+          "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "__WEB_IDENTITY_VAL__=R4-C2|5"
+            "text": "__WEB_IDENTITY_VAL__=G6-A5|7"
           }
         },
         {
-          "delayMs": 1,
+          "delayMs": 0,
           "event": {
             "kind": "identity",
-            "user": "R4-C2",
-            "sessionId": "5"
+            "user": "G6-A5",
+            "sessionId": "7"
           }
         },
         {
-          "delayMs": 18,
+          "delayMs": 20,
           "event": {
             "kind": "output",
-            "text": "\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "\nPS C:\\Users\\G6-A5\\Shared> "
           }
         },
         {
@@ -101,7 +101,7 @@
       ],
       "3": [
         {
-          "delayMs": 2,
+          "delayMs": 1,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -109,14 +109,14 @@
           }
         },
         {
-          "delayMs": 0,
+          "delayMs": 1,
           "event": {
             "kind": "output",
             "text": "$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; $approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; Write-Output (\"__WEB_APPROVAL_\" + \"VAL__=$($request.ticket)|$($approval.scope)\")\n"
           }
         },
         {
-          "delayMs": 44,
+          "delayMs": 101,
           "event": {
             "kind": "output",
             "text": "__WEB_APPROVAL_VAL__=INC-1042|read-only-diagnostics"
@@ -131,10 +131,10 @@
           }
         },
         {
-          "delayMs": 7,
+          "delayMs": 23,
           "event": {
             "kind": "output",
-            "text": "\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "\nPS C:\\Users\\G6-A5\\Shared> "
           }
         },
         {
@@ -149,7 +149,7 @@
       ],
       "4": [
         {
-          "delayMs": 1,
+          "delayMs": 2,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -157,10 +157,17 @@
           }
         },
         {
-          "delayMs": 0,
+          "delayMs": 1,
           "event": {
             "kind": "output",
-            "text": "$spooler=Get-Service Spooler;$time=Get-Service W32Time; Write-Output (\"__WEB_SERVICES_\" + \"VAL__=$($spooler.Status)|$($time.Status)\")\n__WEB_SERVICES_VAL__=Running|Stopped\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "$spooler=Get-Service Spooler;$time=Get-Service W32Time; Write-Output (\"__WEB_SERVICES_\" + \"VAL__=$($spooler.Status)|$($time.Status)\")\n"
+          }
+        },
+        {
+          "delayMs": 138,
+          "event": {
+            "kind": "output",
+            "text": "__WEB_SERVICES_VAL__=Running|Stopped"
           }
         },
         {
@@ -172,7 +179,14 @@
           }
         },
         {
-          "delayMs": 0,
+          "delayMs": 17,
+          "event": {
+            "kind": "output",
+            "text": "\nPS C:\\Users\\G6-A5\\Shared> "
+          }
+        },
+        {
+          "delayMs": 25,
           "event": {
             "kind": "step-done",
             "demo": "pty",
@@ -191,25 +205,25 @@
           }
         },
         {
-          "delayMs": 0,
+          "delayMs": 2,
           "event": {
             "kind": "output",
             "text": "$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; $approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; $spooler=Get-Service Spooler;$time=Get-Service W32Time; $evidence=@(\"ticket=$($request.ticket)\",\"scope=$($approval.scope)\",\"operator=$env:USERNAME\",\"session_id=$([Diagnostics.Process]::GetCurrentProcess().SessionId)\",\"service=Spooler,status=$($spooler.Status)\",\"service=W32Time,status=$($time.Status)\"); $evidence | Set-Content .\\triage-evidence.txt -Encoding utf8; Write-Output (\"__WEB_EVIDENCE_\" + \"VAL__=written\")\n"
           }
         },
         {
-          "delayMs": 65,
+          "delayMs": 129,
           "event": {
             "kind": "output",
-            "text": "__WEB_EVIDENCE_VAL__=written\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "__WEB_EVIDENCE_VAL__=written\nPS C:\\Users\\G6-A5\\Shared> "
           }
         },
         {
-          "delayMs": 2,
+          "delayMs": 22,
           "event": {
             "kind": "evidence",
             "verified": true,
-            "content": "ticket=INC-1042\r\nscope=read-only-diagnostics\r\noperator=R4-C2\r\nsession_id=5\r\nservice=Spooler,status=Running\r\nservice=W32Time,status=Stopped"
+            "content": "ticket=INC-1042\r\nscope=read-only-diagnostics\r\noperator=G6-A5\r\nsession_id=7\r\nservice=Spooler,status=Running\r\nservice=W32Time,status=Stopped"
           }
         },
         {
@@ -224,7 +238,7 @@
       ],
       "6": [
         {
-          "delayMs": 1,
+          "delayMs": 2,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -232,7 +246,7 @@
           }
         },
         {
-          "delayMs": 1,
+          "delayMs": 0,
           "event": {
             "kind": "output",
             "text": "exit\n"
@@ -259,7 +273,7 @@
     "process": {
       "1": [
         {
-          "delayMs": 16,
+          "delayMs": 22,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -274,7 +288,7 @@
           }
         },
         {
-          "delayMs": 12,
+          "delayMs": 18,
           "event": {
             "kind": "step-done",
             "demo": "process",
@@ -300,7 +314,7 @@
           }
         },
         {
-          "delayMs": 133,
+          "delayMs": 140,
           "event": {
             "kind": "output",
             "text": "ALLOW: input read and output write succeeded\nSTEP 2 COMPLETE: report written to C:\\mxc\\demo\\output\\report.txt\n"
@@ -318,7 +332,7 @@
       ],
       "3": [
         {
-          "delayMs": 9,
+          "delayMs": 16,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -333,14 +347,14 @@
           }
         },
         {
-          "delayMs": 118,
+          "delayMs": 140,
           "event": {
             "kind": "output",
             "text": "DENY: protected file remained inaccessible \nSTEP 3 COMPLETE: protected host file remained inaccessible\n"
           }
         },
         {
-          "delayMs": 13,
+          "delayMs": 15,
           "event": {
             "kind": "step-done",
             "demo": "process",
@@ -351,7 +365,7 @@
       ],
       "4": [
         {
-          "delayMs": 8,
+          "delayMs": 19,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -373,7 +387,7 @@
           }
         },
         {
-          "delayMs": 15,
+          "delayMs": 14,
           "event": {
             "kind": "step-done",
             "demo": "process",
@@ -384,7 +398,7 @@
       ],
       "5": [
         {
-          "delayMs": 10,
+          "delayMs": 18,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -406,10 +420,149 @@
           }
         },
         {
-          "delayMs": 15,
+          "delayMs": 12,
           "event": {
             "kind": "step-done",
             "demo": "process",
+            "step": 5,
+            "code": 0
+          }
+        }
+      ]
+    },
+    "microvm": {
+      "1": [
+        {
+          "delayMs": 22,
+          "event": {
+            "kind": "step-start",
+            "demo": "microvm",
+            "step": 1
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\n"
+          }
+        },
+        {
+          "delayMs": 49,
+          "event": {
+            "kind": "output",
+            "text": "Hyperlight snapshots verified: bash (initrd+snapshot), python (initrd+snapshot)\nSnapshot cache ready (mxc-hyperlight)\nDry-run 1.1.0-alpha contract check: validation passed\nMICROVM STEP 1 COMPLETE: Hyperlight backend & warmed snapshots ready\n"
+          }
+        },
+        {
+          "delayMs": 13,
+          "event": {
+            "kind": "step-done",
+            "demo": "microvm",
+            "step": 1,
+            "code": 0
+          }
+        }
+      ],
+      "2": [
+        {
+          "delayMs": 18,
+          "event": {
+            "kind": "step-start",
+            "demo": "microvm",
+            "step": 2
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "HOST_OS=Windows_NT 10.0.26300 (x64)\nGUEST_KERNEL=Unikraft 5.15.148-Ijiraq\nGUEST_ARCH=x86_64\nGUEST_ID=root:0\nGUEST_ROOTFS=bin dev etc lib proc sbin sys tmp usr\nMICROVM_BOOT_MS=98\nMICROVM STEP 2 COMPLETE: hardware VM booted guest kernel in 98ms\n"
+          }
+        },
+        {
+          "delayMs": 16,
+          "event": {
+            "kind": "step-done",
+            "demo": "microvm",
+            "step": 2,
+            "code": 0
+          }
+        }
+      ],
+      "3": [
+        {
+          "delayMs": 21,
+          "event": {
+            "kind": "step-start",
+            "demo": "microvm",
+            "step": 3
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "GUEST_PYTHON=3.12.15\nEVAL_RESULT={\"approvedTotal\": 1865.5, \"flagged\": [\"INV-9042\"]}\nMICROVM STEP 3 COMPLETE: untrusted Python evaluated safely in 87ms\n"
+          }
+        },
+        {
+          "delayMs": 13,
+          "event": {
+            "kind": "step-done",
+            "demo": "microvm",
+            "step": 3,
+            "code": 0
+          }
+        }
+      ],
+      "4": [
+        {
+          "delayMs": 12,
+          "event": {
+            "kind": "step-start",
+            "demo": "microvm",
+            "step": 4
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "HOST_FS=UNREACHABLE (0 host mounts)\nHOST_ENV=ISOLATED (0 host vars)\nGUEST_NET=BLOCKED (PermissionError: [Errno 13] Permission denied)\nMICROVM STEP 4 COMPLETE: host filesystem, env, and sockets unreachable from VM\n"
+          }
+        },
+        {
+          "delayMs": 17,
+          "event": {
+            "kind": "step-done",
+            "demo": "microvm",
+            "step": 4,
+            "code": 0
+          }
+        }
+      ],
+      "5": [
+        {
+          "delayMs": 13,
+          "event": {
+            "kind": "step-start",
+            "demo": "microvm",
+            "step": 5
+          }
+        },
+        {
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "RUN_A_TMP_MARKER=True\nRUN_B_TMP_MARKER=False\nMICROVM STEP 5 COMPLETE: clean snapshot restored (83ms + 71ms, zero state residue)\n"
+          }
+        },
+        {
+          "delayMs": 15,
+          "event": {
+            "kind": "step-done",
+            "demo": "microvm",
             "step": 5,
             "code": 0
           }
@@ -426,10 +579,17 @@
       ],
       "events": [
         {
-          "delayMs": 5,
+          "delayMs": 7,
           "event": {
             "kind": "output",
-            "text": "whoami\nWIN11-HOST\\r4-c2\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "whoami\n"
+          }
+        },
+        {
+          "delayMs": 73,
+          "event": {
+            "kind": "output",
+            "text": "WIN11-HOST\\g6-a5\nPS C:\\Users\\G6-A5\\Shared> "
           }
         }
       ]
@@ -447,7 +607,7 @@
           "delayMs": 2,
           "event": {
             "kind": "output",
-            "text": "pwd\n\nPath\n----\nC:\\Users\\R4-C2\\Shared\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "pwd\n\nPath\n----\nC:\\Users\\G6-A5\\Shared\nPS C:\\Users\\G6-A5\\Shared> "
           }
         }
       ]
@@ -467,7 +627,14 @@
           "delayMs": 3,
           "event": {
             "kind": "output",
-            "text": "Get-ChildItem -Name\nincident-approval.json\nincident-request.json\ntriage-evidence.txt\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "Get-ChildItem -Name\n"
+          }
+        },
+        {
+          "delayMs": 38,
+          "event": {
+            "kind": "output",
+            "text": "incident-approval.json\nincident-request.json\ntriage-evidence.txt\nPS C:\\Users\\G6-A5\\Shared> "
           }
         }
       ]
@@ -482,10 +649,17 @@
       ],
       "events": [
         {
-          "delayMs": 3,
+          "delayMs": 2,
           "event": {
             "kind": "output",
-            "text": "Get-Service Spooler, W32Time | Format-Table -AutoSize\n\nStatus  Name    DisplayName\n------  ----    -----------  \nRunning Spooler Print Spooler\nStopped W32Time Windows Time\n\n\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "Get-Service Spooler, W32Time | Format-Table -AutoSize\n"
+          }
+        },
+        {
+          "delayMs": 64,
+          "event": {
+            "kind": "output",
+            "text": "\nStatus  Name    DisplayName  \n------  ----    -----------\nRunning Spooler Print Spooler\nStopped W32Time Windows Time\n\n\nPS C:\\Users\\G6-A5\\Shared> "
           }
         }
       ]
@@ -507,7 +681,14 @@
           "delayMs": 2,
           "event": {
             "kind": "output",
-            "text": "Get-Content .\\triage-evidence.txt\nticket=INC-1042\nscope=read-only-diagnostics\noperator=R4-C2\nsession_id=5\nservice=Spooler,status=Running\nservice=W32Time,status=Stopped\nPS C:\\Users\\R4-C2\\Shared> "
+            "text": "Get-Content .\\triage-evidence.txt\n"
+          }
+        },
+        {
+          "delayMs": 46,
+          "event": {
+            "kind": "output",
+            "text": "ticket=INC-1042\nscope=read-only-diagnostics\noperator=G6-A5\nsession_id=7\nservice=Spooler,status=Running\nservice=W32Time,status=Stopped\nPS C:\\Users\\G6-A5\\Shared> "
           }
         }
       ]

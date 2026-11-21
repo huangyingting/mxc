@@ -17,6 +17,7 @@ const repoRoot = path.resolve(demoRoot, "..");
 const htmlPath = path.join(repoRoot, "dist", "html", "index.html");
 const port = Number.parseInt(process.env.MXC_DEMO_PORT ?? "8787", 10);
 const processScript = path.join(demoRoot, "dist", "process-container.js");
+const microvmScript = path.join(demoRoot, "dist", "microvm.js");
 const clients = new Set();
 const processSteps = [
   "discover",
@@ -24,6 +25,13 @@ const processSteps = [
   "file-deny",
   "network-allow",
   "network-deny",
+];
+const microvmSteps = [
+  "discover-warm",
+  "guest-boundary",
+  "safe-compute",
+  "escape-blocked",
+  "snapshot-reset",
 ];
 let active = null;
 let busy = false;
@@ -274,12 +282,35 @@ async function runProcessStep(step) {
   finishStep("process", step);
 }
 
+async function runMicroVmStep(step) {
+  if (step < 1 || step > microvmSteps.length) {
+    throw new Error(`Unknown MicroVM step: ${step}`);
+  }
+  await new Promise((resolve, reject) => {
+    const child = spawn(
+      process.execPath,
+      [microvmScript, `--step=${microvmSteps[step - 1]}`],
+      { cwd: demoRoot, env: { ...process.env }, windowsHide: true },
+    );
+    active = child;
+    child.stdout.on("data", (chunk) => send({ kind: "output", text: chunk.toString() }));
+    child.stderr.on("data", (chunk) => send({ kind: "output", text: chunk.toString() }));
+    child.on("error", reject);
+    child.on("close", (code) => {
+      active = null;
+      if (code === 0) resolve();
+      else reject(new Error(`MicroVM step exited with code ${code}`));
+    });
+  });
+  finishStep("microvm", step);
+}
+
 async function runStep(demo, step) {
   if (busy) throw new Error("A demo step is already running.");
-  if (demo === "process" && ptyState !== null) {
+  if (demo !== "pty" && ptyState !== null) {
     throw new Error("Finish or reset the active PTY session before switching.");
   }
-  if (!["process", "pty"].includes(demo)) {
+  if (!["process", "pty", "microvm"].includes(demo)) {
     throw new Error(`Unknown demo: ${demo}`);
   }
   beginStep(demo, step);
@@ -288,6 +319,9 @@ async function runStep(demo, step) {
       await runProcessStep(step);
       currentDemo = null;
       processStepIndex = step === processSteps.length ? 0 : step;
+    } else if (demo === "microvm") {
+      await runMicroVmStep(step);
+      currentDemo = null;
     } else {
       if (step === 1 && ptyState !== null) {
         throw new Error("PTY session is already active. Run Steps 2–6 or click Reset.");

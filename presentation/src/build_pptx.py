@@ -104,7 +104,7 @@ note(s,'AI Agent 已从内容生成工具演进为具备执行能力的系统，
 # ---------- 1 AGENDA
 s=1
 header(s,'AGENDA','Our journey today')
-items=[('01','Why sandboxing','Risks of agents that act'),('02','Meet MXC','What it is and how it works'),('03','Features & platforms','Backends, files, network, modes'),('04','Use cases','Coding, desktop and data agents'),('05','Integration','SDKs and reference architecture'),('06','Live demos','Files, network, operator PTY'),('07','Takeaways & Q&A','What to do next')]
+items=[('01','Why sandboxing','Risks of agents that act'),('02','Meet MXC','What it is and how it works'),('03','Features & platforms','Backends, files, network, modes'),('04','Use cases','Coding, desktop and data agents'),('05','Integration','SDKs and reference architecture'),('06','Live demos','Files, network, PTY & MicroVM'),('07','Takeaways & Q&A','What to do next')]
 col=CW/7; ry=3150000
 rect(s,M,ry-19050,CW,38100,fill=EDGE)
 for i,(n,t,d) in enumerate(items):
@@ -547,10 +547,41 @@ rect(s,railx+100000-12700,ys[0]+200000,25400,ys[-1]-ys[0],fill=EDGE)
 for i,yy in enumerate(ys):
     rect(s,railx,yy+100000,200000,200000,fill=CY if i!=3 else AMB,preset='ellipse')
 footer(s,'Web demo: npm --prefix demo run demo:web  ·  open the step-by-step MXC demo on slide 27',27,cx=cxl)
-note(s,'这个 Demo 对应常见的 L1/L2 运维事故处理。INC-1042 表示打印和时间服务异常：Host 先把工单与“只读诊断”审批写入共享 workspace，再在 IsolationSession 中以独立 Windows 操作员用户打开 PowerShell PTY。Agent 校验审批，检查真实的 Spooler 与 W32Time 状态，并生成包含工单号、审批人、操作员、Session ID 和服务状态的证据文件；Host 验证证据后停止并删除 Session。\n本地网页模式先运行 npm --prefix demo run demo:web，再用下拉框选择 ProcessContainer 或 IsolationSession 步骤逐一发送。按钮通过仅监听 127.0.0.1 的 Node bridge 真实执行 MXC，并把输出、Host/Agent 对比与生命周期流回页面；静态 GitHub Pages 不会尝试启动本机进程。')
+note(s,'这个 Demo 对应常见的 L1/L2 运维事故处理。INC-1042 表示打印和时间服务异常：Host 先把工单与“只读诊断”审批写入共享 workspace，再在 IsolationSession 中以独立 Windows 操作员用户打开 PowerShell PTY。Agent 校验审批，检查真实的 Spooler 与 W32Time 状态，并生成包含工单号、审批人、操作员、Session ID 和服务状态的证据文件；Host 验证证据后停止并删除 Session。\n本地网页模式先运行 npm --prefix demo run demo:web，再用下拉框选择 ProcessContainer、IsolationSession 或 MicroVM 步骤逐一发送。静态 GitHub Pages 则内联了在 Windows 11 真机录制的执行轨迹，可离线逐步交互回放。')
 
-# ---------- 27 CLOSER
+# ---------- 27 DEMO 4 (MICROVM)
 s=27
+header(s,'06 · LIVE DEMO 4','Untrusted code in a MicroVM')
+cx_=5550000; cy0=1620000; chh=4300000
+rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
+rect(s,M+cx_-1700000,cy0+140000,1450000,340000,fill=AMB,preset='roundRect',text='Experimental',size=11,bold=True,color=BG)
+tb(s,M+250000,cy0+140000,cx_-2000000,'hyperlight-policy.json',size=12,color=FOOT,font=MF,cy=340000)
+vm_code='{\n  "version": "1.1.0-alpha",\n  "containment": "hyperlight",\n  "hyperlight": {\n    "runtime": "python"\n  },\n  "process": {\n    "commandLine": "python eval_untrusted.py",\n    "timeout": 30000\n  }\n}'
+tb(s,M+250000,cy0+580000,cx_-500000,None,paras=[{'text':l} for l in vm_code.split('\n')],size=13.5,color=CODE,font=MF)
+rect(s,M+250000,cy0+3320000,cx_-500000,740000,fill=CARD2,line=CY,lw=12700)
+tb(s,M+420000,cy0+3320000,cx_-840000,None,paras=[
+    {'text':'PS> npm --prefix demo run demo:microvm','sizePt':12,'bold':True,'color':INK},
+    {'text':'Warm snapshot restore: ~90 ms · Unikraft 5.15','sizePt':12,'color':CY},
+],font=MF,cy=740000)
+rx=M+cx_+320000; rw=W-M-rx; ry0=1620000; rcard_h=1320000; rgap=170000
+vm_cards=[
+    ('✓  Hardware VM kernel','Unikraft 5.15 on Hypervisor','Runs inside a hardware-virtualized partition, never sharing the Windows NT kernel.',CY),
+    ('✕  Zero host surface','No host FS, env, or sockets','Host C:\\, environment variables, and TCP sockets (Errno 13) remain unreachable.',AMB),
+    ('↺  Instant snapshot wipe','<100 ms restore & reset','Every call restores a warmed memory snapshot; /tmp writes vanish on exit.',CY),
+]
+for idx,(t,sub,desc,col_) in enumerate(vm_cards):
+    yy=ry0+idx*(rcard_h+rgap)
+    rect(s,rx,yy,rw,rcard_h,fill=CARD,line=col_,lw=19050)
+    tb(s,rx+240000,yy,rw-480000,None,paras=[
+        {'text':t,'sizePt':17,'bold':True,'color':INK},
+        {'text':sub,'sizePt':12.5,'bold':True,'color':col_},
+        {'text':desc,'sizePt':13.5,'color':MUTED},
+    ],cy=rcard_h)
+footer(s,'Experimental Hyperlight MicroVM backend via MXC 1.1.0-alpha contract',28)
+note(s,'第四个 Demo 展示最强的硬件虚拟化隔离边界——Hyperlight MicroVM。当 Agent 需要直接执行模型临时生成的 Python 代码、未知第三方插件或高风险解析逻辑时，仅靠进程级 ACL 可能仍共享宿主操作系统内核；而传统完整虚拟机启动又往往需要数秒。\nMXC 内置的实验性 hyperlight Backend 基于 Windows Hypervisor Platform 启动轻量级 Unikraft unikernel 微型虚拟机，并通过预热内存快照在约 90 毫秒内完成恢复与代码执行。演示依次验证五件事：探测并校验预热快照、确认 Guest 运行在独立 Unikraft Linux 内核而非 Windows 内核、在百毫秒内完成不可信 Python 对账计算、证明宿主机 C 盘与环境变量及网络套接字全部不可达，以及每次调用结束后内存状态彻底重置、不留任何跨次残留。该能力属于实验特性，必须通过 1.1.0-alpha 契约与 --experimental 显式启用。')
+
+# ---------- 28 CLOSER
+s=28
 img(s,'hd-closer.jpg',0,0,W,H,'Hand-drawn sketch illustration: three robot agents in bubbles and an engineer giving a thumbs up at sunrise over a city')
 x=M+150000; cx=5900000
 tb(s,x,650000,cx,'KEY TAKEAWAYS',size=13,color=CY,font=HF,bold=True,ls=2)

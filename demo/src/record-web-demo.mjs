@@ -300,6 +300,11 @@ async function main() {
       processSteps[String(step)] = await captureStep("process", step, 120);
     }
 
+    const microvmSteps = {};
+    for (let step = 1; step <= 5; step += 1) {
+      microvmSteps[String(step)] = await captureStep("microvm", step, 120);
+    }
+
     const payload = sanitize({
       schemaVersion: 1,
       sdkPackage: "@microsoft/mxc-sdk@1.1.0",
@@ -311,6 +316,7 @@ async function main() {
       steps: {
         pty: ptySteps,
         process: processSteps,
+        microvm: microvmSteps,
       },
       ptyCommands,
     });

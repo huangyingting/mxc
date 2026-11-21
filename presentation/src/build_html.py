@@ -73,6 +73,7 @@ DEMO_LAUNCHERS = {
     24: ('process', '1', 'Launch Sandbox Studio · Files & Network'),
     25: ('process', '4', 'Launch Sandbox Studio · Network Rules'),
     26: ('pty', '1', 'Launch Interactive Session PTY Studio'),
+    27: ('microvm', '1', 'Launch MicroVM Studio · Hyperlight'),
 }
 
 def reveal_attrs(slide_index, operation_index):
@@ -155,6 +156,10 @@ LIVE_DEMO = """
             <span class="tab-kicker">Demo 1 + 2 · One-Shot Policy</span>
             <strong>ProcessContainer</strong>
           </button>
+          <button type="button" class="mode-tab" data-mode="microvm" role="tab" aria-selected="false">
+            <span class="tab-kicker">Demo 4 · Hardware VM</span>
+            <strong>Hyperlight MicroVM</strong>
+          </button>
         </div>
         <div class="studio-status-group">
           <span class="status-badge" id="live-demo-status">READY</span>
@@ -169,7 +174,7 @@ LIVE_DEMO = """
         <div class="custom-select" id="cs-kind" data-value="pty">
           <button type="button" class="cs-trigger" id="cs-kind-btn" aria-haspopup="listbox" aria-expanded="false" aria-label="Demo">
             <span class="cs-kicker">DEMO</span>
-            <span class="cs-label" id="cs-kind-label">IsolationSession · Stateful Operator PTY (6 steps)</span>
+            <span class="cs-label" id="cs-kind-label">IsolationSession · Operator PTY (6 steps)</span>
             <svg class="cs-chevron" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <ul class="cs-menu" id="cs-kind-menu" role="listbox" tabindex="-1" hidden>
@@ -180,6 +185,10 @@ LIVE_DEMO = """
             <li role="option" data-val="process" aria-selected="false" class="cs-option">
               <span class="cs-opt-main">ProcessContainer · File &amp; Network Guardrails</span>
               <span class="cs-opt-sub">5 one-shot steps · files + loopback rules</span>
+            </li>
+            <li role="option" data-val="microvm" aria-selected="false" class="cs-option">
+              <span class="cs-opt-main">Hyperlight MicroVM · Hardware Unikernel Sandbox</span>
+              <span class="cs-opt-sub">5 VM steps · Unikraft kernel + ~90 ms snapshot</span>
             </li>
           </ul>
         </div>
@@ -261,7 +270,7 @@ LIVE_DEMO = """
             <div class="id-box agent">
               <div class="id-role" id="agent-role-label">MXC ISOLATIONSESSION</div>
               <div class="id-name" id="live-agent-user">Not provisioned</div>
-              <div class="id-meta">Session ID <strong id="live-agent-session">—</strong></div>
+              <div class="id-meta"><span id="agent-meta-label">Session ID </span><strong id="live-agent-session">—</strong></div>
             </div>
           </div>
         </section>
@@ -352,8 +361,8 @@ img.a{object-fit:cover}
 .studio-bar{display:flex;align-items:center;justify-content:space-between;gap:9px;background:var(--surface);border:1px solid var(--edge);border-radius:12px;padding:7px 11px;box-shadow:0 4px 16px rgba(35,30,22,.04);flex-wrap:wrap;position:relative;z-index:30}
 .bar-select-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
-.custom-select{position:relative;min-width:215px}
-.cs-step-select{min-width:250px}
+.custom-select{position:relative;min-width:200px;max-width:300px}
+.cs-step-select{min-width:220px;max-width:290px}
 .cs-trigger{width:100%%;display:flex;align-items:center;gap:8px;border:1px solid var(--edge);border-radius:9px;background:#fff;color:var(--ink);padding:5px 10px 5px 6px;font:600 12px/1.2 var(--font-sans);cursor:pointer;box-shadow:0 2px 5px rgba(32,28,22,.04);transition:border-color .16s ease,box-shadow .16s ease}
 .cs-step-select .cs-trigger{border-color:rgba(63,96,126,.48)}
 .cs-trigger:hover:not(:disabled){border-color:var(--accent);box-shadow:0 4px 12px rgba(63,96,126,.12)}
@@ -541,13 +550,36 @@ var STEP_GUIDES={
    what:'Runs against the exact same local HTTP listener with hostLoopback: "deny" and egress: "deny"; curl fails immediately.',
    why:'Proves data exfiltration is cut off at the OS network stack whenever a destination is not explicitly permitted.',
    code:'network: { egress: { default: "deny" }, ingress: { hostLoopback: "deny" } }'}
+ ],
+ microvm:[
+  {label:'1 · Discover Hyperlight & Warm Snapshot',boundary:'Experimental Opt-In',title:'Step 1 · Verify Hyperlight Backend & Warmed VM Snapshots',
+   what:'Calls getPlatformSupport() to confirm native hyperlight support, checks pre-warmed Unikraft initrd memory snapshots (bash + python), and dry-runs the 1.1.0-alpha contract.',
+   why:'MicroVMs require explicit experimental opt-in and pre-warmed snapshots so subsequent untrusted code launches skip cold OS boot.',
+   code:'getPlatformSupport() + wxc-exec --experimental --dry-run (containment: "hyperlight")'},
+  {label:'2 · Boot Unikraft Kernel (<100 ms)',boundary:'Hardware Hypervisor Boundary',title:'Step 2 · Prove Separate Unikraft Kernel Inside VM Partition',
+   what:'Restores a hardware-virtualized Unikraft 5.15 x86_64 guest on Windows Hypervisor Platform and inspects uname + rootfs in ~90 ms.',
+   why:'Unlike process containers that share the host OS kernel, a kernel bug or syscall exploit inside Hyperlight hits a dedicated unikernel VM boundary.',
+   code:'containment: "hyperlight" → Unikraft 5.15.148-Ijiraq (Windows Hypervisor Platform)'},
+  {label:'3 · Evaluate Untrusted AI Python Code',boundary:'Sub-100ms Code Sandbox',title:'Step 3 · Run AI-Generated Python 3.12 Analytics Safely',
+   what:'Executes untrusted model-authored Python reconciliation logic inside the MicroVM and returns structured JSON anomalies to the host.',
+   why:'Gives AI coding and data agents near-process responsiveness (~90 ms) with hardware-level virtual machine isolation.',
+   code:'hyperlight: { runtime: "python" } → Python 3.12.15 JSON stdout'},
+  {label:'4 · Block Host FS, Env & Socket Escape',boundary:'Zero-Surface Air Gap',title:'Step 4 · Adversarial Probe: Host C:\\, Env & TCP Blocked',
+   what:'Runs an adversarial script attempting to read C:\\Windows, inspect host environment variables, and open a loopback TCP socket.',
+   why:'Zero host mounts, zero inherited host env vars, and zero guest NIC (Errno 13 Permission denied) eliminate exfiltration paths by construction.',
+   code:'HOST_FS=UNREACHABLE · HOST_ENV=ISOLATED · GUEST_NET=BLOCKED (Errno 13)'},
+  {label:'5 · Verify Stateless Snapshot Reset',boundary:'Deterministic Memory Wipe',title:'Step 5 · Write /tmp Marker in Run A → Gone in Run B',
+   what:'Writes /tmp/agent-residue.txt in MicroVM Run A, then immediately launches Run B from the warmed snapshot and checks if the file exists.',
+   why:'Every invocation starts from an identical, clean memory image—preventing cross-tenant or cross-prompt poisoning.',
+   code:'Run A: /tmp/agent-residue=True → Run B: /tmp/agent-residue=False'}
  ]
 };
 
-var liveNext={pty:1,process:1},doneSet={pty:{},process:{}},liveSource=null,ptyReady=false;
+var liveNext={pty:1,process:1,microvm:1},doneSet={pty:{},process:{},microvm:{}},liveSource=null,ptyReady=false;
 var KIND_LABELS={
- pty:'IsolationSession · Stateful Operator PTY (6 steps)',
- process:'ProcessContainer · File & Network Guardrails (5 steps)'
+ pty:'IsolationSession · Operator PTY (6 steps)',
+ process:'ProcessContainer · Files & Network (5 steps)',
+ microvm:'Hyperlight MicroVM · Unikernel VM (5 steps)'
 };
 
 function getKindVal(){return byId('cs-kind').dataset.value||'pty';}
@@ -653,7 +685,7 @@ function renderExplain(kind,step){
 
 function syncComposerState(){
  var kind=getKindVal(),inp=byId('live-pty-input'),btn=byId('live-pty-send'),form=byId('live-pty-form'),qbar=byId('live-quick-bar');
- if(kind==='process'){
+ if(kind!=='pty'){
   form.style.display='none';
   if(qbar)qbar.style.display='none';
  }else{
@@ -685,30 +717,46 @@ function updateLiveMode(){
   t.setAttribute('aria-selected',active?'true':'false');
  });
  setStepVal(liveNext[kind]);
+ var metaLbl=byId('agent-meta-label');
  if(kind==='pty'){
   byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 3 · STATEFUL SESSION ISOLATION';
   byId('live-demo-title').textContent='Session PTY — Stateful Incident Triage';
   byId('terminal-mode-title').textContent='REAL MXC PTY · PowerShell';
   byId('terminal-mode-sub').textContent='120 × 30 · persistent isolated operator session';
   byId('agent-role-label').textContent='MXC ISOLATIONSESSION';
+  if(metaLbl)metaLbl.textContent='Session ID ';
   byId('compare-heading').textContent='Host Login vs. Isolated Agent Session';
   byId('compare-sub').textContent='Separate OS account & session';
   byId('live-agent-user').textContent='Awaiting Step 1';byId('live-agent-session').textContent='—';
   byId('live-spooler').textContent='Spooler: pending';byId('live-w32time').textContent='W32Time: pending';
   byId('live-extra-chip').textContent='Approval: INC-1042 staged';
   byId('live-demo').querySelectorAll('.live-demo-lifecycle span').forEach(function(x,idx){x.textContent=['1 · PROVISION','2 · IDENTITY','3–5 · TRIAGE','6 · CLEAN UP'][idx];});
- }else{
+ }else if(kind==='process'){
   byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 1 + 2 · PROCESSCONTAINER GUARDRAILS';
   byId('live-demo-title').textContent='ProcessContainer — Files & Network on a Leash';
   byId('terminal-mode-title').textContent='MXC PROCESSCONTAINER · One-Shot Sandboxes';
   byId('terminal-mode-sub').textContent='base-container · file allow/deny + loopback allow/deny';
   byId('agent-role-label').textContent='PROCESSCONTAINER SANDBOX';
+  if(metaLbl)metaLbl.textContent='Session ID ';
   byId('compare-heading').textContent='Trusted Host vs. One-Shot Sandbox';
   byId('compare-sub').textContent='Deny-by-default policy';
   byId('live-agent-user').textContent='base-container';byId('live-agent-session').textContent='ephemeral';
   byId('live-spooler').textContent='Files: pending';byId('live-w32time').textContent='Network: pending';
   byId('live-extra-chip').textContent='Protected secret: locked';
   byId('live-demo').querySelectorAll('.live-demo-lifecycle span').forEach(function(x,idx){x.textContent=['1 · PROBE','2–3 · FILES','4–5 · NETWORK','VERIFIED'][idx];});
+ }else{
+  byId('live-demo-eyebrow').textContent='06 · LIVE DEMO 4 · HARDWARE MICROVM (EXPERIMENTAL)';
+  byId('live-demo-title').textContent='Hyperlight MicroVM — Untrusted Code in <100 ms';
+  byId('terminal-mode-title').textContent='MXC HYPERLIGHT · Unikraft MicroVM';
+  byId('terminal-mode-sub').textContent='hardware hypervisor partition · bash & python 3.12 snapshots';
+  byId('agent-role-label').textContent='HYPERLIGHT MICROVM';
+  if(metaLbl)metaLbl.textContent='Warm boot ';
+  byId('compare-heading').textContent='Windows Host vs. Hardware MicroVM';
+  byId('compare-sub').textContent='Separate Unikraft kernel';
+  byId('live-agent-user').textContent='Unikraft VM';byId('live-agent-session').textContent='standby';
+  byId('live-spooler').textContent='VM Kernel: pending';byId('live-w32time').textContent='Host/Net escape: pending';
+  byId('live-extra-chip').textContent='Snapshot reset: pending';
+  byId('live-demo').querySelectorAll('.live-demo-lifecycle span').forEach(function(x,idx){x.textContent=['1 · SNAPSHOT','2 · VM KERNEL','3–4 · ISOLATE','5 · RESET'][idx];});
  }
  syncComposerState();
  syncStepSelection();
@@ -741,8 +789,8 @@ function resetLive(){
  resolveStepWaiters(false);
  ptyReady=false;
  replayBannerShown=false;
- doneSet={pty:{},process:{}};
- liveNext={pty:1,process:1};
+ doneSet={pty:{},process:{},microvm:{}};
+ liveNext={pty:1,process:1,microvm:1};
  byId('live-demo-output').textContent='';
  setControlsDisabled(false);
  setStatus(replayMode?'REPLAY READY':'READY');
@@ -765,11 +813,29 @@ function inspectLive(value){
   }
   if(/__WEB_APPROVAL_VAL__=/.test(value)){byId('live-extra-chip').textContent='Approval: verified read-only';byId('live-extra-chip').classList.add('on');}
   if(/__WEB_EVIDENCE_VAL__=written/.test(value)){byId('live-extra-chip').textContent='Evidence: host-verified ✓';byId('live-extra-chip').classList.add('on');}
- }else{
+ }else if(kind==='process'){
   if(value.includes('STEP 2 COMPLETE')){byId('live-spooler').textContent='Write output: ALLOWED ✓';byId('live-spooler').classList.add('on');}
   if(value.includes('STEP 3 COMPLETE')){byId('live-extra-chip').textContent='Secret read: DENIED ✕';byId('live-extra-chip').classList.add('denied');}
   if(value.includes('STEP 4 COMPLETE')){byId('live-w32time').textContent='Loopback allow: REACHED ✓';byId('live-w32time').classList.add('on');}
   if(value.includes('STEP 5 COMPLETE')){byId('live-w32time').textContent='Loopback deny: BLOCKED ✕';byId('live-w32time').classList.remove('on');byId('live-w32time').classList.add('denied');}
+ }else if(kind==='microvm'){
+  var gk=value.match(/GUEST_KERNEL=([^\\r\\n]+)/);
+  if(gk){
+   var kshort=gk[1].trim().split('-')[0];
+   byId('live-agent-user').textContent=kshort;
+   byId('live-spooler').textContent='Kernel: '+kshort+' ✓';byId('live-spooler').classList.add('on');
+  }
+  var bms=value.match(/MICROVM_BOOT_MS=(\\d+)/);
+  if(bms)byId('live-agent-session').textContent=bms[1]+' ms';
+  if(value.includes('MICROVM STEP 3 COMPLETE')&&!gk){
+   byId('live-spooler').textContent='Python 3.12 eval: OK ✓';byId('live-spooler').classList.add('on');
+  }
+  if(value.includes('MICROVM STEP 4 COMPLETE')){
+   byId('live-w32time').textContent='FS/Env/Net: BLOCKED ✕';byId('live-w32time').classList.add('denied');
+  }
+  if(value.includes('MICROVM STEP 5 COMPLETE')){
+   byId('live-extra-chip').textContent='Snapshot reset: CLEAN ✓';byId('live-extra-chip').classList.add('on');
+  }
  }
 }
 
@@ -803,6 +869,7 @@ function applyDemoEvent(data){
   var demo=data.demo,step=Number(data.step),defs=STEP_GUIDES[demo];
   doneSet[demo][step]=true;
   if(demo==='process'){if(step===1)markLiveStep(1);if(step===2||step===3)markLiveStep(2);if(step>=4)markLiveStep(3);if(step===5)markLiveStep(4);}
+  else if(demo==='microvm'){if(step===1)markLiveStep(1);if(step===2)markLiveStep(2);if(step===3||step===4)markLiveStep(3);if(step===5)markLiveStep(4);}
   else{if(step===1){markLiveStep(1);ptyReady=true;}if(step===2)markLiveStep(2);if(step>=3&&step<=5)markLiveStep(3);if(step===6){markLiveStep(4);ptyReady=false;}}
   liveNext[demo]=step>=defs.length?1:step+1;
   setStepVal(liveNext[demo]);

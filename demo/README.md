@@ -36,7 +36,7 @@ npm --prefix demo run demo:record
 
 ### 静态网页（GitHub Pages）录制与交互回放
 
-`demo:record` 会在支持 MXC 的 Windows 主机上真实运行 `IsolationSession`（6 个步骤 + 常用交互命令 `whoami`/`pwd`/`ls`/`Get-Service`/`cat triage-evidence.txt`）与 `ProcessContainer`（5 个步骤），脱敏本机用户名和路径后保存到 `presentation/assets/demo-recordings.json`。`python build.py --target html` 会将该录制数据内联进单文件 HTML，因此在 GitHub Pages 或离线静态打开时，同样可以逐步点击 **Send Step**、一键 **Auto-Play All** 或体验 PTY 快捷命令；而在 `http://127.0.0.1:8787` 下则自动切换为真实 OS 容器执行。
+`demo:record` 会在支持 MXC 的 Windows 主机上真实运行 `IsolationSession`（6 个步骤 + 常用交互命令 `whoami`/`pwd`/`ls`/`Get-Service`/`cat triage-evidence.txt`）、`ProcessContainer`（5 个步骤）与 `Hyperlight MicroVM`（5 个步骤），脱敏本机用户名和路径后保存到 `presentation/assets/demo-recordings.json`。`python build.py --target html` 会将该录制数据内联进单文件 HTML，因此在 GitHub Pages 或离线静态打开时，同样可以逐步点击 **Send Step**、一键 **Auto-Play All** 或体验 PTY 快捷命令；而在 `http://127.0.0.1:8787` 下则自动切换为真实 OS / MicroVM 容器执行。
 
 ### 这个 Demo 在做什么
 
@@ -54,6 +54,24 @@ npm --prefix demo run demo:record
 
 IsolationSession 不接受文件 Policy；网络必须声明为 egress、ingress、host loopback 全部 `allow`；窗口与 Session 自己的剪贴板可用，但 `SendInput` 被阻止。它不是凭据保险箱，也不能替代 ProcessContainer 的细粒度文件/网络隔离。工单审批是演示夹具，生产变更还需要真实审批、JIT 权限、Host-side Broker 和受控执行器。
 
+## 3. Hyperlight MicroVM：百毫秒级硬件微虚拟机（Experimental）
+
+源码：`demo/src/microvm.ts`
+
+运行：
+
+```text
+npm --prefix demo run demo:microvm
+```
+
+该 Demo 通过 `getPlatformSupport()` 发现宿主机的 `hyperlight` 能力，并调用随 `@microsoft/mxc-sdk` 分发的 `wxc-exec --experimental`（`1.1.0-alpha` 契约，`containment: "hyperlight"`）验证五件事：
+
+1. 检查并在首次运行时自动拉取、预热 `bash` 与 `python` 的 Unikraft 内存快照（`%LOCALAPPDATA%\mxc-hyperlight`）。
+2. 从预热快照恢复独立 `Unikraft 5.15 x86_64` 微内核（约 80–100 ms），证明不共享 Windows NT 内核。
+3. 在硬件隔离的 Python 3.12 微虚拟机内安全评估不可信 AI 对账代码。
+4. 验证宿主机 `C:\` 文件系统、宿主环境变量及网络套接字（`Errno 13`）在 VM 内全部不可达。
+5. 验证前一次运行写入 `/tmp` 的状态在下一次启动时被彻底清空，无跨次污染。
+
 ## 构建
 
 ```text
@@ -61,7 +79,7 @@ npm --prefix demo ci
 npm --prefix demo run build
 ```
 
-运行两个 Demo：
+运行全部三个 Demo：
 
 ```text
 npm --prefix demo run demo:all
