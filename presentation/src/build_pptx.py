@@ -81,10 +81,9 @@ def rect(s,x,y,cx,cy,fill=CARD,line=None,lw=None,preset='rect',text=None,size=16
     P(s,op)
 def img(s,path,x,y,cx,cy,alt):
     P(s,{'op':'add_image','slide':s,'path':path,'x':int(x),'y':int(y),'cx':int(cx),'cy':int(cy),'fit':'cover','altText':alt})
-def header(s,eyebrow,title,x=M,cx=CW):
+def header(s,eyebrow,title,x=M,cx=CW,title_cy=None):
     tb(s,x,400000,cx,eyebrow,size=13,color=CY,font=HF,bold=True,ls=2)
-    tb(s,x,760000,cx,title,size=32,color=INK,font=HF,bold=True)
-    rect(s,x,1320000,650000,25400,fill=CY)
+    tb(s,x,760000,cx,title,size=32,color=INK,font=HF,bold=True,cy=title_cy)
 def footer(s,src,num,x=M,cx=CW):
     if src: tb(s,x,6180000,cx-900000,src,size=12,color=FOOT)
     tb(s,x+cx-800000,6180000,800000,str(num),size=12,color=FOOT,align='right')
@@ -537,7 +536,7 @@ note(s,'网络隔离验证将 egress 与 ingress 默认设置为拒绝，仅允�
 s=26
 img(s,'hd-blocked.jpg',W-PANEL,0,PANEL,H,'Hand-drawn sketch panel: a sneaky amber tentacle pulls a robot agent toward a door, but a force field blocks it')
 cxl=W-PANEL-2*M
-header(s,'06 · LIVE DEMO 3','Incident triage in an isolated operator session',cx=cxl)
+header(s,'06 · LIVE DEMO 3','Incident triage in isolation',cx=cxl,title_cy=600000)
 beats=[('Stage','Host places INC-1042 and its read-only approval in the shared workspace.'),('Open PTY','A dedicated Windows operator session launches PowerShell with MXC-owned I/O.'),('Triage','Check Spooler and W32Time, retain context, and write auditable evidence.'),('Close','Host validates the report, stops the session and deprovisions the operator.')]
 railx=M+150000; y=1650000
 ys=[]
@@ -673,9 +672,9 @@ def build(out,img_dir):
                 if 'text' in o: write_text(sh.text_frame,o)
                 rendered.append(sh)
         if k==5:
-            add_appear_animation(sl,[rendered[start:start+5] for start in (3,8,13)])
+            add_appear_animation(sl,[rendered[start:start+5] for start in (2,7,12)])
         elif k==7:
-            add_appear_animation(sl,[rendered[start:start+4] for start in (3,7,11,15,19)])
+            add_appear_animation(sl,[rendered[start:start+4] for start in (2,6,10,14,18)])
         if k in notes: sl.notes_slide.notes_text_frame.text=notes[k]
     prs.save(out); print(f'Saved {out}  ({len(prs.slides)} slides)')
 

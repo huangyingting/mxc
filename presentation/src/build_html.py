@@ -56,8 +56,8 @@ def text_html(o):
     return f'<div class="t" style="font-family:{e(font)};{ls}">' + ''.join(out) + '</div>'
 
 REVEAL_ITEMS = {
-    5: (3, 5, 3),
-    7: (3, 4, 5),
+    5: (2, 5, 3),
+    7: (2, 4, 5),
 }
 
 def reveal_attrs(slide_index, operation_index):
