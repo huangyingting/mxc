@@ -15,10 +15,12 @@ except ImportError:
     import build_pptx as D
 
 PX = 9525  # EMU per CSS px  (slide = 1280 x 720 px)
-CLIP = {'rightArrow':'polygon(0 25%,70% 25%,70% 0,100% 50%,70% 100%,70% 75%,0 75%)',
-        'leftArrow':'polygon(30% 0,30% 25%,100% 25%,100% 75%,30% 75%,30% 100%,0 50%)',
-        'chevron':'polygon(0 0,82% 0,100% 50%,82% 100%,0 100%,18% 50%)',
-        'homePlate':'polygon(0 0,82% 0,100% 50%,82% 100%,0 100%)'}
+SVG_POINTS = {
+    'rightArrow':'0,25 70,25 70,0 100,50 70,100 70,75 0,75',
+    'leftArrow':'30,0 30,25 100,25 100,75 30,75 30,100 0,50',
+    'chevron':'0,0 82,0 100,50 82,100 0,100 18,50',
+    'homePlate':'0,0 82,0 100,50 82,100 0,100',
+}
 FALLBACK = {
     'Aptos Display':'"Aptos Display","Segoe UI Variable Display","Segoe UI",Arial,sans-serif',
     'Aptos':'Aptos,"Segoe UI Variable Text","Segoe UI",Arial,sans-serif',
@@ -54,8 +56,8 @@ def text_html(o):
     return f'<div class="t" style="font-family:{e(font)};{ls}">' + ''.join(out) + '</div>'
 
 REVEAL_ITEMS = {
-    5: (2, 5, 3),
-    7: (2, 4, 5),
+    5: (3, 5, 3),
+    7: (3, 4, 5),
 }
 
 def reveal_attrs(slide_index, operation_index):
@@ -78,13 +80,21 @@ def slide_html(k, ops, img_dir, maxw):
         elif o['op'] == 'add_text_box':
             parts.append(f'<div class="{classes}"{reveal} style="{box(o)}">{text_html(o)}</div>')
         elif o['op'] == 'add_shape':
-            pr = o['preset']; st = box(o) + f"background:#{o['fill']};"
-            if pr == 'ellipse': st += 'border-radius:50%;'
-            if pr == 'roundRect': st += f"border-radius:{min(o['cx'],o['cy'])/PX/6:.1f}px;"
-            if pr in CLIP: st += f'clip-path:{CLIP[pr]};'
-            if o.get('line') and pr not in CLIP: st += f"box-shadow:inset 0 0 0 {max(1,o.get('lineWidth',12700)/PX):.1f}px #{o['line']};"
+            pr = o['preset']
             inner = text_html(o) if 'text' in o else ''
-            parts.append(f'<div class="{classes}"{reveal} style="{st}">{inner}</div>')
+            if pr in SVG_POINTS:
+                stroke = f' stroke="#{o["line"]}" stroke-width="{max(1,o.get("lineWidth",12700)/PX):.1f}"' if o.get('line') else ''
+                svg = (
+                    '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">'
+                    f'<polygon points="{SVG_POINTS[pr]}" fill="#{o["fill"]}"{stroke}/></svg>'
+                )
+                parts.append(f'<div class="{classes} svg-shape"{reveal} style="{box(o)}">{svg}{inner}</div>')
+            else:
+                st = box(o) + f"background:#{o['fill']};"
+                if pr == 'ellipse': st += 'border-radius:50%;'
+                if pr == 'roundRect': st += f"border-radius:{min(o['cx'],o['cy'])/PX/6:.1f}px;"
+                if o.get('line'): st += f"box-shadow:inset 0 0 0 {max(1,o.get('lineWidth',12700)/PX):.1f}px #{o['line']};"
+                parts.append(f'<div class="{classes}"{reveal} style="{st}">{inner}</div>')
     reveal_count = REVEAL_ITEMS[k][2] if k in REVEAL_ITEMS else 0
     return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="Slide {k+1}">{"".join(parts)}</section>'
 
@@ -98,6 +108,8 @@ html,body{width:100%%;height:100%%;background:var(--bg);color:var(--ink);overflo
 .a{position:absolute}
 .reveal{visibility:hidden}
 .reveal.shown{visibility:visible}
+.svg-shape svg{position:absolute;inset:0;width:100%%;height:100%%;overflow:visible}
+.svg-shape>.t{z-index:1}
 img.a{object-fit:cover}
 .t{position:absolute;inset:0;padding:4px 10px;display:flex;flex-direction:column;justify-content:center;line-height:1.2}
 @media (prefers-color-scheme:dark){:root{--chrome:#1a1a1a}}

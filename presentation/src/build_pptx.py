@@ -84,6 +84,7 @@ def img(s,path,x,y,cx,cy,alt):
 def header(s,eyebrow,title,x=M,cx=CW):
     tb(s,x,400000,cx,eyebrow,size=13,color=CY,font=HF,bold=True,ls=2)
     tb(s,x,760000,cx,title,size=32,color=INK,font=HF,bold=True)
+    rect(s,x,1320000,650000,25400,fill=CY)
 def footer(s,src,num,x=M,cx=CW):
     if src: tb(s,x,6180000,cx-900000,src,size=12,color=FOOT)
     tb(s,x+cx-800000,6180000,800000,str(num),size=12,color=FOOT,align='right')
@@ -672,9 +673,9 @@ def build(out,img_dir):
                 if 'text' in o: write_text(sh.text_frame,o)
                 rendered.append(sh)
         if k==5:
-            add_appear_animation(sl,[rendered[start:start+5] for start in (2,7,12)])
+            add_appear_animation(sl,[rendered[start:start+5] for start in (3,8,13)])
         elif k==7:
-            add_appear_animation(sl,[rendered[start:start+4] for start in (2,6,10,14,18)])
+            add_appear_animation(sl,[rendered[start:start+4] for start in (3,7,11,15,19)])
         if k in notes: sl.notes_slide.notes_text_frame.text=notes[k]
     prs.save(out); print(f'Saved {out}  ({len(prs.slides)} slides)')
 

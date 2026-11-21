@@ -64,6 +64,7 @@ HTML 为包含图片、样式和脚本的单文件，画面中不显示控件或
 - 正文：**Aptos**
 - 代码：**Cascadia Code**
 - 配色：原有暖米色背景、炭灰文字、石板蓝强调色、米色卡片与少量砖红警示色
+- 图示：PPTX 使用可编辑的原生 PowerPoint 矢量形状，HTML 图示使用内联 SVG，箭头与流程连接在不同分辨率下保持清晰
 
 HTML 在系统缺少 Aptos/Cascadia 时会回退到 Segoe UI、Arial 或 Consolas；PPTX 使用 Office 原生现代字体，保持跨文件一致性。
 
