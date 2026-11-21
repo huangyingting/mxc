@@ -38,6 +38,7 @@ python build.py --target demo
 - HTML：`dist/html/index.html`，同时复制到 `docs/index.html`
 - ProcessContainer Demo：`npm --prefix demo run demo:process`
 - 通用 PTY Demo：`npm --prefix demo run demo:pty`；交互模式为 `npm --prefix demo run demo:pty:interactive`
+- 网页集成交互式 Demo Studio：`npm --prefix demo run demo:web`，打开 `http://127.0.0.1:8787/#25`（合并文件+网络护栏）或 `http://127.0.0.1:8787/#27`（有状态 Session PTY 逐步接管），也可在任意页按 `D` 呼出
 
 Session Container 解决的是独立 Windows 用户/Session 与状态隔离，不是凭据保险箱；文件策略不可用、网络必须全开放、`SendInput` 被阻止。ERP 凭据仍应由 Host/Broker 或专用低权限账号管理。
 - Lab：阅读 `labs/lab-01-least-privilege/README.md`
@@ -59,13 +60,11 @@ HTML 为包含图片、样式和脚本的单文件，画面中不显示控件或
 
 ## 视觉系统
 
-- 标题：**Aptos Display**
-- 正文：**Aptos**
-- 代码：**Cascadia Code**
-- 配色：原有暖米色背景、炭灰文字、石板蓝强调色、米色卡片与少量砖红警示色
-- 图示：PPTX 使用可编辑的原生 PowerPoint 矢量形状，HTML 图示使用内联 SVG，箭头与流程连接在不同分辨率下保持清晰
-
-HTML 在系统缺少 Aptos/Cascadia 时会回退到 Segoe UI、Arial 或 Consolas；PPTX 使用 Office 原生现代字体，保持跨文件一致性。
+- 展示大标题（HTML）：**Newsreader** 衬线字体，增强编辑感与叙事张力
+- 标题与正文：**Plus Jakarta Sans**（回退至 Inter / Segoe UI）
+- 代码与终端：**JetBrains Mono**（回退至 Cascadia Code / Consolas）
+- 配色：暖米色宣纸底、炭灰墨色、石板蓝强调色、圆角微阴影卡片与砖红警示色
+- 图示与交互：PPTX 使用可编辑原生矢量形状；HTML 使用内联 SVG、自定义无原生 `<select>` 下拉组件，以及右侧实时分步架构解说栏
 
 ## Demo 的边界
 

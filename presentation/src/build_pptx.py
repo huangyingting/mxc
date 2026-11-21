@@ -30,13 +30,13 @@ from PIL import Image
 W,H=12192000,6858000; M=457200; CW=W-2*M
 BG='F3EEE4'; CARD='E9E2D4'; CARD2='E9E2D4'; EDGE='C9C0AE'; INK='2B2B2B'; MUTED='57534C'; FOOT='6E685F'
 CY='3F607E'; AMB='A84A35'; CODEBG='FAF7F1'; CODE='2F4B66'
-HF='Aptos Display'; BF='Aptos'; MF='Cascadia Code'
+HF='Plus Jakarta Sans'; BF='Plus Jakarta Sans'; MF='JetBrains Mono'
 PANEL=4572000   # width of the side illustration panel
 # ===================== HELPERS ===================
 slides={}  # idx -> list of patches
 notes={}
 def P(s,op): slides.setdefault(s,[]).append(op)
-WF={'Aptos Display':0.55,'Aptos':0.51,'Cascadia Code':0.6,'Georgia':0.6,'Arial':0.56,'Calibri':0.5,'Courier New':0.6}
+WF={'Plus Jakarta Sans':0.52,'Newsreader':0.56,'JetBrains Mono':0.6,'Aptos Display':0.55,'Aptos':0.51,'Cascadia Code':0.6,'Georgia':0.6,'Arial':0.56,'Calibri':0.5,'Courier New':0.6}
 def nlines(text,size,cx,font,bold):
     f=WF[font]*(1.07 if bold else 1)
     cpl=max(1,int((cx-182880)/(size*12700*f)))
@@ -546,8 +546,8 @@ for i,(t,d) in enumerate(beats):
 rect(s,railx+100000-12700,ys[0]+200000,25400,ys[-1]-ys[0],fill=EDGE)
 for i,yy in enumerate(ys):
     rect(s,railx,yy+100000,200000,200000,fill=CY if i!=3 else AMB,preset='ellipse')
-footer(s,'npm --prefix demo run demo:pty  ·  real service diagnostics, no mutations',27,cx=cxl)
-note(s,'这个 Demo 对应常见的 L1/L2 运维事故处理。INC-1042 表示打印和时间服务异常：Host 先把工单与“只读诊断”审批写入共享 workspace，再在 IsolationSession 中以独立 Windows 操作员用户打开 PowerShell PTY。Agent 校验审批，检查真实的 Spooler 与 W32Time 状态，并生成包含工单号、审批人、操作员、Session ID 和服务状态的证据文件；Host 验证证据后停止并删除 Session。\n为什么需要 Session：运维 Agent 通常需要持续终端、多步骤上下文和可选人工接管，但不应共享员工当前会话的 Windows Profile、Registry、Shell 历史或个人登录环境。Demo 中的服务状态、独立用户、Session ID、PTY 和证据都是真实的，工单与审批是可替换夹具。示例不读凭据、不重启服务、不改配置；生产变更必须增加 JIT 权限、独立审批和 Host-side 执行器。Session 不是凭据外置层，文件与网络也不是最小权限，不可信代码仍应优先使用 ProcessContainer。')
+footer(s,'Web demo: npm --prefix demo run demo:web  ·  open the step-by-step MXC demo on slide 27',27,cx=cxl)
+note(s,'这个 Demo 对应常见的 L1/L2 运维事故处理。INC-1042 表示打印和时间服务异常：Host 先把工单与“只读诊断”审批写入共享 workspace，再在 IsolationSession 中以独立 Windows 操作员用户打开 PowerShell PTY。Agent 校验审批，检查真实的 Spooler 与 W32Time 状态，并生成包含工单号、审批人、操作员、Session ID 和服务状态的证据文件；Host 验证证据后停止并删除 Session。\n本地网页模式先运行 npm --prefix demo run demo:web，再用下拉框选择 ProcessContainer 或 IsolationSession 步骤逐一发送。按钮通过仅监听 127.0.0.1 的 Node bridge 真实执行 MXC，并把输出、Host/Agent 对比与生命周期流回页面；静态 GitHub Pages 不会尝试启动本机进程。')
 
 # ---------- 27 CLOSER
 s=27

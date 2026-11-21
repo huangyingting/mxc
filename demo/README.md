@@ -28,9 +28,10 @@ npm --prefix demo run demo:process
 ```text
 npm --prefix demo run demo:pty
 npm --prefix demo run demo:pty:interactive
+npm --prefix demo run demo:web
 ```
 
-自动模式处理只读事故工单 `INC-1042`，检查真实的 `Spooler` 和 `W32Time` 状态，并让 Host 验证 `triage-evidence.txt`。交互模式把真实键盘与输出连接到隔离 Session 中的 PowerShell，适合人工接管和现场演示。
+自动模式处理只读事故工单 `INC-1042`，检查真实的 `Spooler` 和 `W32Time` 状态，并让 Host 验证 `triage-evidence.txt`。交互模式把真实键盘与输出连接到隔离 Session 中的 PowerShell，适合人工接管和现场演示。网页模式启动仅监听 `127.0.0.1` 的本机 Server；打开 `http://127.0.0.1:8787/#27` 后点击 **Open step-by-step MXC demo**，用下拉框选择 Demo 和步骤再逐步发送。
 
 ### 这个 Demo 在做什么
 
@@ -47,6 +48,8 @@ npm --prefix demo run demo:pty:interactive
 ### 边界
 
 IsolationSession 不接受文件 Policy；网络必须声明为 egress、ingress、host loopback 全部 `allow`；窗口与 Session 自己的剪贴板可用，但 `SendInput` 被阻止。它不是凭据保险箱，也不能替代 ProcessContainer 的细粒度文件/网络隔离。工单审批是演示夹具，生产变更还需要真实审批、JIT 权限、Host-side Broker 和受控执行器。
+
+网页本身是静态页面，无法直接启动本机进程。GitHub Pages 点击按钮只会显示本地启动命令；只有通过 `demo:web` 提供的 loopback bridge 才会真实运行 MXC。
 
 ## 构建
 
