@@ -177,7 +177,7 @@ note(s,'所以做 Agent 架构一定要想明白一句话：不能让 Agent 自�
 s=5
 header(s,'01 · WHY SANDBOXING','Three pillars for agents on Windows')
 cw3=(CW-2*238800)/3; y0=1650000; ch=3900000
-pill=[('Containment','Limit what an agent can access and do','Microsoft Execution Containers (MXC). Windows 365 support for MXC is also generally available.','Generally available'),('Identity','Tell agent activity apart from a person','Microsoft Entra Agent ID is GA; identity for supported local agents is in preview.','GA + preview'),('Manageability','Govern access and monitor agents','Agent 365 is GA; Intune/MXC controls for local agents are in preview.','GA + preview')]
+pill=[('Containment','Limit what an agent can access and do','Isolates file, network, process and UI access at the OS layer via MXC — on physical PCs and Windows 365 Cloud PCs.','Generally available'),('Identity','Tell agent activity apart from a person','Microsoft Entra Agent ID gives each agent its own identity and audit trail instead of sharing a human login.','GA + preview'),('Manageability','Govern access and monitor agents','Microsoft Agent 365 and Intune discover agents, monitor activity, and roll out enterprise sandbox policies.','GA + preview')]
 for i,(t,sub,body,state) in enumerate(pill):
     x=M+i*(cw3+238800)
     rect(s,x,y0,cw3,ch,fill=CARD)
@@ -209,7 +209,7 @@ note(s,'那 MXC 到底是什么？简单讲，它是微软用 MIT 协议开源�
 s=7
 header(s,'02 · UNDERSTANDING MXC','Five concepts to remember')
 gap=150000; cw5=(CW-4*gap)/5; y0=1650000; ch=3900000
-cons=[('Host app','Your trusted app or agent runtime. Picks permissions, supplies inputs, handles results.'),('Workload','The command, script or process that runs under containment.'),('Policy','The access you permit: readable files, writable folders, network destinations, UI.'),('Execution config','The policy plus command, working directory, runtime settings and containment choice.'),('Backend','The OS mechanism that enforces it: process sandbox, separate session or VM.')]
+cons=[('Host app','Your trusted app or agent runtime. Picks permissions, supplies inputs, handles results.'),('Workload','The command, script or process that runs under containment.'),('Policy','The access you permit: readable files, writable folders, network destinations, UI.'),('Container request','Combines the policy with the command, working directory, timeout and sandbox choice.'),('Backend','The OS mechanism that enforces it: process sandbox, separate session or VM.')]
 for i,(t,d) in enumerate(cons):
     x=M+i*(cw5+gap)
     rect(s,x,y0,cw5,ch,fill=CARD)
@@ -257,7 +257,7 @@ tb(s,M,1550000,4000000,'Lighter and faster',size=14,color=MUTED)
 tb(s,W-M-4000000,1550000,4000000,'Stronger isolation',size=14,color=MUTED,align='right')
 rect(s,M,ry-80000,CW,220000,fill=EDGE,preset='rightArrow')
 gap=180000; cw4=(CW-3*gap)/4; y0=2350000; ch=3550000
-bx=[('Process container','Windows 11 · macOS · Linux','AppContainer, Seatbelt or Bubblewrap. Lightweight and responsive; the default for coding agents.',None),('Session container','Windows 11 only','Separate Windows account and OS session with session-local UI. No file or network filtering; SendInput is blocked.',None),('WSL container','Windows 11','Runs Linux workloads on a Windows host through WSL.',None),('MicroVM','Windows 11 · Linux','Hardware-enforced virtual machine boundary; the strongest option.','Experimental')]
+bx=[('Process container','Windows 11 · macOS · Linux','AppContainer, Seatbelt or Bubblewrap. Fast startup and fine-grained file/network rules; default for coding agents.',None),('Session container','Windows 11 only','Separate Windows login and desktop for GUI apps. Protects your screen & clipboard (open network; blocks fake keystrokes).',None),('WSL container','Windows 11','Runs Linux workloads and toolchains on a Windows host through WSL.',None),('MicroVM','Windows 11 · Linux','Hardware-virtualized unikernel boundary; never shares the host OS kernel.','Experimental')]
 for i,(t,p,d,st) in enumerate(bx):
     x=M+i*(cw4+gap)
     rect(s,x+cw4/2-110000,ry-80000,220000,220000,fill=CY,line=BG,lw=25400,preset='ellipse')
@@ -276,9 +276,9 @@ s=11
 header(s,'03 · FEATURES & PLATFORMS','Where MXC runs today')
 c1=M; w1=3000000; c2=c1+w1+150000; w2=3000000; c3=c2+w2+150000; w3=W-M-c3
 hy=1500000
-for x,w,t in [(c1,w1,'HOST'),(c2,w2,'DEFAULT PROCESS BACKEND'),(c3,w3,'ALSO IN THE V1 SDK / NOTES')]:
+for x,w,t in [(c1,w1,'HOST'),(c2,w2,'DEFAULT PROCESS BACKEND'),(c3,w3,'ADDITIONAL OPTIONS & CLOUD PC')]:
     tb(s,x+200000,hy,w-200000,t,size=11,color=CY,font=HF,bold=True,ls=1,cy=400000)
-rowsd=[('Windows 11','ProcessContainer','IsolationSession and WSLc; Learning Mode activity reports'),('Linux','Bubblewrap','LXC'),('macOS','Seatbelt','Check each release for other options'),('Windows 365 Cloud PC','ProcessContainer','Same as a physical PC; session or VM backends need nested virtualization')]
+rowsd=[('Windows 11','ProcessContainer','Also supports IsolationSession, WSLc & Learning Mode reports'),('Linux','Bubblewrap','Also supports LXC containers'),('macOS','Seatbelt','Enforces native macOS sandbox profiles'),('Windows 365 Cloud PC','ProcessContainer','Works out of the box; session or VM backends need nested virtualization')]
 y=1980000; rh=720000
 for i,(a,b,c) in enumerate(rowsd):
     rect(s,c1,y,CW,rh,fill=CARD)
@@ -287,7 +287,7 @@ for i,(a,b,c) in enumerate(rowsd):
     tb(s,c3+200000,y,w3-300000,c,size=15,color=MUTED,cy=rh)
     y+=rh+100000
 rect(s,M,y+100000,CW,640000,fill=CARD,line=AMB,lw=19050)
-tb(s,M+300000,y+100000,CW-600000,'Experimental, explicit opt-in only: Windows Sandbox, MicroVM and Hyperlight (not creatable through V1 SDK APIs).',size=15,color=INK,cy=640000)
+tb(s,M+300000,y+100000,CW-600000,'Experimental (explicit opt-in via 1.1-alpha): Windows Sandbox, MicroVM, and Hyperlight unikernel.',size=15,color=INK,cy=640000)
 footer(s,'Source: Microsoft Learn, MXC containment options and platform support (MXC v1.0.0); Windows 365 support for MXC',12)
 note(s,'做跨平台应用时，统一 SDK 省去了重写业务代码的麻烦，但每个平台底层落到哪儿我们得心里有数。Windows 11 默认走 ProcessContainer，同时支持独立会话、WSL 容器和后面要讲的学习模式；Linux 默认用 Bubblewrap，macOS 用 Seatbelt。如果团队平时在 Windows 365 云电脑上干活，进程级隔离跟物理机完全一致，连嵌套虚拟化都不用开；只有用到会话或虚拟化后端时才需要额外确认环境。\n至于最底下的 Windows Sandbox、MicroVM 和 Hyperlight，目前还属于实验特性，需要显式打开实验开关才能用。所以代码里最稳妥的做法，永远是在启动前先查一次平台支持情况，别硬编码死某一种后端。')
 
@@ -297,8 +297,8 @@ header(s,'03 · FEATURES & PLATFORMS','Files: read in, write out')
 cx_=6000000; cy0=1600000; chh=4300000
 rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
 tb(s,M+250000,cy0+120000,cx_-500000,'policy.json',size=12,color=FOOT,font=MF,cy=340000)
-code='{\n  "version": "1.0.0",\n  "containment": "processcontainer",\n  "process": {\n    "commandLine": "python summarize.py"\n  },\n  "filesystem": {\n    "readwritePaths": ["C:\\\\demo\\\\output"],\n    "deniedPaths": ["C:\\\\Users\\\\me\\\\.ssh"]\n  }\n}'
-tb(s,M+250000,cy0+550000,cx_-500000,None,paras=[{'text':l} for l in code.split('\n')],size=14,color=CODE,font=MF)
+code='{\n  "version": "1.0.0",\n  "containment": "processcontainer",\n  "process": {\n    "commandLine": "python summarize.py"\n  },\n  "filesystem": {\n    "readonlyPaths": ["C:\\\\demo\\\\input"],\n    "readwritePaths": ["C:\\\\demo\\\\output"],\n    "deniedPaths": ["C:\\\\Users\\\\me\\\\.ssh"]\n  }\n}'
+tb(s,M+250000,cy0+520000,cx_-500000,code,size=13,color=CODE,font=MF,cy=3560000)
 rx=M+cx_+400000; rw=W-M-rx
 rules=[('Read in, write out','Separate readable inputs from one dedicated writable output folder.'),('Deny the crown jewels','Explicitly deny secrets, system and profile paths.'),('Teardown is not undo','Writes to granted host folders survive the sandbox. Choose output paths deliberately.')]
 y=1650000
@@ -321,7 +321,7 @@ for i,(t,d,c,g) in enumerate(dests):
     rect(s,dx,yy,dw,dh,fill=CARD,line=c,lw=19050)
     tb(s,dx+180000,yy,dw-300000,None,paras=[{'text':g+'  '+t,'sizePt':15,'bold':True,'color':INK},{'text':d,'sizePt':13,'color':MUTED}],cy=dh)
 fx=dx+dw+350000; fw=W-M-fx
-facts=['Rules are directional: egress and ingress, each with its own default.','Allow by IP/CIDR, protocol and port, not hostnames.','Need domains? Route through an HTTP(S) proxy with runtimeConfig.networkProxy.','In production, identify a packaged proxy with allowedProxyPeer.']
+facts=['Rules are directional: egress and ingress, each with its own default.','Allow by IP/CIDR, protocol and port, not hostnames.','Need domains? Route through an HTTP(S) proxy with runtimeConfig.networkProxy.','In production, lock proxy traffic to your trusted process via allowedProxyPeer.']
 tb(s,fx,1750000,fw,None,paras=[{'text':f} for f in facts],size=15,color=MUTED)
 footer(s,'Source: github.com/microsoft/mxc, docs/examples.md',14)
 note(s,'光锁住文件还不够，网络出口要是不管，Agent 读到的任何一点东西都能顺着网线发走。MXC 把网络拆成出站、入站和本机回环三个方向，上手第一步就是把默认规则全设成拒绝。\n这里要注意，操作系统底层的防火墙规则认的是 IP、网段和端口号，它没法直接认域名。如果业务上必须按域名放行，比如只允许连公司的内部网关或者指定的包管理源，标准做法是在宿主机起一个受控的本地代理，通过 networkProxy 把沙箱流量引过去，由代理来做域名白名单和日志审计；在生产环境里还可以加上 allowedProxyPeer 校验代理进程身份，防止本机其他程序冒名顶替。')
@@ -377,9 +377,9 @@ def lane(y,label,sub,stepsL,desc):
         if i<n-1: rect(s,x+bw+50000,y+190000,g-100000,220000,fill=CY,preset='rightArrow')
     tb(s,ax,y+680000,aw,desc,size=15,color=MUTED)
 lane(1600000,'One-shot','Default choice',['Create','Run one workload','Tear down'],'Builds, tests, generated commands: a fresh, narrow sandbox for every action.')
-lane(3000000,'State-aware','When state must persist',['Provision','Start','Execute','Stop','Deprovision'],'Agent profiles, installed tools. In MXC 1.0: IsolationSession and WSLc.')
+lane(3000000,'State-aware','When state must persist',['Provision','Start','Execute','Stop','Deprovision'],'Persistent shells and multi-step triage via IsolationSession or WSLc.')
 ry=4450000; g=150000; cw3=(CW-2*g)/3
-for i,(t,d) in enumerate([('run','Returns captured output when the workload finishes.'),('spawn','Live stdin, stdout and stderr while it runs.'),('PTY','A pseudoterminal the host controls, including its size.')]):
+for i,(t,d) in enumerate([('run','Returns captured output when the workload finishes.'),('spawn','Live stdin, stdout and stderr while it runs.'),('PTY','Interactive terminal session for stateful shells and human handoff.')]):
     x=M+i*(cw3+g)
     rect(s,x,ry,cw3,1350000,fill=CARD)
     tb(s,x+250000,ry,cw3-500000,None,paras=[{'text':t,'sizePt':20,'bold':True,'color':CY},{'text':d,'sizePt':15,'color':MUTED}],cy=1350000)
@@ -408,11 +408,11 @@ s=18
 img(s,'hd-desktop.jpg',W-PANEL,0,PANEL,H,'Hand-drawn sketch panel: a human relaxes at his own desk while a robot agent processes invoices at its own separate desktop behind a glass wall')
 cxl=W-PANEL-2*M
 header(s,'04 · USE CASES','Desktop and data agents',cx=cxl)
-cards=[('Desktop automation agent','Keeps app state in a separate Windows account and session, driven through app APIs or UI automation.','Fit: session container; its network is open and SendInput is blocked'),('Sensitive-document agent','Reads one approved folder, writes one report, no network.','Fit: process container with a deny-by-default policy'),('Agents on Cloud PCs','Run beside existing work on Windows 365; process isolation works as on a physical PC.','Fit: Windows 365 + MXC, generally available')]
+cards=[('Desktop automation agent','Keeps app state in a separate Windows account and session, driven through app APIs or UI automation.','Best fit: Session container (isolated desktop, dedicated bot login)'),('Sensitive-document agent','Reads one approved folder, writes one report, no network.','Best fit: Process container (read-in / write-out, network denied)'),('Agents on Cloud PCs','Run beside existing work on Windows 365; process isolation works as on a physical PC.','Best fit: Process container on Windows 365 Cloud PC (GA)')]
 y=1600000; ch=1380000
 for t,d,f in cards:
     rect(s,M,y,cxl,ch,fill=CARD)
-    tb(s,M+250000,y,cxl-500000,None,paras=[{'text':t,'sizePt':18,'bold':True,'color':INK},{'text':d,'sizePt':14,'color':MUTED},{'text':f,'sizePt':14,'color':CY,'bold':True}],cy=ch)
+    tb(s,M+250000,y,cxl-500000,None,paras=[{'text':t,'sizePt':17.5,'bold':True,'color':INK},{'text':d,'sizePt':13.5,'color':MUTED},{'text':f,'sizePt':13.5,'color':CY,'bold':True}],cy=ch)
     y+=ch+110000
 footer(s,'Sources: Windows Developer Blog; Microsoft Learn',19,cx=cxl)
 note(s,'除了研发写代码，企业业务里还有几个场景特别对路。比如操作传统客户端或内网系统的桌面 Agent，给它开一个 Session Container，让它在独立的本地账号和会话里通过 UI Automation 或应用接口跑流程——员工在前台正常办公，Agent 在后台独立桌面里处理单据，两边互不干扰，再配上专门的低权限业务账号就稳妥了。\n再比如审合同、做财报汇总的敏感文档 Agent，直接关进完全断网的 Process Container，只读一个输入目录、只写一个结果目录，物理上断掉外传可能。还有部署在 Windows 365 云电脑上的 Agent，跟员工的云桌面并排运行，进程隔离的用法和体验跟本地电脑完全一致。')
@@ -451,7 +451,7 @@ for i,(t,pkg,reg,api) in enumerate(sdks):
     yy=tb(s,x+250000,yy+120000,cw3-500000,'DISCOVERY',size=12,color=FOOT,font=HF,bold=True,ls=1,cy=280000)
     tb(s,x+250000,yy+40000,cw3-500000,api,size=12,color=INK,font=MF,cy=400000)
 rect(s,M,4600000,CW,1200000,fill=CARD2,line=CY,lw=19050)
-tb(s,M+300000,4600000,CW-600000,None,paras=[{'text':'The SDK converts your ContainerRequest into the stable 1.0.0 schema, so you never pick a schema version.','sizePt':17,'bold':True,'color':INK},{'text':'Windows 365 prerequisites: Windows 11 24H2 or later; .NET 8+ or Node.js 18+.','sizePt':15,'color':MUTED}],cy=1200000)
+tb(s,M+300000,4600000,CW-600000,None,paras=[{'text':'Write one ContainerRequest in code — the SDK maps it to the right OS sandbox on Windows, macOS, and Linux.','sizePt':17,'bold':True,'color':INK},{'text':'Requirements: Windows 11 24H2+ (physical or Windows 365), macOS, or Linux  ·  .NET 8+ / Node.js 18+ / Rust.','sizePt':15,'color':MUTED}],cy=1200000)
 footer(s,'Sources: Microsoft Learn, MXC overview, platform support and Windows 365 support for MXC',21)
 note(s,'如果你准备把它接进自家的 Agent 运行时，工程接入非常轻。官方在 NuGet、npm 和 crates.io 上同步维护了 .NET、TypeScript 和 Rust 三套 SDK。不管你用哪门语言，写法都是一致的：在代码里填好统一的 ContainerRequest，声明清楚文件、网络、命令和超时，SDK 会自动帮你序列化成稳定的 1.0.0 标准契约，不用你操心底层系统的差异。\n接入时只要养成一个好习惯：启动任务前先调 getPlatformSupport 确认当前机器的支撑情况；如果在 Windows 上跑，还可以顺手调一下 probe，提前确认你配的这份策略能不能拿到预期的原生隔离级别。')
 
@@ -467,7 +467,7 @@ for i,(t,d) in enumerate(boxes):
     if i<4: rect(s,x+bw+30000,y0+bh/2-170000,g-60000,340000,fill=CY,preset='chevron')
 rect(s,M+bw/2,3150000,CW-bw,520000,fill=CARD2,line=CY,lw=19050,preset='leftArrow',text='Output, exit code and denials, validated by the host before the agent acts',size=14,color=INK)
 g2=150000; cw3=(CW-2*g2)/3; y1=4000000; ch=1800000
-side=[('Egress proxy','Attaches credentials and enforces a domain allow-list, outside the box.'),('Learning Mode','Activity reports tighten the policy before enforcement.'),('Enterprise control','Entra Agent ID and Agent 365 are GA; local-agent and Intune/MXC controls are preview.')]
+side=[('Egress proxy','Attaches credentials and enforces a domain allow-list, outside the box.'),('Learning Mode','Activity reports tighten the policy before enforcement.'),('Enterprise control','Entra Agent ID & Agent 365 govern agent identity, audit trails, and fleet policy.')]
 for i,(t,d) in enumerate(side):
     x=M+i*(cw3+g2)
     rect(s,x,y1,cw3,ch,fill=CARD)
@@ -486,7 +486,7 @@ for i,(t,d) in enumerate(st):
     y+=rh+60000
 cx0=M+lw0+300000; cw_=W-M-cx0; cy0=1600000; chh=4300000
 rect(s,cx0,cy0,cw_,chh,fill=CODEBG,line=EDGE)
-tb(s,cx0+250000,cy0+120000,cw_-500000,'host.ts  ·  illustrative pseudocode',size=12,color=FOOT,font=MF,cy=340000)
+tb(s,cx0+250000,cy0+120000,cw_-500000,'host.ts  ·  @microsoft/mxc-sdk',size=12,color=FOOT,font=MF,cy=340000)
 code=['const support = await getPlatformSupport();','if (!support.isSupported) throw support.reason;','','const request = {','  command: "npm test",','  workingDirectory: repo,','  filesystem: { readwritePaths: [repo] },','  network: { egress: { default: "deny" } },','  timeoutMs: 120_000,','};','const result = await runContained(request);','validate(result); // never trust blindly']
 tb(s,cx0+250000,cy0+520000,cw_-400000,None,paras=[{'text':l if l else ' '} for l in code],size=13,color=CODE,font=MF)
 footer(s,'Source: Microsoft Learn, MXC SDK integration guide',23)
@@ -540,7 +540,7 @@ s=25
 img(s,'hd-blocked.jpg',W-PANEL,0,PANEL,H,'Hand-drawn sketch panel: a sneaky amber tentacle pulls a robot agent toward a door, but a force field blocks it')
 cxl=W-PANEL-2*M
 header(s,'06 · LIVE DEMO 2','Isolated incident triage',cx=cxl)
-beats=[('Stage','Host places INC-1042 and its read-only approval in the shared workspace.'),('Open PTY','A dedicated Windows operator session launches PowerShell with MXC-owned I/O.'),('Triage','Check Spooler and W32Time, retain context, and write auditable evidence.'),('Close','Host validates the report, stops the session and deprovisions the operator.')]
+beats=[('Stage','Host places INC-1042 and its read-only approval in the shared workspace.'),('Open PTY','Spins up a separate local Windows account & session, isolated from the employee desktop.'),('Triage','Check Spooler and W32Time, retain context, and write auditable evidence.'),('Close','Host validates the report, stops the session and deprovisions the operator.')]
 railx=M+150000; y=1550000
 ys=[]
 for i,(t,d) in enumerate(beats):
