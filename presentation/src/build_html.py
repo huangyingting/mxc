@@ -104,8 +104,8 @@ def text_html(o):
     return f'<div class="t" style="font-family:{e(font)};{ls}">' + ''.join(out) + '</div>'
 
 REVEAL_ITEMS = {
-    5: (2, 5, 3),
-    7: (2, 4, 5),
+    5: (2, 6, 3),
+    7: (2, 5, 5),
 }
 
 DEMO_LAUNCHERS = {
@@ -378,6 +378,7 @@ code,pre,kbd,.pages-qr-kicker,.pages-qr-url{font-variation-settings:"wdth" 90}
 .svg-shape>.t{z-index:1}
 img.a{object-fit:cover}
 .t{position:absolute;inset:0;padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
+.a[style*="border-radius:50%%"]>.t{padding:0;align-items:center;text-align:center}
 .ref-link{color:inherit;text-decoration:underline;text-decoration-color:rgba(63,96,126,.42);text-underline-offset:3px;transition:color .14s ease,text-decoration-color .14s ease}
 .ref-link:hover{color:#1f384e;text-decoration-color:currentColor}
 .pages-qr-card{display:inline-flex;align-items:center;gap:14px;padding:10px 18px 10px 10px;border-radius:14px;background:rgba(251,248,242,.92);border:1px solid var(--edge);box-shadow:0 10px 26px rgba(35,30,22,.07);text-decoration:none;color:var(--ink);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;z-index:5}
