@@ -117,11 +117,15 @@ class BuilderTests(unittest.TestCase):
             url = 'https://huangyingting.github.io/mxc/'
             with patch.object(D, 'slides', {0: [], 1: []}), patch.object(D, 'notes', {}):
                 H.build(str(root / 'index.html'), str(root), 1600, pages_url=url)
+                D.build(str(root / 'deck.pptx'), str(root), pages_url=url)
             doc = (root / 'index.html').read_text(encoding='utf-8')
             self.assertEqual(doc.count('class="a pages-qr-card"'), 1)
             self.assertIn('href="https://huangyingting.github.io/mxc/"', doc)
             self.assertIn('huangyingting.github.io/mxc', doc)
             self.assertIn('<svg class="pages-qr-svg"', doc)
+            self.assertIn('.pages-qr-svg{width:176px;height:176px;', doc)
+            prs = Presentation(str(root / 'deck.pptx'))
+            self.assertGreaterEqual(len(prs.slides[0].shapes), 5)
 
     @unittest.skipUnless(shutil.which('node'), 'node is required to syntax-check embedded JS')
     def test_embedded_javascript_has_valid_syntax(self):

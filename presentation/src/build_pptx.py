@@ -108,11 +108,11 @@ def medallion(s,cx_mid,cy_mid,diam=360000,glyph='→',fill=CY,color=BG,size=14):
 s=0
 img(s,'hd-cover.jpg',0,0,W,H,'Hand-drawn sketch illustration: a friendly robot AI agent standing inside a glass cube, with files, cloud and keys kept outside the boundary')
 x=M+150000; cx=5900000
-rect(s,x,820000,560000,40000,fill=CY,preset='roundRect')
-tb(s,x,940000,cx,'MICROSOFT EXECUTION CONTAINERS (MXC)',size=12,color=CY,font=HF,bold=True,ls=0.9,cy=280000)
-tb(s,x,1300000,cx,'Guardrails with\nSandboxing',size=45,color=INK,font=HF,bold=True,cy=1460000)
-tb(s,x,2880000,cx,'Keeping AI agents inside safe boundaries: isolating execution and controlling access to files, network and credentials on Windows',size=17,color=MUTED,cy=1300000)
-tb(s,x,4360000,cx,'Yingting Huang  |  Sr. Cloud Solution Architect, Microsoft',size=15,color=INK,bold=True,cy=420000)
+rect(s,x,480000,560000,40000,fill=CY,preset='roundRect')
+tb(s,x,590000,cx,'MICROSOFT EXECUTION CONTAINERS (MXC)',size=12,color=CY,font=HF,bold=True,ls=0.9,cy=260000)
+tb(s,x,920000,cx,'Guardrails with\nSandboxing',size=44,color=INK,font=HF,bold=True,cy=1380000)
+tb(s,x,2400000,cx,'Keeping AI agents inside safe boundaries: isolating execution and controlling access to files, network and credentials on Windows',size=16.2,color=MUTED,cy=1100000)
+tb(s,x,3620000,cx,'Yingting Huang  |  Sr. Cloud Solution Architect, Microsoft',size=15,color=INK,bold=True,cy=360000)
 footer(s,'',1)
 note(s,'大家好，欢迎来到今天的分享。这两年大家都在做 Agent，你会发现它的角色已经变了——以前大模型只是陪你聊天、写段代码让你自己复制粘贴；现在的 Agent 是真正在你的电脑或服务器上干活，自己读文件、跑命令、调接口。\n能力变强之后，安全问题也跟着变了：万一它理解错了意图，或者读到了别人埋了坑的文档，怎么保证它不会把系统搞乱、把密钥传出去？今天我们就来聊微软开源的沙箱执行层 MXC，看看怎么在放手让 Agent 干活的同时，在操作系统这一层把安全边界牢牢守住。')
 
@@ -894,7 +894,33 @@ def add_appear_animation(sl,item_shapes):
     )
     sl._element.insert_element_before(timing,'p:extLst')
 
-def build(out,img_dir):
+def add_pages_qr(sl, pages_url):
+    clean = (pages_url or '').strip()
+    if not clean:
+        return
+    import io, re, qrcode
+    display = re.sub(r'^https?://', '', clean).rstrip('/')
+    card = sl.shapes.add_shape(PRESETS['roundRect'], Emu(740000), Emu(4190000), Emu(4720000), Emu(1930000))
+    card.shadow.inherit = False
+    card.fill.solid(); card.fill.fore_color.rgb = rgb(CODEBG)
+    card.line.color.rgb = rgb(EDGE); card.line.width = Emu(12700)
+    pad = sl.shapes.add_shape(PRESETS['roundRect'], Emu(860000), Emu(4310000), Emu(1690000), Emu(1690000))
+    pad.shadow.inherit = False
+    pad.fill.solid(); pad.fill.fore_color.rgb = rgb('FFFFFF')
+    pad.line.color.rgb = rgb(EDGE); pad.line.width = Emu(9525)
+    qr = qrcode.QRCode(version=None, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=12, border=2)
+    qr.add_data(clean); qr.make(fit=True)
+    img_buf = io.BytesIO()
+    qr.make_image(fill_color='#' + INK, back_color='#FFFFFF').save(img_buf, format='PNG')
+    img_buf.seek(0)
+    sl.shapes.add_picture(img_buf, Emu(875000), Emu(4325000), Emu(1660000), Emu(1660000))
+    cap = sl.shapes.add_textbox(Emu(2710000), Emu(4780000), Emu(2640000), Emu(280000))
+    write_text(cap.text_frame, {'text': 'SCAN FOR LIVE SLIDES & DEMO', 'size': 8.5, 'bold': True, 'color': CY, 'font': BF})
+    url_tb = sl.shapes.add_textbox(Emu(2710000), Emu(5060000), Emu(2640000), Emu(380000))
+    write_text(url_tb.text_frame, {'text': display, 'size': 11, 'bold': True, 'color': INK, 'font': MF})
+    url_tb.text_frame.paragraphs[0].runs[0].hyperlink.address = clean
+
+def build(out,img_dir,pages_url=None):
     validate_layout()
     out_dir=os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir,exist_ok=True)
@@ -919,6 +945,8 @@ def build(out,img_dir):
                 if o.get('rot'): sh.rotation=o['rot']/60000
                 if 'text' in o: write_text(sh.text_frame,o)
                 rendered.append(sh)
+        if k==0 and pages_url:
+            add_pages_qr(sl, pages_url)
         if k==5:
             add_appear_animation(sl,[rendered[start:start+6] for start in (2,8,14)])
         elif k==7:
@@ -932,4 +960,5 @@ if __name__=='__main__':
     ap=argparse.ArgumentParser()
     ap.add_argument('--out',default=os.path.join(root,'dist','pptx','Guardrails with Sandboxing - MXC.pptx'))
     ap.add_argument('--images',default=os.path.join(here,'assets','images'))
-    a=ap.parse_args(); build(a.out,a.images)
+    ap.add_argument('--pages-url',default=os.environ.get('PAGES_URL'))
+    a=ap.parse_args(); build(a.out,a.images,pages_url=a.pages_url)

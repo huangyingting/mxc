@@ -44,8 +44,8 @@ def resolve_pages_url(explicit_url: str | None = None) -> str | None:
     return raw
 
 
-def build_presentation() -> None:
-    build_pptx.build(str(PPTX_OUT), str(IMAGES))
+def build_presentation(pages_url: str | None = None) -> None:
+    build_pptx.build(str(PPTX_OUT), str(IMAGES), pages_url=resolve_pages_url(pages_url))
 
 
 def build_site(pages_url: str | None = None) -> None:
@@ -88,7 +88,7 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.target in ("all", "presentation", "pptx"):
-        build_presentation()
+        build_presentation(args.pages_url)
     if args.target in ("all", "presentation", "html"):
         build_site(args.pages_url)
     if args.target in ("all", "demo"):

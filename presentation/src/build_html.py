@@ -124,13 +124,13 @@ def reveal_attrs(slide_index, operation_index):
         return 'a reveal', f' data-reveal="{item}"'
     return 'a', ''
 
-def qr_badge_html(pages_url, left_px=77.7, top_px=520.0):
+def qr_badge_html(pages_url, left_px=77.7, top_px=440.0):
     clean_url = pages_url.strip()
     if not clean_url:
         return ''
     qr = qrcode.QRCode(
         version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
         box_size=1,
         border=2,
     )
@@ -216,7 +216,7 @@ def slide_html(k, ops, img_dir, maxw, pages_url=None):
             f'<span class="pulse-dot" aria-hidden="true"></span><span>{e(label)}</span>'
             f'<span class="trigger-arrow" aria-hidden="true">↗</span></button>'
         )
-    qr_html = qr_badge_html(pages_url, left_px=77.7, top_px=520.0) if (k == 0 and pages_url) else ''
+    qr_html = qr_badge_html(pages_url, left_px=77.7, top_px=440.0) if (k == 0 and pages_url) else ''
     return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="Slide {k+1}">{"".join(parts)}{qr_html}{action}</section>'
 
 PRESENTER_UI = """
@@ -383,12 +383,12 @@ img.a{object-fit:cover}
 .page-num{z-index:6}.page-num>.t{padding:2px 8px;align-items:flex-end}.page-num>.t>p{background:rgba(243,238,228,.82);padding:2px 7px;border-radius:999px}
 .ref-link{color:inherit;text-decoration:underline;text-decoration-color:rgba(63,96,126,.42);text-underline-offset:3px;transition:color .14s ease,text-decoration-color .14s ease}
 .ref-link:hover{color:#1f384e;text-decoration-color:currentColor}
-.pages-qr-card{display:inline-flex;align-items:center;gap:14px;padding:10px 18px 10px 10px;border-radius:14px;background:rgba(251,248,242,.92);border:1px solid var(--edge);box-shadow:0 10px 26px rgba(35,30,22,.07);text-decoration:none;color:var(--ink);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;z-index:5}
-.pages-qr-card:hover{transform:translateY(-1px);border-color:var(--accent);box-shadow:0 14px 30px rgba(35,30,22,.11)}
-.pages-qr-svg{width:88px;height:88px;border-radius:8px;border:1px solid rgba(201,192,174,.65);flex-shrink:0;display:block;background:#fff}
-.pages-qr-meta{display:flex;flex-direction:column;gap:5px;min-width:0}
-.pages-qr-kicker{font:700 10.5px/1.1 var(--font-mono);letter-spacing:.08em;color:var(--accent)}
-.pages-qr-url{font:600 13.5px/1.25 var(--font-mono);color:var(--ink);word-break:break-all}
+.pages-qr-card{display:inline-flex;align-items:center;gap:18px;padding:12px 22px 12px 12px;border-radius:16px;background:rgba(251,248,242,.95);border:1.5px solid var(--edge);box-shadow:0 12px 32px rgba(35,30,22,.09);text-decoration:none;color:var(--ink);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;z-index:5}
+.pages-qr-card:hover{transform:translateY(-1px);border-color:var(--accent);box-shadow:0 16px 36px rgba(35,30,22,.13)}
+.pages-qr-svg{width:176px;height:176px;border-radius:10px;border:1px solid rgba(201,192,174,.75);flex-shrink:0;display:block;background:#fff}
+.pages-qr-meta{display:flex;flex-direction:column;gap:7px;min-width:0;max-width:280px}
+.pages-qr-kicker{font:700 11.5px/1.2 var(--font-mono);letter-spacing:.07em;color:var(--accent)}
+.pages-qr-url{font:700 15.5px/1.3 var(--font-mono);color:var(--ink);word-break:break-all}
 
 #deck-progress{position:fixed;left:0;top:0;height:3px;width:0;z-index:40;background:linear-gradient(90deg,var(--accent),#5d8aa8);transition:width .25s ease;pointer-events:none}
 
