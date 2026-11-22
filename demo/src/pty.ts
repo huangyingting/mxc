@@ -12,6 +12,7 @@ import {
   stopContainer,
   type ContainerId,
 } from "@microsoft/mxc-sdk/v1";
+import { fmt } from "./demo-format.js";
 
 const interactive = process.argv.includes("--interactive");
 const ptyShell = process.env.MXC_PTY_COMMAND
@@ -42,6 +43,13 @@ async function main(): Promise<void> {
   let stdinWasRaw = false;
 
   try {
+    fmt.policy('containment="isolation_session"  (stateful Windows operator session)', [
+      'network    : egress="allow", ingress="allow", hostLoopback="allow" (required by session backend)',
+      "filesystem : separate local Windows user SID + ephemeral shared workspace",
+      "ui         : isolated session desktop & clipboard; SendInput blocked",
+    ]);
+    fmt.run("provisionContainer({ containment: 'isolation_session' }) -> spawnInContainerWithPty()");
+
     const provisioned = await provisionContainer({
       containment: "isolation_session",
       appId: "MxcLearningKit.PtyDemo",
@@ -65,10 +73,7 @@ async function main(): Promise<void> {
         path.join(workspace, "incident-approval.json"),
       ),
     ]);
-    console.log(
-      "PTY incident staged: INC-1042, read-only diagnostics, "
-      + "operator approval attached",
-    );
+    fmt.log("Staged INC-1042 & read-only approval into shared workspace");
 
     await startContainer(containerId);
     started = true;
@@ -84,10 +89,7 @@ async function main(): Promise<void> {
       { size: { rows: 30, columns: 120 } },
     );
 
-    console.log(
-      `PTY connected to isolated session: ${ptyShell}; `
-      + `terminal=${120}x${30}`,
-    );
+    fmt.pass(`Connected 120x30 PowerShell PTY to isolated operator ${provisioned.metadata?.agentUserName ?? "session"}`);
 
     if (interactive) {
       console.log(
@@ -110,6 +112,7 @@ async function main(): Promise<void> {
         );
       }
     } else {
+      const hostProfile = os.homedir();
       let transcript = "";
       const outputEnded = once(terminal.output, "end");
       terminal.output.on("data", (chunk) => {
@@ -123,6 +126,8 @@ async function main(): Promise<void> {
         + "if ($approval.ticket -ne $request.ticket -or "
         + "$approval.scope -ne 'read-only-diagnostics') "
         + "{ Write-Error 'Approval mismatch'; exit 2 }\r\n"
+        + `try { Get-ChildItem -LiteralPath '${hostProfile.replace(/'/g, "''")}' -ErrorAction Stop | Out-Null; Write-Output 'HOST_PROFILE=EXPOSED' } catch { Write-Output ('HOST_PROFILE_BLOCKED=' + $_.Exception.Message) }\r\n`
+        + "try { Stop-Service -Name Spooler -ErrorAction Stop; Write-Output 'STOP_SPOOLER=ALLOWED' } catch { Write-Output ('STOP_SPOOLER_BLOCKED=' + $_.Exception.Message) }\r\n"
         + "$serviceLines = @($request.serviceNames | ForEach-Object { "
         + "$service = Get-Service -Name $_; "
         + "'service=' + $service.Name + ',status=' + $service.Status })\r\n"
@@ -164,7 +169,9 @@ async function main(): Promise<void> {
       ) {
         throw new Error("The PTY incident evidence is incomplete.");
       }
-      console.log("PTY evidence verified by the trusted host");
+      fmt.blocked("Cross-user host profile read & service Stop-Service were both denied by Windows ACLs");
+      fmt.pass("Host verified triage-evidence.txt (INC-1042, read-only diagnostics)");
+      fmt.why("Separate Windows operator user keeps shell state for triage while protecting the employee profile and service config.");
     }
   } catch (error) {
     operationError = error;

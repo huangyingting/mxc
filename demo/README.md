@@ -1,6 +1,11 @@
 # Real MXC SDK demos
 
-这组 Demo 直接调用官方 `@microsoft/mxc-sdk/v1`，每个 Demo 都对应一个明确的 MXC 能力和可验证结果，不提供普通进程回退。
+这组 Demo 直接调用官方 `@microsoft/mxc-sdk/v1`，每个步骤都按统一结构清晰输出四部分信息（命令行 TTY 与网页 Studio 均以语义颜色区分）：
+
+- **`[POLICY]`（蓝色）**：当前步骤生效的 MXC 隔离策略（右侧面板同步显示完整 JSON）。
+- **`[RUN]`（琥珀色）**：在沙箱内实际执行的命令，以及普通标准输出日志（中性浅灰）。
+- **`✓ PASS`（绿色） / `✕ BLOCKED`（红色）**：命令真实退出码（如 `exit code 0` 成功，或被操作系统内核/虚拟化边界阻断返回 `exit code 1` / `exit code 7` / `Errno 13` / `Access denied`）。
+- **`Why:`（暖黄说明）**：用一句话解释为什么当前策略放行或拦截了该命令。
 
 ## 1. Demo 1 · ProcessContainer：文件与网络护栏
 

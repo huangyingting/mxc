@@ -10,7 +10,7 @@
     "pty": {
       "1": [
         {
-          "delayMs": 9,
+          "delayMs": 7,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -22,9 +22,9 @@
           "event": {
             "kind": "phase",
             "name": "provisioned",
-            "user": "G6-A5",
-            "workspace": "C:\\Users\\G6-A5\\Shared",
-            "text": "PTY incident staged: INC-1042, read-only diagnostics, operator approval attached\nPTY connected to isolated session: powershell.exe -NoLogo -NoProfile; terminal=120x30\n"
+            "user": "S8-F5",
+            "workspace": "C:\\Users\\S8-F5\\Shared",
+            "text": "[POLICY] containment=\"isolation_session\"  (stateful Windows session)\n  network    : egress=\"allow\", ingress=\"allow\", hostLoopback=\"allow\"\n  isolation  : separate local Windows account + OS Session + isolated desktop (SendInput blocked)\n[RUN] provisionContainer({ containment: \"isolation_session\" }) -> spawnInContainerWithPty()\n  staged: incident-request.json & incident-approval.json -> C:\\Users\\S8-F5\\Shared\n✓ PASS — Provisioned isolated Windows operator \"S8-F5\" & opened 120x30 PowerShell PTY\nWhy: Stateful triage runs in its own Windows login instead of sharing the employee's desktop session.\n"
           }
         },
         {
@@ -38,11 +38,11 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "PS C:\\Users\\G6-A5\\Shared> "
+            "text": "PS C:\\Users\\S8-F5\\Shared> "
           }
         },
         {
-          "delayMs": 1,
+          "delayMs": 2,
           "event": {
             "kind": "step-done",
             "demo": "pty",
@@ -53,7 +53,7 @@
       ],
       "2": [
         {
-          "delayMs": 1,
+          "delayMs": 2,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -61,36 +61,29 @@
           }
         },
         {
-          "delayMs": 1,
+          "delayMs": 0,
           "event": {
             "kind": "output",
-            "text": "Write-Output (\"__WEB_IDENTITY_\" + \"VAL__=$env:USERNAME|$((Get-Process -Id $PID).SessionId)\")\n"
+            "text": "[POLICY] Windows user SID boundary (Operator account vs. Host \"employee-desktop\")\n[RUN] Check $env:USERNAME / SessionId, then try Get-ChildItem \"C:\\Users\\employee-desktop\"\n"
           }
         },
         {
-          "delayMs": 140,
+          "delayMs": 107,
           "event": {
-            "kind": "output",
-            "text": "__WEB_IDENTITY_VAL__=G6-A5|7"
+            "kind": "identity",
+            "user": "S8-F5",
+            "sessionId": "11"
           }
         },
         {
           "delayMs": 0,
           "event": {
-            "kind": "identity",
-            "user": "G6-A5",
-            "sessionId": "7"
-          }
-        },
-        {
-          "delayMs": 20,
-          "event": {
             "kind": "output",
-            "text": "\nPS C:\\Users\\G6-A5\\Shared> "
+            "text": "  operator=\"S8-F5\" (Session 11)  vs.  host=\"employee-desktop\" (Session 1)\n  stderr (OS): 对路径“C:\\Users\\employee-desktop”的访问被拒绝。\n✓ PASS — Verified separate Windows account (S8-F5, Session 11)\n✕ BLOCKED — Reading host profile \"C:\\Users\\employee-desktop\" failed (Access denied)\nWhy: Windows NTFS user ACLs block the isolated operator from reading the employee's profile.\n"
           }
         },
         {
-          "delayMs": 25,
+          "delayMs": 122,
           "event": {
             "kind": "step-done",
             "demo": "pty",
@@ -101,7 +94,7 @@
       ],
       "3": [
         {
-          "delayMs": 1,
+          "delayMs": 2,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -109,21 +102,14 @@
           }
         },
         {
-          "delayMs": 1,
+          "delayMs": 0,
           "event": {
             "kind": "output",
-            "text": "$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; $approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; Write-Output (\"__WEB_APPROVAL_\" + \"VAL__=$($request.ticket)|$($approval.scope)\")\n"
+            "text": "[POLICY] Shared handoff workspace (C:\\Users\\S8-F5\\Shared) · scope=\"read-only-diagnostics\"\n[RUN] Get-Content .\\incident-request.json, .\\incident-approval.json\n"
           }
         },
         {
-          "delayMs": 101,
-          "event": {
-            "kind": "output",
-            "text": "__WEB_APPROVAL_VAL__=INC-1042|read-only-diagnostics"
-          }
-        },
-        {
-          "delayMs": 1,
+          "delayMs": 44,
           "event": {
             "kind": "approval",
             "ticket": "INC-1042",
@@ -131,14 +117,14 @@
           }
         },
         {
-          "delayMs": 23,
+          "delayMs": 0,
           "event": {
             "kind": "output",
-            "text": "\nPS C:\\Users\\G6-A5\\Shared> "
+            "text": "  ticket=INC-1042 · scope=read-only-diagnostics · approvedBy=on-call-operator\n✓ PASS — Staged ticket & read-only approval loaded inside persistent PTY\nWhy: Host stages only the specific files needed for this task into the ephemeral workspace.\n"
           }
         },
         {
-          "delayMs": 25,
+          "delayMs": 134,
           "event": {
             "kind": "step-done",
             "demo": "pty",
@@ -157,21 +143,14 @@
           }
         },
         {
-          "delayMs": 1,
+          "delayMs": 0,
           "event": {
             "kind": "output",
-            "text": "$spooler=Get-Service Spooler;$time=Get-Service W32Time; Write-Output (\"__WEB_SERVICES_\" + \"VAL__=$($spooler.Status)|$($time.Status)\")\n"
+            "text": "[POLICY] Standard non-admin operator token (read service health OK; service mutation denied)\n[RUN] Get-Service Spooler, W32Time  &&  Stop-Service Spooler\n"
           }
         },
         {
-          "delayMs": 138,
-          "event": {
-            "kind": "output",
-            "text": "__WEB_SERVICES_VAL__=Running|Stopped"
-          }
-        },
-        {
-          "delayMs": 1,
+          "delayMs": 40,
           "event": {
             "kind": "services",
             "spooler": "Running",
@@ -179,14 +158,14 @@
           }
         },
         {
-          "delayMs": 17,
+          "delayMs": 0,
           "event": {
             "kind": "output",
-            "text": "\nPS C:\\Users\\G6-A5\\Shared> "
+            "text": "  stdout: Spooler=Running, W32Time=Stopped\n  stderr (OS): 由于以下错误无法停止服务“Print Spooler (Spooler)”: 无法打开计算机“.”上的 Spooler 服务。\n✓ PASS — Inspected live Windows services (Spooler=Running, W32Time=Stopped)\n✕ BLOCKED — Stop-Service Spooler rejected by Windows service manager\nWhy: Non-elevated operator account can diagnose live services without permission to stop or reconfigure them.\n"
           }
         },
         {
-          "delayMs": 25,
+          "delayMs": 123,
           "event": {
             "kind": "step-done",
             "demo": "pty",
@@ -197,7 +176,7 @@
       ],
       "5": [
         {
-          "delayMs": 2,
+          "delayMs": 1,
           "event": {
             "kind": "step-start",
             "demo": "pty",
@@ -205,25 +184,25 @@
           }
         },
         {
-          "delayMs": 2,
+          "delayMs": 0,
           "event": {
             "kind": "output",
-            "text": "$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; $approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; $spooler=Get-Service Spooler;$time=Get-Service W32Time; $evidence=@(\"ticket=$($request.ticket)\",\"scope=$($approval.scope)\",\"operator=$env:USERNAME\",\"session_id=$([Diagnostics.Process]::GetCurrentProcess().SessionId)\",\"service=Spooler,status=$($spooler.Status)\",\"service=W32Time,status=$($time.Status)\"); $evidence | Set-Content .\\triage-evidence.txt -Encoding utf8; Write-Output (\"__WEB_EVIDENCE_\" + \"VAL__=written\")\n"
+            "text": "[POLICY] Host-side output verification before consuming sandbox artifacts\n[RUN] Set-Content .\\triage-evidence.txt  ->  Host schema & ticket check\n"
           }
         },
         {
-          "delayMs": 129,
-          "event": {
-            "kind": "output",
-            "text": "__WEB_EVIDENCE_VAL__=written\nPS C:\\Users\\G6-A5\\Shared> "
-          }
-        },
-        {
-          "delayMs": 22,
+          "delayMs": 140,
           "event": {
             "kind": "evidence",
             "verified": true,
-            "content": "ticket=INC-1042\r\nscope=read-only-diagnostics\r\noperator=G6-A5\r\nsession_id=7\r\nservice=Spooler,status=Running\r\nservice=W32Time,status=Stopped"
+            "content": "ticket=INC-1042\r\nscope=read-only-diagnostics\r\noperator=S8-F5\r\nsession_id=11\r\nservice=Spooler,status=Running\r\nservice=W32Time,status=Stopped"
+          }
+        },
+        {
+          "delayMs": 0,
+          "event": {
+            "kind": "output",
+            "text": "  artifact: ticket=INC-1042 | scope=read-only-diagnostics | operator=S8-F5 | session_id=11 | service=Spooler,status=Running | service=W32Time,status=Stopped\n✓ PASS — Host independently validated triage-evidence.txt (INC-1042)\nWhy: Containment isn't trust — the host always validates sandbox output before acting on it.\n"
           }
         },
         {
@@ -249,14 +228,14 @@
           "delayMs": 0,
           "event": {
             "kind": "output",
-            "text": "exit\n"
+            "text": "[POLICY] Lifecycle teardown: stopContainer(id) + deprovisionContainer(id)\n[RUN] exit  ->  stop session  ->  delete temporary Windows operator account\n"
           }
         },
         {
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "\nPTY session stopped\nPTY session deprovisioned\n"
+            "text": "✓ PASS — PTY closed, Windows session stopped, and temporary operator account deleted\nWhy: Always deprovision stateful containers so temporary accounts and workspaces never linger.\nPS session closed.\n"
           }
         },
         {
@@ -273,7 +252,7 @@
     "process": {
       "1": [
         {
-          "delayMs": 22,
+          "delayMs": 9,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -284,11 +263,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\nSTEP 1 COMPLETE: platform and ProcessContainer policy discovered\n"
+            "text": "[POLICY] containment=\"processcontainer\"  (demo/config/policy.json)\n  readonlyPaths : [\"input\"]\n  readwritePaths: [\"output\"]\n  deniedPaths   : [\"protected/denied.txt\"]\n  network       : egress=\"deny\", hostLoopback=\"deny\"\n[RUN] getPlatformSupport() + probe(ContainerRequest)\n"
           }
         },
         {
-          "delayMs": 18,
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "  Host backends: processcontainer, isolation_session, hyperlight, wslc\n  Enforced ProcessContainer tier: base-container\n✓ PASS — Native ProcessContainer verified (tier: base-container, zero unsandboxed fallback)\nWhy: Always probe host capabilities before running untrusted agent commands.\nSTEP 1 COMPLETE\n"
+          }
+        },
+        {
+          "delayMs": 10,
           "event": {
             "kind": "step-done",
             "demo": "process",
@@ -299,7 +285,7 @@
       ],
       "2": [
         {
-          "delayMs": 15,
+          "delayMs": 9,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -310,18 +296,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\n"
+            "text": "[POLICY] containment=\"processcontainer\"  (demo/config/policy.json)\n  readonlyPaths : [\"input\"]\n  readwritePaths: [\"output\"]\n  deniedPaths   : [\"protected/denied.txt\"]\n  network       : egress=\"deny\", hostLoopback=\"deny\"\n[RUN] cmd.exe /c type input\\request.txt > output\\report.txt\n"
           }
         },
         {
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "ALLOW: input read and output write succeeded\nSTEP 2 COMPLETE: report written to C:\\mxc\\demo\\output\\report.txt\n"
+            "text": "  stdout: Summarize the approved input without accessing other files.\n  stdout: Result: access-controlled write\n✓ PASS — Command succeeded (exit code 0) — read input\\request.txt & wrote output\\report.txt\nWhy: input/ is granted in readonlyPaths and output/ is granted in readwritePaths.\nSTEP 2 COMPLETE\n"
           }
         },
         {
-          "delayMs": 12,
+          "delayMs": 11,
           "event": {
             "kind": "step-done",
             "demo": "process",
@@ -332,7 +318,7 @@
       ],
       "3": [
         {
-          "delayMs": 16,
+          "delayMs": 8,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -343,18 +329,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\n"
+            "text": "[POLICY] containment=\"processcontainer\"  (demo/config/policy.json)\n  readonlyPaths : [\"input\"]\n  readwritePaths: [\"output\"]\n  deniedPaths   : [\"protected/denied.txt\"]\n  network       : egress=\"deny\", hostLoopback=\"deny\"\n[RUN] cmd.exe /c type protected\\denied.txt\n"
           }
         },
         {
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "DENY: protected file remained inaccessible \nSTEP 3 COMPLETE: protected host file remained inaccessible\n"
+            "text": "  stderr (OS): Access is denied. (Windows kernel ACL deny)\n✕ BLOCKED — Command failed (exit code 1) — OS blocked reading protected\\denied.txt\nWhy: deniedPaths: [\"protected/denied.txt\"] applied a kernel deny ACL, overriding the host user's own file access.\nSTEP 3 COMPLETE\n"
           }
         },
         {
-          "delayMs": 15,
+          "delayMs": 12,
           "event": {
             "kind": "step-done",
             "demo": "process",
@@ -365,7 +351,7 @@
       ],
       "4": [
         {
-          "delayMs": 19,
+          "delayMs": 10,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -376,18 +362,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\n"
+            "text": "[POLICY] containment=\"processcontainer\"  (network guardrail)\n  network.egress.default       : \"deny\"   (outbound internet blocked)\n  network.ingress.hostLoopback : \"allow\"  (local proxy/listener permitted)\n[RUN] curl.exe -sS --noproxy \"*\" --max-time 5 \"http://127.0.0.1:52820\"\n"
           }
         },
         {
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "ALLOW: approved loopback endpoint reached \nSTEP 4 COMPLETE: host loopback allow\n"
+            "text": "  stdout: HTTP 200 \"MXC_LOOPBACK_OK\" from http://127.0.0.1:52820\n✓ PASS — Command succeeded (exit code 0) — reached approved local listener http://127.0.0.1:52820\nWhy: hostLoopback: \"allow\" lets the sandbox talk to a trusted local proxy/broker while internet egress stays denied.\nSTEP 4 COMPLETE\n"
           }
         },
         {
-          "delayMs": 14,
+          "delayMs": 13,
           "event": {
             "kind": "step-done",
             "demo": "process",
@@ -398,7 +384,7 @@
       ],
       "5": [
         {
-          "delayMs": 18,
+          "delayMs": 8,
           "event": {
             "kind": "step-start",
             "demo": "process",
@@ -409,14 +395,14 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\nMXC ProcessContainer tier: base-container\n"
+            "text": "[POLICY] containment=\"processcontainer\"  (network guardrail)\n  network.egress.default       : \"deny\"   (outbound internet blocked)\n  network.ingress.hostLoopback : \"deny\"  (all local ports blocked)\n[RUN] curl.exe -sS --noproxy \"*\" --max-time 2 \"http://127.0.0.1:52825\"\n"
           }
         },
         {
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "DENY: host loopback remained blocked \nSTEP 5 COMPLETE: host loopback deny\n"
+            "text": "  stderr (OS): curl: (7) Failed to connect to 127.0.0.1:52825 after 0 ms: Could not connect to server\n✕ BLOCKED — Command failed (exit code 7) — exact same curl command blocked from http://127.0.0.1:52825\nWhy: Changing only hostLoopback from \"allow\" to \"deny\" severed loopback access at the Windows network stack.\nSTEP 5 COMPLETE\n"
           }
         },
         {
@@ -433,7 +419,7 @@
     "microvm": {
       "1": [
         {
-          "delayMs": 22,
+          "delayMs": 9,
           "event": {
             "kind": "step-start",
             "demo": "microvm",
@@ -444,18 +430,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "MXC host backends: processcontainer, isolation_session, hyperlight, wslc\n"
+            "text": "[POLICY] version=\"1.1.0-alpha\" · containment=\"hyperlight\" (--experimental)\n  hyperlight.runtime : \"bash\" | \"python\" (Unikraft unikernel)\n  isolation          : Windows Hypervisor Platform hardware VM partition\n[RUN] wxc-exec --experimental --dry-run (validate contract & warm snapshots)\n  Host backends: processcontainer, isolation_session, hyperlight, wslc\n"
           }
         },
         {
-          "delayMs": 49,
+          "delayMs": 51,
           "event": {
             "kind": "output",
-            "text": "Hyperlight snapshots verified: bash (initrd+snapshot), python (initrd+snapshot)\nSnapshot cache ready (mxc-hyperlight)\nDry-run 1.1.0-alpha contract check: validation passed\nMICROVM STEP 1 COMPLETE: Hyperlight backend & warmed snapshots ready\n"
+            "text": "  Snapshots verified: bash + python in mxc-hyperlight\n✓ PASS — Hyperlight MicroVM backend & pre-warmed memory snapshots ready\nWhy: Pre-warmed snapshots give hardware VM isolation in ~90 ms instead of multi-second cold VM boot.\nMICROVM STEP 1 COMPLETE\n"
           }
         },
         {
-          "delayMs": 13,
+          "delayMs": 9,
           "event": {
             "kind": "step-done",
             "demo": "microvm",
@@ -466,7 +452,7 @@
       ],
       "2": [
         {
-          "delayMs": 18,
+          "delayMs": 9,
           "event": {
             "kind": "step-start",
             "demo": "microvm",
@@ -477,11 +463,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "HOST_OS=Windows_NT 10.0.26300 (x64)\nGUEST_KERNEL=Unikraft 5.15.148-Ijiraq\nGUEST_ARCH=x86_64\nGUEST_ID=root:0\nGUEST_ROOTFS=bin dev etc lib proc sbin sys tmp usr\nMICROVM_BOOT_MS=98\nMICROVM STEP 2 COMPLETE: hardware VM booted guest kernel in 98ms\n"
+            "text": "[POLICY] containment=\"hyperlight\" · hyperlight={ runtime: \"bash\" }\n  kernelSharing : none (dedicated Unikraft guest kernel on Hypervisor)\n[RUN] uname -sr && uname -m && id -un && ls /\n"
           }
         },
         {
-          "delayMs": 16,
+          "delayMs": 104,
+          "event": {
+            "kind": "output",
+            "text": "  HOST_OS=Windows_NT 10.0.26300 (x64)\n  GUEST_KERNEL=Unikraft 5.15.148-Ijiraq\n  GUEST_ARCH=x86_64\n  GUEST_ID=root:0\n  GUEST_ROOTFS=bin dev etc lib proc sbin sys tmp usr\nMICROVM_BOOT_MS=104\n✓ PASS — Command succeeded (104 ms) — running inside Unikraft 5.15 VM, not Windows NT\nWhy: Untrusted code executes on its own minimal unikernel inside a hardware-enforced partition.\nMICROVM STEP 2 COMPLETE\n"
+          }
+        },
+        {
+          "delayMs": 11,
           "event": {
             "kind": "step-done",
             "demo": "microvm",
@@ -492,7 +485,7 @@
       ],
       "3": [
         {
-          "delayMs": 21,
+          "delayMs": 7,
           "event": {
             "kind": "step-start",
             "demo": "microvm",
@@ -503,11 +496,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "GUEST_PYTHON=3.12.15\nEVAL_RESULT={\"approvedTotal\": 1865.5, \"flagged\": [\"INV-9042\"]}\nMICROVM STEP 3 COMPLETE: untrusted Python evaluated safely in 87ms\n"
+            "text": "[POLICY] containment=\"hyperlight\" · hyperlight={ runtime: \"python\", timeout: 30000 }\n  hostFilesystem : unmounted  |  guestNetwork : disabled\n[RUN] python -c \"<AI-generated invoice reconciliation script>\"\n"
           }
         },
         {
-          "delayMs": 13,
+          "delayMs": 95,
+          "event": {
+            "kind": "output",
+            "text": "  GUEST_PYTHON=3.12.15\n  EVAL_RESULT={\"approvedTotal\": 1865.5, \"flagged\": [\"INV-9042\"]}\n✓ PASS — Command succeeded (95 ms) — Python 3.12 reconciled invoices safely\nWhy: Pure compute runs at near-native speed via stdout JSON without needing any host disk or network.\nMICROVM STEP 3 COMPLETE\n"
+          }
+        },
+        {
+          "delayMs": 9,
           "event": {
             "kind": "step-done",
             "demo": "microvm",
@@ -518,7 +518,7 @@
       ],
       "4": [
         {
-          "delayMs": 12,
+          "delayMs": 8,
           "event": {
             "kind": "step-start",
             "demo": "microvm",
@@ -529,11 +529,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "HOST_FS=UNREACHABLE (0 host mounts)\nHOST_ENV=ISOLATED (0 host vars)\nGUEST_NET=BLOCKED (PermissionError: [Errno 13] Permission denied)\nMICROVM STEP 4 COMPLETE: host filesystem, env, and sockets unreachable from VM\n"
+            "text": "[POLICY] containment=\"hyperlight\" · zero-host-surface VM air gap\n  hostMounts : [] (none)  |  hostEnv : isolated  |  sockets : disabled\n[RUN] python -c \"open('C:/Windows/System32/drivers/etc/hosts'); os.environ['USERPROFILE']; socket.connect(('127.0.0.1',80))\"\n"
           }
         },
         {
-          "delayMs": 17,
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "  stderr (OS): ERR_FS=FileNotFoundError: [Errno 2] No such file or directory: 'C:/Windows/System32/drivers/etc/hosts'\n  stderr (OS): ERR_ENV=KeyError: 'USERPROFILE' not in guest env\n  stderr (OS): ERR_NET=PermissionError: [Errno 13] Permission denied\n✕ BLOCKED — All 3 escape attempts failed (FileNotFoundError, KeyError, PermissionError Errno 13)\nWhy: The MicroVM has no mounted host drives, no inherited host env vars, and no network stack.\nMICROVM STEP 4 COMPLETE\n"
+          }
+        },
+        {
+          "delayMs": 9,
           "event": {
             "kind": "step-done",
             "demo": "microvm",
@@ -544,7 +551,7 @@
       ],
       "5": [
         {
-          "delayMs": 13,
+          "delayMs": 8,
           "event": {
             "kind": "step-start",
             "demo": "microvm",
@@ -555,11 +562,18 @@
           "delayMs": 140,
           "event": {
             "kind": "output",
-            "text": "RUN_A_TMP_MARKER=True\nRUN_B_TMP_MARKER=False\nMICROVM STEP 5 COMPLETE: clean snapshot restored (83ms + 71ms, zero state residue)\n"
+            "text": "[POLICY] containment=\"hyperlight\" · ephemeral warm-snapshot restore\n  persistence : none (every invocation restores the clean memory snapshot)\n[RUN] Run A: write /tmp/agent-residue.txt  ->  Run B: open('/tmp/agent-residue.txt')\n"
           }
         },
         {
-          "delayMs": 15,
+          "delayMs": 140,
+          "event": {
+            "kind": "output",
+            "text": "  Run A (88 ms): RUN_A_WROTE_TMP=True\n  stderr (OS): Run B (85 ms): RUN_B_ERR=FileNotFoundError: [Errno 2] No such file or directory: '/tmp/agent-residue.txt'\n✕ BLOCKED — Run B could not read Run A's /tmp/agent-residue.txt (FileNotFoundError)\n✓ PASS — Snapshot wiped clean across runs (88 ms + 85 ms, zero state residue)\nWhy: Each call restores a fresh memory snapshot, so malware or temp files vanish immediately on exit.\nMICROVM STEP 5 COMPLETE\n"
+          }
+        },
+        {
+          "delayMs": 9,
           "event": {
             "kind": "step-done",
             "demo": "microvm",
@@ -579,17 +593,17 @@
       ],
       "events": [
         {
-          "delayMs": 7,
+          "delayMs": 6,
           "event": {
             "kind": "output",
             "text": "whoami\n"
           }
         },
         {
-          "delayMs": 73,
+          "delayMs": 44,
           "event": {
             "kind": "output",
-            "text": "WIN11-HOST\\g6-a5\nPS C:\\Users\\G6-A5\\Shared> "
+            "text": "WIN11-HOST\\s8-f5\nPS C:\\Users\\S8-F5\\Shared> "
           }
         }
       ]
@@ -607,7 +621,7 @@
           "delayMs": 2,
           "event": {
             "kind": "output",
-            "text": "pwd\n\nPath\n----\nC:\\Users\\G6-A5\\Shared\nPS C:\\Users\\G6-A5\\Shared> "
+            "text": "pwd\n\nPath\n----\nC:\\Users\\S8-F5\\Shared\nPS C:\\Users\\S8-F5\\Shared> "
           }
         }
       ]
@@ -624,17 +638,10 @@
       ],
       "events": [
         {
-          "delayMs": 3,
+          "delayMs": 1,
           "event": {
             "kind": "output",
-            "text": "Get-ChildItem -Name\n"
-          }
-        },
-        {
-          "delayMs": 38,
-          "event": {
-            "kind": "output",
-            "text": "incident-approval.json\nincident-request.json\ntriage-evidence.txt\nPS C:\\Users\\G6-A5\\Shared> "
+            "text": "Get-ChildItem -Name\nincident-approval.json\nincident-request.json\ntriage-evidence.txt\nPS C:\\Users\\S8-F5\\Shared> "
           }
         }
       ]
@@ -652,14 +659,7 @@
           "delayMs": 2,
           "event": {
             "kind": "output",
-            "text": "Get-Service Spooler, W32Time | Format-Table -AutoSize\n"
-          }
-        },
-        {
-          "delayMs": 64,
-          "event": {
-            "kind": "output",
-            "text": "\nStatus  Name    DisplayName  \n------  ----    -----------\nRunning Spooler Print Spooler\nStopped W32Time Windows Time\n\n\nPS C:\\Users\\G6-A5\\Shared> "
+            "text": "Get-Service Spooler, W32Time | Format-Table -AutoSize\n\nStatus  Name    DisplayName  \n------  ----    -----------\nRunning Spooler Print Spooler\nStopped W32Time Windows Time\n\n\nPS C:\\Users\\S8-F5\\Shared> "
           }
         }
       ]
@@ -678,17 +678,10 @@
       ],
       "events": [
         {
-          "delayMs": 2,
+          "delayMs": 3,
           "event": {
             "kind": "output",
-            "text": "Get-Content .\\triage-evidence.txt\n"
-          }
-        },
-        {
-          "delayMs": 46,
-          "event": {
-            "kind": "output",
-            "text": "ticket=INC-1042\nscope=read-only-diagnostics\noperator=G6-A5\nsession_id=7\nservice=Spooler,status=Running\nservice=W32Time,status=Stopped\nPS C:\\Users\\G6-A5\\Shared> "
+            "text": "Get-Content .\\triage-evidence.txt\nticket=INC-1042\nscope=read-only-diagnostics\noperator=S8-F5\nsession_id=11\nservice=Spooler,status=Running\nservice=W32Time,status=Stopped\nPS C:\\Users\\S8-F5\\Shared> "
           }
         }
       ]

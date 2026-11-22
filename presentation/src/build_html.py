@@ -239,6 +239,13 @@ LIVE_DEMO = """
         <div class="terminal-chrome">
           <div class="chrome-dots" aria-hidden="true"><span></span><span></span><span></span></div>
           <div class="chrome-title"><strong id="terminal-mode-title">ProcessContainer</strong><span id="terminal-mode-sub">base-container · one-shot policy</span></div>
+          <div class="term-legend" aria-label="Color legend">
+            <span class="lg-item lg-pol">Policy</span>
+            <span class="lg-item lg-run">Command</span>
+            <span class="lg-item lg-ok">✓ Pass</span>
+            <span class="lg-item lg-err">✕ Blocked</span>
+            <span class="lg-item lg-log">Log</span>
+          </div>
         </div>
         <pre class="studio-terminal" id="live-demo-output" role="log" aria-live="polite"></pre>
         <form class="terminal-composer" id="live-pty-form" hidden>
@@ -257,7 +264,8 @@ LIVE_DEMO = """
           <h3 id="explain-title">Runtime Discovery &amp; Probe</h3>
           <p class="explain-summary" id="explain-what"></p>
           <div class="explain-code-wrap">
-            <code id="explain-code"></code>
+            <div class="policy-kicker">ACTIVE MXC POLICY</div>
+            <pre id="explain-code"></pre>
           </div>
         </article>
 
@@ -392,7 +400,26 @@ img.a{object-fit:cover}
 .terminal-chrome{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#15212c;border-bottom:1px solid #233342;color:#b8cad8;font:500 11.5px var(--font-mono);min-width:0;flex-shrink:0}
 .chrome-dots{display:flex;gap:6px;flex-shrink:0}.chrome-dots span{width:9px;height:9px;border-radius:50%%;background:#3a4b59}.chrome-dots span:first-child{background:#d46a5e}.chrome-dots span:nth-child(2){background:#deb05b}.chrome-dots span:nth-child(3){background:#5fb384}
 .chrome-title{display:flex;align-items:baseline;gap:10px;min-width:0;flex:1;overflow:hidden}.chrome-title strong{color:#f2f7fb;font-weight:600;white-space:nowrap}.chrome-title span{color:#8fa4b5;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.studio-terminal{flex:1;min-height:0;overflow:auto;margin:0;padding:16px 18px;color:#e5eff7;font:450 12.5px/1.55 var(--font-mono);white-space:pre-wrap;word-break:break-word;scrollbar-color:#445a6c #0d151d}
+.term-legend{display:flex;align-items:center;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.lg-item{font:700 10px/1 var(--font-mono);padding:3px 7px;border-radius:999px;border:1px solid transparent}
+.lg-pol{color:#93c5fd;background:rgba(147,197,253,.12);border-color:rgba(147,197,253,.28)}
+.lg-run{color:#fcd34d;background:rgba(252,211,77,.12);border-color:rgba(252,211,77,.28)}
+.lg-ok{color:#4ade80;background:rgba(74,222,128,.13);border-color:rgba(74,222,128,.32)}
+.lg-err{color:#f87171;background:rgba(248,113,113,.14);border-color:rgba(248,113,113,.34)}
+.lg-log{color:#cbd5e1;background:rgba(203,213,225,.10);border-color:rgba(203,213,225,.22)}
+.studio-terminal{flex:1;min-height:0;overflow:auto;margin:0;padding:14px 16px;color:#cbd5e1;font:450 12.2px/1.55 var(--font-mono);white-space:pre-wrap;word-break:break-word;scrollbar-color:#445a6c #0d151d}
+.tl{display:block;padding:1px 6px;border-radius:4px}
+.tl-hint{color:#94a3b8;font-style:italic}
+.tl-step{color:#7cc4f8;font-weight:700;margin-top:10px;padding-top:7px;border-top:1px dashed rgba(124,196,248,.24)}
+.tl-step:first-child{margin-top:0;padding-top:1px;border-top:0}
+.tl-policy{color:#93c5fd;font-weight:700;margin-top:3px}
+.tl-policy-sub{color:#bfdbfe}
+.tl-run{color:#fcd34d;font-weight:700;margin-top:3px}
+.tl-pass{color:#4ade80;font-weight:700;background:rgba(34,197,94,.13);border-left:3px solid #22c55e;padding:4px 9px;margin:4px 0 2px;border-radius:0 6px 6px 0}
+.tl-fail{color:#f87171;font-weight:700;background:rgba(239,68,68,.15);border-left:3px solid #ef4444;padding:4px 9px;margin:4px 0 2px;border-radius:0 6px 6px 0}
+.tl-err{color:#fca5a5}
+.tl-why{color:#fde68a;padding-left:9px;margin-bottom:2px}
+.tl-log{color:#cbd5e1}
 .terminal-composer{display:flex;align-items:center;gap:8px;padding:8px 12px;background:#121d27;border-top:1px solid #223241;flex-shrink:0}
 .terminal-composer[hidden]{display:none!important}
 .composer-prompt{color:#7cc4f8;font:600 11.5px var(--font-mono);white-space:nowrap}
@@ -411,7 +438,8 @@ img.a{object-fit:cover}
 .narrative-card h3{font:700 19px/1.2 var(--font-display);color:var(--ink)}
 .explain-summary{color:var(--ink-soft);font-size:13.5px;line-height:1.5}
 .explain-code-wrap{background:var(--codebg);border:1px solid var(--edge);border-radius:9px;padding:9px 12px;margin-top:2px;min-width:0}
-.explain-code-wrap code{font:600 11.5px/1.38 var(--font-mono);color:var(--accent);white-space:normal;word-break:break-word;display:block}
+.policy-kicker{font:800 9.5px/1 var(--font-mono);letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.explain-code-wrap pre{margin:0;font:600 11.2px/1.42 var(--font-mono);color:var(--accent);white-space:pre-wrap;word-break:break-word}
 
 .compare-card{display:flex;flex-direction:column;gap:14px}
 .section-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;min-width:0}
@@ -517,56 +545,56 @@ var STEP_GUIDES={
  pty:[
   {label:'1 · Provision Session & Open PTY',boundary:'OS Session',title:'Provision Isolated Operator Session',
    what:'Creates a fresh local Windows operator account, stages ticket INC-1042 into the shared workspace, and opens a persistent PowerShell PTY.',
-   code:"provisionContainer({ containment: 'isolation_session' }) → spawnInContainerWithPty()"},
-  {label:'2 · Verify User & Session ID',boundary:'Identity Separation',title:'Prove Operator ≠ Host Employee',
-   what:'Queries $env:USERNAME and Windows SessionId inside the PTY—proving the agent cannot touch the employee desktop, clipboard, or profile.',
-   code:'$env:USERNAME · (Get-Process -Id $PID).SessionId'},
-  {label:'3 · Check Ticket & Scope',boundary:'Workspace Handoff',title:'Validate INC-1042 Read-Only Approval',
-   what:'Reads staged JSON files from the shared workspace and confirms read-only-diagnostics scope while keeping shell state alive.',
-   code:'Get-Content .\\\\incident-request.json, .\\\\incident-approval.json'},
-  {label:'4 · Diagnose Windows Services',boundary:'Stateful Triage',title:'Inspect Live Spooler & W32Time Health',
-   what:'Checks real Windows service status inside the ongoing PowerShell session without mutating machine configuration.',
-   code:'Get-Service Spooler, W32Time | Select-Object Name, Status'},
+   code:'{\\n  "containment": "isolation_session",\\n  "network": { "egress": "allow", "ingress": "allow" },\\n  "ui": "separate session desktop (SendInput blocked)"\\n}'},
+  {label:'2 · Verify User & Profile Block',boundary:'SID Isolation',title:'Operator Allowed vs. Employee Profile Blocked',
+   what:'Confirms separate Windows username/SessionId (PASS), then tries reading the host employee profile—blocked by Windows NTFS ACLs (BLOCKED).',
+   code:'{\\n  "containment": "isolation_session",\\n  "agentUser": "temporary local Windows SID",\\n  "hostProfileAccess": "denied by OS user ACL"\\n}'},
+  {label:'3 · Check Ticket & Scope',boundary:'Workspace Handoff',title:'Read Staged INC-1042 Approval',
+   what:'Reads staged JSON files from the shared handoff folder and confirms read-only-diagnostics scope while keeping shell state alive.',
+   code:'{\\n  "ephemeralWorkspace": ["incident-request.json", "incident-approval.json"],\\n  "scope": "read-only-diagnostics"\\n}'},
+  {label:'4 · Diagnose Services (Stop Blocked)',boundary:'Privilege Boundary',title:'Read Service Health (PASS) vs. Stop-Service (BLOCKED)',
+   what:'Reads live Spooler & W32Time status (PASS), then attempts Stop-Service Spooler—rejected by Windows service permissions (BLOCKED).',
+   code:'{\\n  "operatorPrivilege": "standard non-admin user",\\n  "Get-Service": "allowed",\\n  "Stop-Service": "denied by OS"\\n}'},
   {label:'5 · Write Host-Verified Evidence',boundary:'Output Validation',title:'Persist Audit Evidence & Verify on Host',
-   what:'Writes triage-evidence.txt in the workspace; the trusted Host independently validates ticket, operator, and service fields before accepting it.',
-   code:'Set-Content .\\\\triage-evidence.txt → Host verifies INC-1042'},
-  {label:'6 · Exit & Deprovision Account',boundary:'Clean Teardown',title:'Close PTY & Remove Temporary User',
+   what:'Writes triage-evidence.txt in the handoff folder; the trusted Host independently validates ticket, operator, and service fields.',
+   code:'{\\n  "handoffFile": "triage-evidence.txt",\\n  "hostValidation": ["ticket=INC-1042", "operator", "services"]\\n}'},
+  {label:'6 · Exit & Deprovision Account',boundary:'Clean Teardown',title:'Close PTY & Delete Temporary User',
    what:'Exits PowerShell, stops the isolated Windows session, and deletes the temporary OS operator account.',
-   code:'stopContainer(id) → deprovisionContainer(id)'}
+   code:'stopContainer(containerId)\\n→ deprovisionContainer(containerId)'}
  ],
  process:[
-  {label:'1 · Discover & Probe Tier',boundary:'Capability Probe',title:'Verify Native ProcessContainer Tier',
-   what:'Calls getPlatformSupport() and probe(request) to verify path deny rules and loopback controls are enforceable before running anything.',
-   code:'getPlatformSupport() + probe(request) → base-container'},
-  {label:'2 · Allowed File Read / Write',boundary:'Least Privilege',title:'Read Approved Input & Write Report',
-   what:'Grants read-only access to demo/input and write access only to demo/output; legitimate report generation succeeds.',
-   code:'filesystem: { readonlyPaths: ["input"], readwritePaths: ["output"] }'},
-  {label:'3 · Block Protected Secret',boundary:'Kernel ACL Deny',title:'Attempt to Read Secret File → Denied',
-   what:'Runs under the same policy while attempting to read demo/protected/denied.txt; the Windows kernel blocks access.',
-   code:'deniedPaths: ["protected/denied.txt"] → Access denied'},
-  {label:'4 · Allow Loopback Endpoint',boundary:'Network Allow Rule',title:'Reach Explicitly Permitted Endpoint',
-   what:'Connects to a local verification listener with hostLoopback: "allow" while outbound internet remains denied by default.',
-   code:'network: { egress: { default: "deny" }, ingress: { hostLoopback: "allow" } }'},
-  {label:'5 · Block Unapproved Network',boundary:'Default-Deny Leash',title:'Same Endpoint with Loopback Denied → Blocked',
-   what:'Switches hostLoopback to "deny" against the exact same listener; the OS network stack cuts off the connection immediately.',
-   code:'network: { egress: { default: "deny" }, ingress: { hostLoopback: "deny" } }'}
+  {label:'1 · Discover & Probe Policy',boundary:'Capability Probe',title:'Verify Native ProcessContainer Policy',
+   what:'Loads policy.json and runs getPlatformSupport() + probe(request) to confirm Windows kernel ACL and network filters are active.',
+   code:'{\\n  "containment": "processcontainer",\\n  "filesystem": {\\n    "readonlyPaths": ["input"],\\n    "readwritePaths": ["output"],\\n    "deniedPaths": ["protected/denied.txt"]\\n  }\\n}'},
+  {label:'2 · Allowed File Read / Write',boundary:'Least Privilege (PASS)',title:'Read input/ & Write output/report.txt → PASS',
+   what:'Runs cmd /c type input\\\\request.txt > output\\\\report.txt. Because both folders are granted in policy, the command succeeds (exit 0).',
+   code:'{\\n  "readonlyPaths": ["input"],\\n  "readwritePaths": ["output"],\\n  "deniedPaths": ["protected/denied.txt"]\\n}'},
+  {label:'3 · Block Protected Secret',boundary:'Kernel ACL (BLOCKED)',title:'Read protected/denied.txt → BLOCKED (exit 1)',
+   what:'Runs cmd /c type protected\\\\denied.txt under the exact same policy. Windows kernel ACL blocks the read with Access Denied (exit 1).',
+   code:'{\\n  "readonlyPaths": ["input"],\\n  "readwritePaths": ["output"],\\n  "deniedPaths": ["protected/denied.txt"]\\n}'},
+  {label:'4 · Allow Loopback Endpoint',boundary:'Loopback Allow (PASS)',title:'curl Local Listener with hostLoopback: "allow" → PASS',
+   what:'Sets hostLoopback: "allow" (while internet egress stays "deny"). curl reaches 127.0.0.1 and receives HTTP 200 (exit 0).',
+   code:'{\\n  "network": {\\n    "egress": { "default": "deny" },\\n    "ingress": { "hostLoopback": "allow" }\\n  }\\n}'},
+  {label:'5 · Block Unapproved Network',boundary:'Loopback Deny (BLOCKED)',title:'Same curl with hostLoopback: "deny" → BLOCKED (exit 7)',
+   what:'Flips only hostLoopback to "deny" and runs the exact same curl command—blocked immediately by the OS network stack (exit 7).',
+   code:'{\\n  "network": {\\n    "egress": { "default": "deny" },\\n    "ingress": { "hostLoopback": "deny" }\\n  }\\n}'}
  ],
  microvm:[
-  {label:'1 · Verify Warm Snapshots',boundary:'Experimental Opt-In',title:'Check Hyperlight & Warmed Snapshots',
-   what:'Verifies native hyperlight availability, pre-warmed Unikraft memory snapshots (bash + python), and 1.1.0-alpha policy validation.',
-   code:'wxc-exec --experimental --dry-run (containment: "hyperlight")'},
-  {label:'2 · Boot Unikraft Kernel',boundary:'Hardware Hypervisor',title:'Restore Separate Unikraft Kernel (<100 ms)',
+  {label:'1 · Verify Warm Snapshots',boundary:'Experimental Opt-In',title:'Validate 1.1.0-alpha Hyperlight Policy',
+   what:'Checks native hyperlight support and pre-warmed Unikraft unikernel memory snapshots (bash + python) for <100 ms restore.',
+   code:'{\\n  "version": "1.1.0-alpha",\\n  "containment": "hyperlight",\\n  "hyperlight": { "runtime": "bash | python" }\\n}'},
+  {label:'2 · Boot Unikraft Kernel',boundary:'Hardware Hypervisor',title:'Run uname Inside Unikraft VM → PASS',
    what:'Restores a hardware-virtualized Unikraft 5.15 x86_64 guest on Windows Hypervisor Platform—never sharing the Windows NT kernel.',
-   code:'containment: "hyperlight" → Unikraft 5.15.148-Ijiraq'},
-  {label:'3 · Run Untrusted Python',boundary:'Fast VM Compute',title:'Evaluate AI-Generated Python 3.12 Safely',
-   what:'Executes untrusted invoice-reconciliation Python inside the MicroVM in ~90 ms and returns structured JSON stdout to the host.',
-   code:'hyperlight: { runtime: "python" } → JSON stdout'},
-  {label:'4 · Block Host & Socket Escape',boundary:'Zero-Surface Air Gap',title:'Probe Host C:\\\\, Env & TCP → All Blocked',
-   what:'Adversarial Python finds zero host mounts, zero host environment variables, and no guest network stack (Errno 13 Permission denied).',
-   code:'HOST_FS=UNREACHABLE · HOST_ENV=ISOLATED · GUEST_NET=BLOCKED'},
+   code:'{\\n  "containment": "hyperlight",\\n  "hyperlight": { "runtime": "bash" },\\n  "process": { "commandLine": "uname -sr && ls /" }\\n}'},
+  {label:'3 · Run Untrusted Python',boundary:'Fast VM Compute',title:'Evaluate AI-Generated Python 3.12 → PASS',
+   what:'Executes untrusted invoice-reconciliation Python inside the isolated VM and returns structured JSON stdout to the host.',
+   code:'{\\n  "containment": "hyperlight",\\n  "hyperlight": { "runtime": "python" },\\n  "process": { "timeout": 30000 }\\n}'},
+  {label:'4 · Block Host & Socket Escape',boundary:'Zero-Surface Air Gap',title:'Probe Host C:\\\\, Env & TCP → ALL BLOCKED',
+   what:'Runs adversarial Python attempting to read C:\\\\Windows, USERPROFILE, and a TCP socket—all 3 fail with OS/Python exceptions.',
+   code:'{\\n  "containment": "hyperlight",\\n  "hostMounts": "none",\\n  "hostEnv": "isolated",\\n  "networkStack": "disabled (Errno 13)"\\n}'},
   {label:'5 · Verify Snapshot Reset',boundary:'Memory Wipe',title:'Write /tmp in Run A → Gone in Run B',
-   what:'Writes /tmp/agent-residue.txt in Run A, then restores Run B from the clean memory snapshot—zero state survives across runs.',
-   code:'Run A: /tmp marker=True → Run B: /tmp marker=False'}
+   what:'Run A writes /tmp/agent-residue.txt (PASS), then Run B tries to read it—FileNotFoundError (BLOCKED), proving instant memory reset.',
+   code:'{\\n  "containment": "hyperlight",\\n  "snapshotRestore": "clean memory image on every call"\\n}'}
  ]
 };
 
@@ -655,14 +683,16 @@ function setStepVal(val){
  }).join('');
 }
 
-function renderExplain(kind,step){
- var list=STEP_GUIDES[kind],idx=Math.max(0,Math.min(list.length-1,(Number(step)||1)-1)),g=list[idx];
- byId('explain-step-badge').textContent='STEP '+(idx+1)+' / '+list.length;
+function renderExplain(kind,step,keepExplicitRun){
+ var list=STEP_GUIDES[kind],idx=Math.max(0,Math.min(list.length-1,(Number(step)||1)-1)),cur=idx+1,g=list[idx];
+ byId('explain-step-badge').textContent='STEP '+cur+' / '+list.length;
  byId('explain-boundary-tag').textContent=g.boundary;
  byId('explain-title').textContent=g.title;
  byId('explain-what').textContent=g.what;
  byId('explain-code').textContent=g.code;
- byId('live-run-label').textContent='Run Step '+(idx+1);
+ var nextTarget=(!keepExplicitRun&&doneSet[kind][cur]&&cur<list.length)?cur+1:cur;
+ byId('live-demo-run').dataset.targetStep=String(nextTarget);
+ byId('live-run-label').textContent=(nextTarget!==cur)?('Next: Step '+nextTarget):('Run Step '+cur);
 }
 
 function syncComposerState(){
@@ -678,10 +708,10 @@ function syncComposerState(){
  }
 }
 
-function syncStepSelection(){
+function syncStepSelection(explicitPick){
  var kind=getKindVal(),step=getStepVal();
  setStepVal(step);
- renderExplain(kind,step);
+ renderExplain(kind,step,!!explicitPick);
 }
 
 function idleModeLabel(){return replayMode?'Replay · Win11':'Live · 127.0.0.1:8787';}
@@ -726,8 +756,34 @@ function updateLiveMode(){
  syncStepSelection();
 }
 
-function isLocalDemoHost(){return ['127.0.0.1','localhost'].includes(location.hostname)&&location.port==='8787';}
+function isLocalDemoHost(){return ['127.0.0.1','localhost'].includes(location.hostname)&&location.protocol.indexOf('http')===0;}
 var replayMode=!isLocalDemoHost(),replayTimers=[],autoPlaying=false,stepRunning=false,stepDoneWaiters=[],replayBannerShown=false;
+
+function escHtml(s){
+ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderTerminalHtml(text){
+ var lines=String(text||'').split('\\n'),inPolicy=false,html=[];
+ for(var idx=0;idx<lines.length;idx++){
+  var raw=lines[idx];
+  if(/^(?:MICROVM )?STEP \\d+ COMPLETE/.test(raw)||/^MICROVM_BOOT_MS=\\d+$/.test(raw))continue;
+  if(idx===lines.length-1&&raw==='')continue;
+  var safe=escHtml(raw),cls='tl-log';
+  if(/^# /.test(raw)){inPolicy=false;cls='tl-hint';}
+  else if(/^──▶/.test(raw)){inPolicy=false;cls='tl-step';}
+  else if(/^\\[POLICY\\]/.test(raw)){inPolicy=true;cls='tl-policy';}
+  else if(inPolicy&&/^  \\S/.test(raw)){cls='tl-policy-sub';}
+  else if(/^\\[RUN\\]/.test(raw)||/^PS [^>]+>/.test(raw)){inPolicy=false;cls='tl-run';}
+  else if(/^✓ PASS/.test(raw)){inPolicy=false;cls='tl-pass';}
+  else if(/^✕ BLOCKED/.test(raw)||/^\\[Error\\]/.test(raw)){inPolicy=false;cls='tl-fail';}
+  else if(/^  stderr \\(OS\\):/.test(raw)){inPolicy=false;cls='tl-err';}
+  else if(/^Why:/.test(raw)){inPolicy=false;cls='tl-why';}
+  else{inPolicy=false;}
+  html.push('<span class="tl '+cls+'">'+(safe||' ')+'</span>');
+ }
+ return html.join('');
+}
 
 function clearReplayTimers(){
  while(replayTimers.length)clearTimeout(replayTimers.pop());
@@ -747,17 +803,27 @@ function resolveStepWaiters(ok){
  while(stepDoneWaiters.length){var fn=stepDoneWaiters.shift();fn(ok);}
 }
 
-var rawLog='';
+var rawLog='',displayLog='';
+function flushTerminal(){
+ var out=byId('live-demo-output');
+ out.innerHTML=renderTerminalHtml(displayLog);
+ out.scrollTop=out.scrollHeight;
+}
+function appendTerminal(chunk){
+ displayLog+=chunk;
+ flushTerminal();
+}
+
 function resetLive(){
  stopAutoPlay();
  clearReplayTimers();
  resolveStepWaiters(false);
  ptyReady=false;
  replayBannerShown=false;
- rawLog='';
+ rawLog='';displayLog='';
  doneSet={pty:{},process:{},microvm:{}};
  liveNext={pty:1,process:1,microvm:1};
- byId('live-demo-output').textContent='';
+ byId('live-demo-output').innerHTML='';
  setControlsDisabled(false);
  setStatus(idleModeLabel());
  byId('live-demo').querySelectorAll('.ev-chip').forEach(function(x){x.classList.remove('on','denied');});
@@ -817,16 +883,15 @@ function formatDisplayChunk(text){
 }
 
 function applyDemoEvent(data){
- var out=byId('live-demo-output');
- if(replayBannerShown&&data.kind==='step-start'){out.textContent='';rawLog='';replayBannerShown=false;}
+ if(replayBannerShown&&data.kind==='step-start'){rawLog='';displayLog='';replayBannerShown=false;}
  if(data.kind==='phase'&&data.text){
   var ptxt=cleanLive(data.text);rawLog+=ptxt;
-  out.textContent+=formatDisplayChunk(ptxt);
+  appendTerminal(formatDisplayChunk(ptxt));
   if(data.user)byId('live-agent-user').textContent=data.user;
   ptyReady=true;syncComposerState();
  }else if(data.kind==='output'){
   var ctxt=cleanLive(data.text);rawLog+=ctxt;
-  out.textContent+=formatDisplayChunk(ctxt);out.scrollTop=out.scrollHeight;inspectLive(rawLog);
+  appendTerminal(formatDisplayChunk(ctxt));inspectLive(rawLog);
  }else if(data.kind==='identity'){
   byId('live-agent-user').textContent=data.user;byId('live-agent-session').textContent=data.sessionId;
  }else if(data.kind==='approval'){
@@ -840,23 +905,22 @@ function applyDemoEvent(data){
   stepRunning=true;
   setStatus('Running Step '+data.step+'…','running');
   setControlsDisabled(true);syncComposerState();
-  out.textContent+=(out.textContent?'\\n':'')+'──▶ [Step '+data.step+'] '+STEP_GUIDES[data.demo][data.step-1].label+'\\n';
-  out.scrollTop=out.scrollHeight;
+  appendTerminal((displayLog?'\\n':'')+'──▶ [Step '+data.step+'] '+STEP_GUIDES[data.demo][data.step-1].label+'\\n');
  }else if(data.kind==='step-done'){
   stepRunning=false;
   var demo=data.demo,step=Number(data.step),defs=STEP_GUIDES[demo];
   doneSet[demo][step]=true;
   if(demo==='pty'){if(step===1)ptyReady=true;if(step===6)ptyReady=false;}
   liveNext[demo]=step>=defs.length?1:step+1;
-  setStepVal(liveNext[demo]);
+  setStepVal(step);
   setStatus(step===defs.length?'All Verified ✓':'Step '+step+' ✓','ok');
   setControlsDisabled(false);
-  syncComposerState();syncStepSelection();
+  syncComposerState();syncStepSelection(false);
   resolveStepWaiters(true);
  }else if(data.kind==='step-error'){
   stepRunning=false;
   setStatus('Error','err');
-  out.textContent+='\\n[Error] '+data.error+'\\n';
+  appendTerminal('\\n[Error] '+data.error+'\\n');
   setControlsDisabled(false);
   syncComposerState();
   resolveStepWaiters(false);
@@ -870,10 +934,9 @@ function initReplayMode(){
   byId('live-host-session').textContent=window.RECORDED_DEMO.hostMeta.sessionId;
  }
  setStatus(idleModeLabel());
- var out=byId('live-demo-output');
- if(!out.textContent){
+ if(!displayLog){
   replayBannerShown=true;
-  out.textContent='# Click "Run Step 1" (or "Auto-Play") above to replay captured Windows 11 MXC output.';
+  appendTerminal('# Select any step or click "Run Step 1" / "Auto-Play" — Policy is blue, Pass is green, Blocked is red.');
  }
  syncComposerState();
 }
@@ -989,7 +1052,7 @@ async function runSingleStep(kind,step){
   return await waitDone;
  }catch(error){
   setStatus('Blocked','err');
-  byId('live-demo-output').textContent+='\\n[Blocked] '+(error.message||String(error))+'\\n';
+  appendTerminal('\\n[Error] '+(error.message||String(error))+'\\n');
   return false;
  }
 }
@@ -997,7 +1060,8 @@ async function runSingleStep(kind,step){
 async function runSelectedLiveStep(){
  if(stepRunning)return;
  stopAutoPlay();
- await runSingleStep(getKindVal(),getStepVal());
+ var target=Number(byId('live-demo-run').dataset.targetStep)||getStepVal();
+ await runSingleStep(getKindVal(),target);
 }
 
 async function toggleAutoPlay(){
@@ -1043,7 +1107,7 @@ setupCustomSelect('cs-kind',function(val){
  if(!byId('cs-kind-btn').disabled)switchScenario(val);
 });
 setupCustomSelect('cs-step',function(val){
- if(!byId('cs-step-btn').disabled){stopAutoPlay();setStepVal(val);syncStepSelection();}
+ if(!byId('cs-step-btn').disabled){stopAutoPlay();setStepVal(val);syncStepSelection(true);}
 });
 byId('live-demo-run').addEventListener('click',runSelectedLiveStep);
 byId('live-demo-autoplay').addEventListener('click',toggleAutoPlay);

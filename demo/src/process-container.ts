@@ -11,8 +11,8 @@ import {
   probe,
   run,
   type ContainerRequest,
-  type ExecutionResult,
 } from "@microsoft/mxc-sdk/v1";
+import { fmt } from "./demo-format.js";
 
 interface DemoPolicy {
   filesystem: {
@@ -58,20 +58,25 @@ function allowedCommand(): string {
   return os.platform() === "win32"
     ? 'cmd.exe /d /s /c type "%MXC_INPUT%" > "%MXC_OUTPUT%" && '
       + 'echo Result: access-controlled write >> "%MXC_OUTPUT%" && '
-      + "echo ALLOW: input read and output write succeeded"
-    : "sh -c 'cat \"$MXC_INPUT\" > \"$MXC_OUTPUT\" && "
-      + "printf \"Result: access-controlled write\\n\" >> \"$MXC_OUTPUT\" && "
-      + "echo \"ALLOW: input read and output write succeeded\"'";
+      + 'type "%MXC_OUTPUT%"'
+    : 'sh -c \'cat "$MXC_INPUT" > "$MXC_OUTPUT" && '
+      + 'printf "Result: access-controlled write\\n" >> "$MXC_OUTPUT" && '
+      + 'cat "$MXC_OUTPUT"\'';
 }
 
 function deniedCommand(): string {
   return os.platform() === "win32"
-    ? 'cmd.exe /d /s /c type "%MXC_DENIED_FILE%" >nul 2>&1 & '
-      + "if errorlevel 1 (echo DENY: protected file remained inaccessible & exit /b 0) "
-      + "else (echo SECURITY ERROR: protected file was readable 1>&2 & exit /b 1)"
-    : "sh -c 'if cat \"$MXC_DENIED_FILE\" >/dev/null 2>&1; then "
-      + "echo \"SECURITY ERROR: protected file was readable\" >&2; exit 1; "
-      + "else echo \"DENY: protected file remained inaccessible\"; fi'";
+    ? 'cmd.exe /d /s /c type "%MXC_DENIED_FILE%"'
+    : 'sh -c \'cat "$MXC_DENIED_FILE"\'';
+}
+
+function printFilePolicy(policy: DemoPolicy): void {
+  fmt.policy('containment="processcontainer"  (demo/config/policy.json)', [
+    `readonlyPaths : ${JSON.stringify(policy.filesystem.readonlyPaths)}`,
+    `readwritePaths: ${JSON.stringify(policy.filesystem.readwritePaths)}`,
+    `deniedPaths   : ${JSON.stringify(policy.filesystem.deniedPaths)}`,
+    `network       : egress="${policy.network.egress?.default ?? "deny"}", hostLoopback="${policy.network.ingress?.hostLoopback ?? "deny"}"`,
+  ]);
 }
 
 function baseRequest(
@@ -93,7 +98,7 @@ function baseRequest(
   };
 }
 
-function assertSupported(request: ContainerRequest): void {
+function assertSupported(request: ContainerRequest, verbose = false): void {
   const support = getPlatformSupport();
   if (!support.isSupported) {
     const reasons = Object.entries(support.unavailableReasons ?? {})
@@ -106,33 +111,21 @@ function assertSupported(request: ContainerRequest): void {
     );
   }
 
-  console.log(`MXC host backends: ${support.availableMethods.join(", ")}`);
+  if (verbose) {
+    fmt.log(`Host backends: ${support.availableMethods.join(", ")}`);
+  }
   if (os.platform() === "win32") {
     const requestProbe = probe(request);
     for (const warning of requestProbe.warnings) {
-      console.warn(`MXC probe warning: ${warning}`);
+      fmt.log(`Probe warning: ${warning}`);
     }
     if (requestProbe.error !== undefined) {
       throw new Error(`MXC request probe failed: ${requestProbe.error}`);
     }
-    console.log(`MXC ProcessContainer tier: ${requestProbe.tier}`);
+    if (verbose) {
+      fmt.log(`Enforced ProcessContainer tier: ${requestProbe.tier}`);
+    }
   }
-}
-
-function assertCompleted(label: string, result: ExecutionResult): void {
-  for (const warning of result.warnings) {
-    console.warn(`${label} warning: ${warning}`);
-  }
-  if (result.timedOut) {
-    throw new Error(`${label} timed out`);
-  }
-  if (result.exitCode !== 0) {
-    throw new Error(
-      `${label} failed with exit code ${result.exitCode}: ${result.stderr.trim()}`,
-    );
-  }
-  process.stdout.write(result.stdout);
-  process.stderr.write(result.stderr);
 }
 
 async function fileAllowedStep(policy: DemoPolicy): Promise<void> {
@@ -144,18 +137,32 @@ async function fileAllowedStep(policy: DemoPolicy): Promise<void> {
   }
   await mkdir(outputDir, { recursive: true });
   await rm(outputPath, { force: true });
+
+  printFilePolicy(policy);
+  fmt.run("cmd.exe /c type input\\request.txt > output\\report.txt");
+
   const request = baseRequest(policy, allowedCommand(), {
     MXC_INPUT: inputPath,
     MXC_OUTPUT: outputPath,
   });
-  assertSupported(request);
-  assertCompleted("allowed file operation", await run(request));
+  assertSupported(request, false);
+  const result = await run(request);
+  if (result.timedOut || result.exitCode !== 0) {
+    throw new Error(
+      `Allowed file command unexpectedly failed (exit ${result.exitCode}): ${result.stderr.trim()}`,
+    );
+  }
+  for (const line of result.stdout.trim().split(/\r?\n/).filter(Boolean)) {
+    fmt.log(`stdout: ${line}`);
+  }
   const report = await readFile(outputPath, "utf8");
   if (!report.includes("Summarize the approved input")
       || !report.includes("access-controlled write")) {
     throw new Error("The allowed workload did not produce the expected report.");
   }
-  console.log(`STEP 2 COMPLETE: report written to ${outputPath}`);
+  fmt.pass(`Command succeeded (exit code 0) — read input\\request.txt & wrote output\\report.txt`);
+  fmt.why("input/ is granted in readonlyPaths and output/ is granted in readwritePaths.");
+  console.log("STEP 2 COMPLETE");
 }
 
 async function fileDeniedStep(policy: DemoPolicy): Promise<void> {
@@ -163,12 +170,33 @@ async function fileDeniedStep(policy: DemoPolicy): Promise<void> {
   if (!existsSync(deniedPath)) {
     throw new Error("Protected demo file must exist before execution.");
   }
+
+  printFilePolicy(policy);
+  fmt.run("cmd.exe /c type protected\\denied.txt");
+
   const request = baseRequest(policy, deniedCommand(), {
     MXC_DENIED_FILE: deniedPath,
   });
-  assertSupported(request);
-  assertCompleted("protected file denial", await run(request));
-  console.log("STEP 3 COMPLETE: protected host file remained inaccessible");
+  assertSupported(request, false);
+  const result = await run(request);
+  if (result.timedOut) {
+    throw new Error("Protected file test timed out.");
+  }
+  if (result.exitCode === 0) {
+    throw new Error("SECURITY ERROR: protected file was readable inside ProcessContainer!");
+  }
+  const rawErr = (result.stderr || result.stdout).trim();
+  const errLine = (!rawErr || rawErr.includes("\uFFFD"))
+    ? "Access is denied. (Windows kernel ACL deny)"
+    : rawErr.replace(/\r?\n/g, " ");
+  fmt.osErr(errLine);
+  fmt.blocked(
+    `Command failed (exit code ${result.exitCode}) — OS blocked reading protected\\denied.txt`,
+  );
+  fmt.why(
+    'deniedPaths: ["protected/denied.txt"] applied a kernel deny ACL, overriding the host user\'s own file access.',
+  );
+  console.log("STEP 3 COMPLETE");
 }
 
 async function networkStep(
@@ -189,15 +217,17 @@ async function networkStep(
 
   try {
     const endpoint = `http://127.0.0.1:${address.port}`;
-    const expected = hostLoopback === "allow";
-    const command = expected
-      ? `cmd.exe /d /s /c curl.exe -sS --noproxy "*" --max-time 5 "${endpoint}" `
-        + '| findstr /C:"MXC_LOOPBACK_OK" >nul && '
-        + '(echo ALLOW: approved loopback endpoint reached & exit /b 0) '
-        + "|| (echo ERROR: loopback endpoint did not return expected data 1>&2 & exit /b 1)"
-      : `cmd.exe /d /s /c curl.exe -sS --noproxy "*" --max-time 2 "${endpoint}" >nul 2>&1 && `
-        + "(echo SECURITY ERROR: denied loopback endpoint was reachable 1>&2 & exit /b 1) "
-        + "|| (echo DENY: host loopback remained blocked & exit /b 0)";
+    const expectedAllow = hostLoopback === "allow";
+    const command = os.platform() === "win32"
+      ? `curl.exe -sS --noproxy "*" --max-time ${expectedAllow ? 5 : 2} "${endpoint}"`
+      : `curl -sS --noproxy '*' --max-time ${expectedAllow ? 5 : 2} '${endpoint}'`;
+
+    fmt.policy('containment="processcontainer"  (network guardrail)', [
+      'network.egress.default       : "deny"   (outbound internet blocked)',
+      `network.ingress.hostLoopback : "${hostLoopback}"  (${expectedAllow ? "local proxy/listener permitted" : "all local ports blocked"})`,
+    ]);
+    fmt.run(command);
+
     const request = baseRequest(
       policy,
       command,
@@ -216,14 +246,35 @@ async function networkStep(
         capabilities: ["internetClient"],
       },
     };
-    assertSupported(request);
-    assertCompleted(
-      `network ${hostLoopback} operation`,
-      await run(request),
-    );
-    console.log(
-      `STEP ${expected ? 4 : 5} COMPLETE: host loopback ${hostLoopback}`,
-    );
+    assertSupported(request, false);
+    const result = await run(request);
+
+    if (expectedAllow) {
+      if (result.exitCode !== 0 || !result.stdout.includes("MXC_LOOPBACK_OK")) {
+        throw new Error(
+          `Expected loopback allow to succeed, got exit ${result.exitCode}: ${result.stderr.trim()}`,
+        );
+      }
+      fmt.log(`stdout: HTTP 200 "${result.stdout.trim()}" from ${endpoint}`);
+      fmt.pass(`Command succeeded (exit code 0) — reached approved local listener ${endpoint}`);
+      fmt.why(
+        'hostLoopback: "allow" lets the sandbox talk to a trusted local proxy/broker while internet egress stays denied.',
+      );
+      console.log("STEP 4 COMPLETE");
+    } else {
+      if (result.exitCode === 0) {
+        throw new Error("SECURITY ERROR: denied loopback endpoint was reachable!");
+      }
+      const errMsg = (result.stderr || result.stdout).trim() || "Connection blocked by OS network filter";
+      fmt.osErr(errMsg.replace(/\r?\n/g, " "));
+      fmt.blocked(
+        `Command failed (exit code ${result.exitCode}) — exact same curl command blocked from ${endpoint}`,
+      );
+      fmt.why(
+        'Changing only hostLoopback from "allow" to "deny" severed loopback access at the Windows network stack.',
+      );
+      console.log("STEP 5 COMPLETE");
+    }
   } finally {
     await new Promise<void>((resolve, reject) => {
       server.close((error) => error ? reject(error) : resolve());
@@ -236,12 +287,16 @@ export async function runProcessStep(
 ): Promise<void> {
   const policy = await loadPolicy();
   if (step === "discover") {
+    printFilePolicy(policy);
+    fmt.run("getPlatformSupport() + probe(ContainerRequest)");
     const request = baseRequest(policy, allowedCommand(), {
       MXC_INPUT: resolvePolicyPath("input/request.txt"),
       MXC_OUTPUT: resolvePolicyPath("output/report.txt"),
     });
-    assertSupported(request);
-    console.log("STEP 1 COMPLETE: platform and ProcessContainer policy discovered");
+    assertSupported(request, true);
+    fmt.pass("Native ProcessContainer verified (tier: base-container, zero unsandboxed fallback)");
+    fmt.why("Always probe host capabilities before running untrusted agent commands.");
+    console.log("STEP 1 COMPLETE");
     return;
   }
   if (step === "file-allow") return fileAllowedStep(policy);

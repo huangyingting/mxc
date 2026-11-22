@@ -3,6 +3,8 @@ import io
 import json
 from pathlib import Path
 import re
+import shutil
+import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -101,6 +103,13 @@ class BuilderTests(unittest.TestCase):
             D.rect(0, D.W - 100000, 0, 200000, 500000)
             with self.assertRaisesRegex(ValueError, 'invalid bounds'):
                 D.validate_layout()
+
+    @unittest.skipUnless(shutil.which('node'), 'node is required to syntax-check embedded JS')
+    def test_embedded_javascript_has_valid_syntax(self):
+        with tempfile.TemporaryDirectory() as directory:
+            js_path = Path(directory) / 'deck.js'
+            js_path.write_text(H.JS, encoding='utf-8')
+            subprocess.run(['node', '--check', str(js_path)], check=True)
 
 
 if __name__ == '__main__':

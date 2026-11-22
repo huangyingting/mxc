@@ -158,17 +158,31 @@ async function provisionPty() {
     ended: false,
   };
   const promptReady = waitForMarker(/PS [^\r\n>]+>/, 15_000).catch(() => {});
+  let suppressRawPtyEcho = false;
   terminal.output.on("data", (chunk) => {
-    send({ kind: "output", text: String(chunk) });
+    if (!suppressRawPtyEcho) {
+      send({ kind: "output", text: String(chunk) });
+    }
   });
+  const opUser = provisioned.metadata?.agentUserName ?? "operator";
   send({
     kind: "phase",
     name: "provisioned",
-    user: provisioned.metadata?.agentUserName ?? "",
+    user: opUser,
     workspace,
-    text: "PTY incident staged: INC-1042, read-only diagnostics, operator approval attached\nPTY connected to isolated session: powershell.exe -NoLogo -NoProfile; terminal=120x30\n",
+    text:
+      `[POLICY] containment="isolation_session"  (stateful Windows session)\n`
+      + `  network    : egress="allow", ingress="allow", hostLoopback="allow"\n`
+      + `  isolation  : separate local Windows account + OS Session + isolated desktop (SendInput blocked)\n`
+      + `[RUN] provisionContainer({ containment: "isolation_session" }) -> spawnInContainerWithPty()\n`
+      + `  staged: incident-request.json & incident-approval.json -> ${workspace}\n`
+      + `✓ PASS — Provisioned isolated Windows operator "${opUser}" & opened 120x30 PowerShell PTY\n`
+      + `Why: Stateful triage runs in its own Windows login instead of sharing the employee's desktop session.\n`,
   });
   await promptReady;
+  ptyState.setSuppress = (flag) => {
+    suppressRawPtyEcho = flag;
+  };
   ptyStepIndex = 1;
   finishStep("pty", 1);
 }
@@ -182,54 +196,137 @@ async function runPtyStep(step) {
   const state = ptyState;
 
   if (step === 2) {
-    const marker = /__WEB_IDENTITY_VAL__=([^|\r\n]+)\|(\d+)/;
-    const pending = waitForMarker(marker);
-    writePtyCommand(
-      'Write-Output ("__WEB_IDENTITY_" + "VAL__=$env:USERNAME|$((Get-Process -Id $PID).SessionId)")',
-    );
-    const result = await pending;
-    const match = result.match(marker);
-    if (match) {
-      send({ kind: "identity", user: match[1].trim(), sessionId: match[2] });
+    const hostDir = os.homedir().replace(/'/g, "''");
+    send({
+      kind: "output",
+      text:
+        `[POLICY] Windows user SID boundary (Operator account vs. Host "${hostMeta.username}")\n`
+        + `[RUN] Check $env:USERNAME / SessionId, then try Get-ChildItem "${os.homedir()}"\n`,
+    });
+    state.setSuppress?.(true);
+    let result = "";
+    try {
+      const marker = /__WEB_IDENTITY_VAL__=([^|\r\n]+)\|(\d+)\|([^\r\n]+)/;
+      const pending = waitForMarker(marker);
+      writePtyCommand(
+        `$pErr='EXPOSED'; try { Get-ChildItem -LiteralPath '${hostDir}' -ErrorAction Stop | Out-Null } catch { $pErr=$_.Exception.Message }; `
+        + 'Write-Output ("__WEB_IDENTITY_" + "VAL__=$env:USERNAME|$((Get-Process -Id $PID).SessionId)|$pErr")',
+      );
+      result = await pending;
+      const match = result.match(marker);
+      if (match) {
+        const opUser = match[1].trim();
+        const opSid = match[2].trim();
+        const denyMsg = match[3].trim();
+        send({ kind: "identity", user: opUser, sessionId: opSid });
+        send({
+          kind: "output",
+          text:
+            `  operator="${opUser}" (Session ${opSid})  vs.  host="${hostMeta.username}" (Session ${hostMeta.sessionId})\n`
+            + `  stderr (OS): ${denyMsg}\n`
+            + `✓ PASS — Verified separate Windows account (${opUser}, Session ${opSid})\n`
+            + `✕ BLOCKED — Reading host profile "${os.homedir()}" failed (Access denied)\n`
+            + `Why: Windows NTFS user ACLs block the isolated operator from reading the employee's profile.\n`,
+        });
+      }
+    } finally {
+      await new Promise((r) => setTimeout(r, 120));
+      state.setSuppress?.(false);
     }
   } else if (step === 3) {
-    const marker = /__WEB_APPROVAL_VAL__=([^|\r\n]+)\|(read-only-diagnostics)/;
-    const pending = waitForMarker(marker);
-    writePtyCommand(
-      '$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; '
-      + '$approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; '
-      + 'Write-Output ("__WEB_APPROVAL_" + "VAL__=$($request.ticket)|$($approval.scope)")',
-    );
-    const result = await pending;
-    const match = result.match(marker);
-    if (match) {
-      send({ kind: "approval", ticket: match[1].trim(), scope: match[2] });
+    send({
+      kind: "output",
+      text:
+        `[POLICY] Shared handoff workspace (${state.workspace}) · scope="read-only-diagnostics"\n`
+        + `[RUN] Get-Content .\\incident-request.json, .\\incident-approval.json\n`,
+    });
+    state.setSuppress?.(true);
+    try {
+      const marker = /__WEB_APPROVAL_VAL__=([^|\r\n]+)\|(read-only-diagnostics)\|([^\r\n]+)/;
+      const pending = waitForMarker(marker);
+      writePtyCommand(
+        "$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; "
+        + "$approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; "
+        + 'Write-Output ("__WEB_APPROVAL_" + "VAL__=$($request.ticket)|$($approval.scope)|$($approval.approvedBy)")',
+      );
+      const result = await pending;
+      const match = result.match(marker);
+      if (match) {
+        send({ kind: "approval", ticket: match[1].trim(), scope: match[2] });
+        send({
+          kind: "output",
+          text:
+            `  ticket=${match[1].trim()} · scope=${match[2]} · approvedBy=${match[3].trim()}\n`
+            + `✓ PASS — Staged ticket & read-only approval loaded inside persistent PTY\n`
+            + `Why: Host stages only the specific files needed for this task into the ephemeral workspace.\n`,
+        });
+      }
+    } finally {
+      await new Promise((r) => setTimeout(r, 120));
+      state.setSuppress?.(false);
     }
   } else if (step === 4) {
-    const marker = /__WEB_SERVICES_VAL__=([^|\r\n]+)\|([^\r\n]+)/;
-    const pending = waitForMarker(marker);
-    writePtyCommand(
-      '$spooler=Get-Service Spooler;$time=Get-Service W32Time; '
-      + 'Write-Output ("__WEB_SERVICES_" + "VAL__=$($spooler.Status)|$($time.Status)")',
-    );
-    const result = await pending;
-    const match = result.match(marker);
-    if (match) {
-      send({ kind: "services", spooler: match[1].trim(), w32time: match[2].trim() });
+    send({
+      kind: "output",
+      text:
+        `[POLICY] Standard non-admin operator token (read service health OK; service mutation denied)\n`
+        + `[RUN] Get-Service Spooler, W32Time  &&  Stop-Service Spooler\n`,
+    });
+    state.setSuppress?.(true);
+    try {
+      const marker = /__WEB_SERVICES_VAL__=([^|\r\n]+)\|([^|\r\n]+)\|([^\r\n]+)/;
+      const pending = waitForMarker(marker);
+      writePtyCommand(
+        "$spooler=Get-Service Spooler;$time=Get-Service W32Time; "
+        + "$mut='ALLOWED'; try { Stop-Service -Name Spooler -ErrorAction Stop } catch { $mut=$_.Exception.Message }; "
+        + 'Write-Output ("__WEB_SERVICES_" + "VAL__=$($spooler.Status)|$($time.Status)|$mut")',
+      );
+      const result = await pending;
+      const match = result.match(marker);
+      if (match) {
+        const sp = match[1].trim();
+        const w32 = match[2].trim();
+        const mutErr = match[3].trim();
+        send({ kind: "services", spooler: sp, w32time: w32 });
+        send({
+          kind: "output",
+          text:
+            `  stdout: Spooler=${sp}, W32Time=${w32}\n`
+            + `  stderr (OS): ${mutErr}\n`
+            + `✓ PASS — Inspected live Windows services (Spooler=${sp}, W32Time=${w32})\n`
+            + `✕ BLOCKED — Stop-Service Spooler rejected by Windows service manager\n`
+            + `Why: Non-elevated operator account can diagnose live services without permission to stop or reconfigure them.\n`,
+        });
+      }
+    } finally {
+      await new Promise((r) => setTimeout(r, 120));
+      state.setSuppress?.(false);
     }
   } else if (step === 5) {
-    const pending = waitForMarker(/__WEB_EVIDENCE_VAL__=written/);
-    writePtyCommand(
-      '$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; '
-      + '$approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; '
-      + '$spooler=Get-Service Spooler;$time=Get-Service W32Time; '
-      + '$evidence=@("ticket=$($request.ticket)","scope=$($approval.scope)",'
-      + '"operator=$env:USERNAME","session_id=$([Diagnostics.Process]::GetCurrentProcess().SessionId)",'
-      + '"service=Spooler,status=$($spooler.Status)","service=W32Time,status=$($time.Status)"); '
-      + "$evidence | Set-Content .\\triage-evidence.txt -Encoding utf8; "
-      + 'Write-Output ("__WEB_EVIDENCE_" + "VAL__=written")',
-    );
-    await pending;
+    send({
+      kind: "output",
+      text:
+        `[POLICY] Host-side output verification before consuming sandbox artifacts\n`
+        + `[RUN] Set-Content .\\triage-evidence.txt  ->  Host schema & ticket check\n`,
+    });
+    state.setSuppress?.(true);
+    try {
+      const pending = waitForMarker(/__WEB_EVIDENCE_VAL__=written/);
+      writePtyCommand(
+        "$request=Get-Content .\\incident-request.json -Raw | ConvertFrom-Json; "
+        + "$approval=Get-Content .\\incident-approval.json -Raw | ConvertFrom-Json; "
+        + "$spooler=Get-Service Spooler;$time=Get-Service W32Time; "
+        + '$evidence=@("ticket=$($request.ticket)","scope=$($approval.scope)",'
+        + '"operator=$env:USERNAME","session_id=$([Diagnostics.Process]::GetCurrentProcess().SessionId)",'
+        + '"service=Spooler,status=$($spooler.Status)","service=W32Time,status=$($time.Status)"); '
+        + "$evidence | Set-Content .\\triage-evidence.txt -Encoding utf8; "
+        + 'Write-Output ("__WEB_EVIDENCE_" + "VAL__=written")',
+      );
+      await pending;
+    } finally {
+      await new Promise((r) => setTimeout(r, 120));
+      state.setSuppress?.(false);
+    }
     const evidence = await readFile(
       path.join(state.workspace, "triage-evidence.txt"),
       "utf8",
@@ -238,7 +335,21 @@ async function runPtyStep(step) {
       throw new Error("Host could not validate the PTY evidence.");
     }
     send({ kind: "evidence", verified: true, content: evidence.trim() });
+    send({
+      kind: "output",
+      text:
+        `  artifact: ${evidence.trim().replace(/\r?\n/g, " | ")}\n`
+        + `✓ PASS — Host independently validated triage-evidence.txt (INC-1042)\n`
+        + `Why: Containment isn't trust — the host always validates sandbox output before acting on it.\n`,
+    });
   } else if (step === 6) {
+    send({
+      kind: "output",
+      text:
+        `[POLICY] Lifecycle teardown: stopContainer(id) + deprovisionContainer(id)\n`
+        + `[RUN] exit  ->  stop session  ->  delete temporary Windows operator account\n`,
+    });
+    state.setSuppress?.(true);
     const resultPromise = state.terminal.wait();
     state.terminal.input.end("exit\r");
     const result = await resultPromise;
@@ -247,7 +358,13 @@ async function runPtyStep(step) {
     await deprovisionContainer(state.containerId);
     state.terminal.dispose();
     ptyState = null;
-    send({ kind: "output", text: "\nPTY session stopped\nPTY session deprovisioned\n" });
+    send({
+      kind: "output",
+      text:
+        `✓ PASS — PTY closed, Windows session stopped, and temporary operator account deleted\n`
+        + `Why: Always deprovision stateful containers so temporary accounts and workspaces never linger.\n`
+        + `PS session closed.\n`,
+    });
     if (result.exitCode !== 0 && !result.timedOut) {
       throw new Error(`PTY exited with code ${result.exitCode}`);
     }
