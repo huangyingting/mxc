@@ -5,7 +5,8 @@
 Usage:  pip install pillow
         python -m presentation.src.build_html [--out dist/html/index.html]
 Keys in the browser: <- / -> or Space to navigate, F = fullscreen,
-Home/End = first/last, D = open interactive MXC Studio. Print (Ctrl+P) gives one slide per page.
+Home/End = first/last, N = speaker notes, D = open interactive MXC Studio.
+Print (Ctrl+P) gives one slide per page.
 """
 import argparse, base64, html, io, json, os
 from PIL import Image
@@ -18,6 +19,7 @@ PX = 9525  # EMU per CSS px  (slide = 1280 x 720 px)
 SVG_POINTS = {
     'rightArrow':'0,24 68,24 68,0 100,50 68,100 68,76 0,76',
     'leftArrow':'32,0 32,24 100,24 100,76 32,76 32,100 0,50',
+    'downArrow':'24,0 76,0 76,62 100,62 50,100 0,62 24,62',
     'chevron':'0,0 82,0 100,50 82,100 0,100 18,50',
     'homePlate':'0,0 82,0 100,50 82,100 0,100',
 }
@@ -36,11 +38,19 @@ FALLBACK = {
 e = lambda s: html.escape(s, quote=True)
 
 def data_uri(path, maxw, cache={}):
-    if path not in cache:
-        im = Image.open(path).convert('RGB'); im.thumbnail((maxw, maxw))
-        b = io.BytesIO(); im.save(b, 'JPEG', quality=82, optimize=True)
-        cache[path] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
-    return cache[path]
+    key = (path, maxw)
+    if key not in cache:
+        if path.lower().endswith('.svg'):
+            with open(path, 'rb') as f:
+                raw = f.read()
+            cache[key] = 'data:image/svg+xml;base64,' + base64.b64encode(raw).decode()
+        else:
+            im = Image.open(path).convert('RGB')
+            im.thumbnail((maxw, maxw), Image.Resampling.LANCZOS)
+            b = io.BytesIO()
+            im.save(b, 'JPEG', quality=88, optimize=True)
+            cache[key] = 'data:image/jpeg;base64,' + base64.b64encode(b.getvalue()).decode()
+    return cache[key]
 
 def box(o):
     return f"left:{o['x']/PX:.1f}px;top:{o['y']/PX:.1f}px;width:{o['cx']/PX:.1f}px;height:{o['cy']/PX:.1f}px;"
@@ -49,19 +59,35 @@ def text_html(o):
     paras = o.get('paragraphs') or [{'text': o['text']}]
     raw_font = o.get('fontFamily', D.BF)
     font = FALLBACK.get(raw_font, FALLBACK['Plus Jakarta Sans'])
-    is_display = any(p.get('sizePt', o.get('sizePt', 16)) >= 30 for p in paras)
+    is_display = any(p.get('sizePt', o.get('sizePt', 16)) >= 29 for p in paras)
     if is_display and raw_font != D.MF:
         font = '"Newsreader","Plus Jakarta Sans",Georgia,serif'
-    ls = f"letter-spacing:{o['letterSpacingPt']*4/3:.1f}px;" if o.get('letterSpacingPt') else ('letter-spacing:-0.022em;' if is_display else '')
+    ls = f"letter-spacing:{o['letterSpacingPt']*4/3:.1f}px;" if o.get('letterSpacingPt') else ('letter-spacing:-0.02em;' if is_display else '')
+    ws = 'white-space:pre-wrap;' if raw_font == D.MF else ''
+    default_gap_pt = o.get('spaceAfterPt', 2 if raw_font == D.MF else 6.5)
     out = []
-    for p in paras:
+    for idx, p in enumerate(paras):
         sz = p.get('sizePt', o.get('sizePt', 16)) * 4/3
         wt = 700 if p.get('bold', o.get('bold')) else (500 if sz >= 22 else 450)
-        lh = 1.12 if sz >= 34 else (1.26 if sz >= 22 else 1.38)
+        if raw_font == D.MF:
+            lh = 1.48
+        elif sz >= 34:
+            lh = 1.14
+        elif sz >= 22:
+            lh = 1.26
+        else:
+            lh = 1.42
+        mb = ''
+        if idx < len(paras) - 1:
+            gap_px = p.get('spaceAfterPt', default_gap_pt) * 4/3
+            mb = f"margin-bottom:{gap_px:.1f}px;"
         st = (f"font-size:{sz:.1f}px;color:#{p.get('color', o.get('color', D.INK))};"
-              f"font-weight:{wt};line-height:{lh};"
+              f"font-weight:{wt};line-height:{lh};{ws}{mb}"
               f"text-align:{p.get('align', o.get('align','center'))};")
-        out.append(f'<p style="{st}">' + '<br>'.join(e(l) for l in p['text'].split('\n')) + '</p>')
+        inner = '<br>'.join(e(l) for l in p['text'].split('\n'))
+        if p.get('href'):
+            inner = f'<a class="ref-link" href="{e(p["href"])}" target="_blank" rel="noreferrer">{inner}</a>'
+        out.append(f'<p style="{st}">{inner}</p>')
     return f'<div class="t" style="font-family:{e(font)};{ls}">' + ''.join(out) + '</div>'
 
 REVEAL_ITEMS = {
@@ -92,7 +118,11 @@ def slide_html(k, ops, img_dir, maxw):
         if o['op'] == 'add_image':
             is_full = o['x'] == 0 and o['y'] == 0 and o['cx'] == D.W and o['cy'] == D.H
             is_side = o['y'] == 0 and o['cy'] == D.H
-            extra_cls = ' bleed' if (is_full or is_side) else ' framed-img'
+            fit_mode = o.get('fit', 'cover')
+            if fit_mode == 'contain':
+                extra_cls = ' contain-img'
+            else:
+                extra_cls = ' bleed' if (is_full or is_side) else ' framed-img'
             src = data_uri(os.path.join(img_dir, os.path.basename(o['path'])), maxw)
             parts.append(f'<img class="{classes}{extra_cls}"{reveal} style="{box(o)}" src="{src}" alt="{e(o.get("altText",""))}">')
         elif o['op'] == 'add_text_box':
@@ -135,6 +165,22 @@ def slide_html(k, ops, img_dir, maxw):
             f'<span class="trigger-arrow" aria-hidden="true">↗</span></button>'
         )
     return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="Slide {k+1}">{"".join(parts)}{action}</section>'
+
+PRESENTER_UI = """
+<div id="deck-hud" class="deck-hud" aria-label="Presenter toolbar">
+  <span class="hud-count" id="hud-count"></span>
+  <button type="button" class="hud-btn" id="hud-notes-btn" title="Toggle Chinese speaker notes (N)" aria-controls="notes-drawer" aria-expanded="false">Notes <kbd>N</kbd></button>
+  <button type="button" class="hud-btn hud-btn-accent" id="hud-demo-btn" title="Open Interactive MXC Studio (D)">Studio <kbd>D</kbd></button>
+</div>
+
+<aside id="notes-drawer" class="notes-drawer" aria-label="Speaker notes" hidden>
+  <div class="notes-head">
+    <strong id="notes-title" lang="zh-CN">讲者备注</strong>
+    <button type="button" class="notes-close" id="notes-close" aria-label="Close speaker notes">✕</button>
+  </div>
+  <div class="notes-body" id="notes-body" lang="zh-CN"></div>
+</aside>
+"""
 
 LIVE_DEMO = """
 <section id="live-demo" class="live-demo" role="dialog" aria-modal="true" aria-label="Interactive MXC Demo" hidden>
@@ -258,26 +304,45 @@ CSS = """
 html,body{width:100%%;height:100%%;background:var(--bg);color:var(--ink);font-family:var(--font-sans);overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 18%% 12%%,rgba(255,255,255,.55),transparent 48%%),var(--bg)}
 .slide{position:absolute;width:1280px;height:720px;background:linear-gradient(180deg,rgba(255,255,255,.28) 0%%,rgba(255,255,255,0) 38%%),var(--bg);overflow:hidden;display:none;transform-origin:center center}
-.slide.on{display:block;animation:slideFade .26s cubic-bezier(.2,.8,.2,1)}
-@keyframes slideFade{from{opacity:.86}to{opacity:1}}
+.slide.on{display:block;animation:slideFade .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes slideFade{from{opacity:.88}to{opacity:1}}
 .a{position:absolute}
-.surface-card{box-shadow:0 10px 28px rgba(38,33,26,.055),inset 0 1px 0 rgba(255,255,255,.55);transition:transform .2s ease}
+.surface-card{box-shadow:0 10px 28px rgba(38,33,26,.055),inset 0 1px 0 rgba(255,255,255,.55)}
 .surface-code{border-radius:14px!important;box-shadow:0 12px 30px rgba(32,45,58,.07),inset 0 1px 0 rgba(255,255,255,.8)!important}
-.framed-img{border-radius:14px;box-shadow:0 14px 34px rgba(35,30,22,.10)}
+.framed-img{border-radius:14px;box-shadow:0 14px 34px rgba(35,30,22,.10);object-fit:cover}
+.contain-img{border-radius:10px;object-fit:contain!important}
 .reveal{opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .28s ease,transform .28s cubic-bezier(.2,.8,.2,1),visibility .28s}
 .reveal.shown{opacity:1;visibility:visible;transform:translateY(0)}
 .svg-shape svg{position:absolute;inset:0;width:100%%;height:100%%;overflow:visible;filter:drop-shadow(0 4px 10px rgba(35,48,62,.08))}
 .svg-shape>.t{z-index:1}
 img.a{object-fit:cover}
-.t{position:absolute;inset:0;padding:6px 12px;display:flex;flex-direction:column;justify-content:center}
+.t{position:absolute;inset:0;padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
+.ref-link{color:inherit;text-decoration:underline;text-decoration-color:rgba(63,96,126,.42);text-underline-offset:3px;transition:color .14s ease,text-decoration-color .14s ease}
+.ref-link:hover{color:#1f384e;text-decoration-color:currentColor}
 
 #deck-progress{position:fixed;left:0;top:0;height:3px;width:0;z-index:40;background:linear-gradient(90deg,var(--accent),#5d8aa8);transition:width .25s ease;pointer-events:none}
 
-.live-demo-trigger{position:absolute;right:48px;top:52px;z-index:12;display:inline-flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:11px 20px;background:linear-gradient(135deg,var(--accent) 0%%,#2c4963 100%%);color:#fbf8f2;font:600 14px/1 var(--font-sans);letter-spacing:.01em;cursor:pointer;box-shadow:0 10px 26px rgba(44,73,99,.28);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
-.live-demo-trigger:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(44,73,99,.36);filter:brightness(1.05)}
+.deck-hud{position:fixed;left:50%%;bottom:8px;transform:translateX(-50%%);z-index:45;display:inline-flex;align-items:center;gap:6px;padding:3px 7px;border-radius:999px;background:rgba(251,248,242,.82);backdrop-filter:blur(8px);border:1px solid rgba(201,192,174,.75);box-shadow:0 4px 14px rgba(35,30,22,.07);opacity:.38;transition:opacity .18s ease}
+.deck-hud:hover,.deck-hud:focus-within,.deck-hud.notes-open{opacity:1}
+.hud-count{font:700 10.5px/1 var(--font-mono);color:var(--muted);padding:0 5px}
+.hud-btn{border:1px solid var(--edge);background:#fff;color:var(--ink);border-radius:999px;padding:4px 9px;font:600 11px/1 var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.hud-btn:hover{border-color:var(--accent);color:var(--accent)}
+.hud-btn-accent{background:var(--accent);border-color:var(--accent);color:#fff}
+.hud-btn-accent:hover{color:#fff;filter:brightness(1.08)}
+.hud-btn kbd{font:700 9.5px/1 var(--font-mono);opacity:.8}
+
+.notes-drawer{position:fixed;left:50%%;bottom:42px;transform:translateX(-50%%);width:min(640px,calc(100vw - 28px));max-height:42vh;z-index:55;background:rgba(251,248,242,.97);backdrop-filter:blur(12px);border:1px solid var(--edge);border-top:3px solid var(--accent);border-radius:14px;box-shadow:0 18px 42px rgba(28,24,18,.16);display:flex;flex-direction:column;overflow:hidden}
+.notes-drawer[hidden]{display:none!important}
+.notes-head{display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--edge);font:700 12.5px/1 var(--font-sans);color:var(--accent)}
+.notes-close{border:0;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;padding:2px 6px;border-radius:6px}
+.notes-close:hover{background:var(--card);color:var(--ink)}
+.notes-body{padding:12px 15px;overflow-y:auto;font:450 13.5px/1.65 var(--font-sans);color:var(--ink);white-space:pre-wrap}
+
+.live-demo-trigger{position:absolute;right:48px;top:48px;z-index:12;display:inline-flex;align-items:center;gap:9px;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:10px 18px;background:linear-gradient(135deg,var(--accent) 0%%,#2c4963 100%%);color:#fbf8f2;font:600 13px/1 var(--font-sans);letter-spacing:.01em;cursor:pointer;box-shadow:0 10px 26px rgba(44,73,99,.26);transition:transform .18s ease,box-shadow .18s ease,filter .18s ease}
+.live-demo-trigger:hover{transform:translateY(-2px);box-shadow:0 14px 32px rgba(44,73,99,.34);filter:brightness(1.05)}
 .pulse-dot{width:8px;height:8px;border-radius:50%%;background:#7ee2b8;box-shadow:0 0 0 4px rgba(126,226,184,.24);animation:pulseDot 1.8s infinite}
 @keyframes pulseDot{0%%,100%%{box-shadow:0 0 0 3px rgba(126,226,184,.28)}50%%{box-shadow:0 0 0 7px rgba(126,226,184,.06)}}
-.trigger-arrow{font-size:15px;opacity:.85}
+.trigger-arrow{font-size:14px;opacity:.88}
 
 .live-demo{position:fixed;inset:0;z-index:120;background:radial-gradient(circle at 12%% 0%%,#faf7f0 0%%,var(--bg) 58%%);color:var(--ink);font-family:var(--font-sans);padding:clamp(14px,1.8vw,24px)}
 .live-demo[hidden]{display:none!important}
@@ -372,36 +437,69 @@ img.a{object-fit:cover}
   .terminal-card{min-height:300px}
 }
 @media print{@page{size:13.333in 7.5in;margin:0}
- html,body{overflow:visible;background:#fff}#deck-progress,.live-demo,.live-demo-trigger{display:none!important}
- #stage{position:static;display:block}.slide{position:relative;display:block!important;transform:none!important;box-shadow:none;page-break-after:always;break-after:page}.reveal{opacity:1!important;visibility:visible!important;transform:none!important}}
+ html,body{overflow:visible;background:#fff}#deck-progress,.deck-hud,.notes-drawer,.live-demo,.live-demo-trigger{display:none!important}
+ #stage{position:static;display:block}.slide{position:relative;display:block!important;transform:none!important;box-shadow:none;page-break-after:always;break-after:page;print-color-adjust:exact;-webkit-print-color-adjust:exact}.reveal{opacity:1!important;visibility:visible!important;transform:none!important}}
 """
 JS = """
 (function(){
-var S=[].slice.call(document.querySelectorAll('.slide')),i=0,steps=S.map(function(){return 0;}),liveOpen=false,bar=document.getElementById('deck-progress');
-function fit(){var v=window.visualViewport,w=v?v.width:innerWidth,h=v?v.height:innerHeight,s=Math.max(w/1280,h/720);S.forEach(function(x){x.style.transform='scale('+s+')';});}
+var S=[].slice.call(document.querySelectorAll('.slide')),i=0,steps=S.map(function(){return 0;}),liveOpen=false,notesOpen=false;
+var bar=document.getElementById('deck-progress'),hudCount=document.getElementById('hud-count'),hud=document.getElementById('deck-hud'),notesDrawer=document.getElementById('notes-drawer');
+function byId(id){return document.getElementById(id);}
+function fit(){var v=window.visualViewport,w=v?v.width:innerWidth,h=v?v.height:innerHeight,s=Math.min(w/1280,h/720);S.forEach(function(x){x.style.transform='scale('+s+')';});}
 function toggleFullscreen(){if(document.fullscreenElement){document.exitFullscreen();}else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}}
-function renderSteps(){var shown=steps[i];S[i].querySelectorAll('.reveal').forEach(function(x){x.classList.toggle('shown',Number(x.dataset.reveal)<shown);});if(bar)bar.style.width=((i+1)/S.length*100).toFixed(2)+'%';}
+function pad2(n){return n<10?'0'+n:String(n);}
+function syncNotes(){
+ if(!notesDrawer)return;
+ var num=pad2(i+1);
+ if(hudCount)hudCount.textContent=num+' / '+pad2(S.length);
+ byId('notes-title').textContent='讲者备注 · Slide '+num;
+ var txt=(window.SLIDE_NOTES&&window.SLIDE_NOTES[String(i)])||'（本页无备注）';
+ byId('notes-body').textContent=txt;
+}
+function toggleNotes(force){
+ notesOpen=typeof force==='boolean'?force:!notesOpen;
+ notesDrawer.hidden=!notesOpen;
+ hud.classList.toggle('notes-open',notesOpen);
+ byId('hud-notes-btn').setAttribute('aria-expanded',String(notesOpen));
+ syncNotes();
+}
+function defaultDemoForSlide(idx){
+ return idx===25?'pty':(idx===26?'microvm':'process');
+}
+function renderSteps(){var shown=steps[i];S[i].querySelectorAll('.reveal').forEach(function(x){x.classList.toggle('shown',Number(x.dataset.reveal)<shown);});if(bar)bar.style.width=((i+1)/S.length*100).toFixed(2)+'%';syncNotes();}
+function parseHash(){var h=location.hash.slice(1),m=/^(?:slide-)?(\\d+)$/.exec(h);return m?Number(m[1])-1:0;}
 function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(x,j){x.classList.toggle('on',j===i);});renderSteps();if(history.replaceState)history.replaceState(null,'','#'+(i+1));}
 function next(){var total=Number(S[i].dataset.reveals||0);if(steps[i]<total){steps[i]++;renderSteps();}else{go(i+1);}}
 function previous(){if(steps[i]>0){steps[i]--;renderSteps();}else{go(i-1);}}
-document.getElementById('stage').addEventListener('click',function(ev){if(liveOpen||ev.target.closest('button'))return;ev.clientX<innerWidth/3?previous():next();});
-addEventListener('keydown',function(ev){var k=ev.key;
+byId('stage').addEventListener('click',function(ev){if(liveOpen||ev.target.closest('button,a'))return;ev.clientX<innerWidth/3?previous():next();});
+byId('hud-notes-btn').addEventListener('click',function(ev){ev.stopPropagation();toggleNotes();});
+byId('notes-close').addEventListener('click',function(){toggleNotes(false);});
+byId('hud-demo-btn').addEventListener('click',function(ev){ev.stopPropagation();openLiveDemo(defaultDemoForSlide(i),1);});
+addEventListener('keydown',function(ev){
+ if(ev.altKey||ev.ctrlKey||ev.metaKey)return;
+ var k=ev.key;
+ if(ev.target&&ev.target.closest('input,textarea,select,[contenteditable="true"]')&&k!=='Escape')return;
  if(liveOpen){
   if(k==='Escape'){
+   ev.preventDefault();
    if(document.querySelector('.cs-menu:not([hidden])')){closeAllSelects();return;}
    closeLiveDemo();
   }
   return;
  }
- if(k==='ArrowRight'||k==='PageDown'||k===' ')next();else if(k==='ArrowLeft'||k==='PageUp')previous();
- else if(k==='Home')go(0);else if(k==='End')go(S.length-1);
- else if(k==='d'||k==='D'){ev.preventDefault();openLiveDemo(i===25?'pty':(i===26?'microvm':'process'),1);}
+ if(k==='Escape'&&notesOpen){ev.preventDefault();toggleNotes(false);return;}
+ if(k===' '&&ev.target&&ev.target.closest('button,a'))return;
+ if(k==='ArrowRight'||k==='ArrowDown'||k==='PageDown'||(k===' '&&!ev.shiftKey)){ev.preventDefault();next();}
+ else if(k==='ArrowLeft'||k==='ArrowUp'||k==='PageUp'||(k===' '&&ev.shiftKey)){ev.preventDefault();previous();}
+ else if(k==='Home'){ev.preventDefault();go(0);}
+ else if(k==='End'){ev.preventDefault();go(S.length-1);}
+ else if(k==='n'||k==='N'){ev.preventDefault();toggleNotes();}
+ else if(k==='d'||k==='D'){ev.preventDefault();openLiveDemo(defaultDemoForSlide(i),1);}
  else if(k==='f'||k==='F'){ev.preventDefault();toggleFullscreen();}});
 addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
-addEventListener('hashchange',function(){var n=(parseInt(location.hash.slice(1),10)||1)-1;if(n!==i)go(n);});
-fit();go((parseInt(location.hash.slice(1),10)||1)-1);
+addEventListener('hashchange',function(){var n=parseHash();if(n!==i)go(n);});
+fit();go(parseHash());
 
-function byId(id){return document.getElementById(id);}
 function cleanLive(value){
  return value
   .replace(/\\x1b\\[2J[\\s\\S]*?\\x1b\\[H/g,'')
@@ -866,6 +964,7 @@ async function connectLive(){
 }
 
 async function openLiveDemo(preferredKind,preferredStep){
+ if(notesOpen)toggleNotes(false);
  byId('live-demo').hidden=false;liveOpen=true;
  replayMode=!isLocalDemoHost();
  if(preferredKind)setKindVal(preferredKind);
@@ -985,10 +1084,12 @@ def load_recorded_demo(img_dir):
     return 'null'
 
 def build(out, img_dir, maxw):
+    D.validate_layout()
     out_dir = os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir, exist_ok=True)
     body = ''.join(slide_html(k, D.slides[k], img_dir, maxw) for k in sorted(D.slides))
     recorded_json = load_recorded_demo(img_dir)
+    notes_json = json.dumps({str(k): v for k, v in D.notes.items()}, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     doc = f"""<!DOCTYPE html>
 <html lang="en" dir="ltr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -996,10 +1097,12 @@ def build(out, img_dir, maxw):
 <title>Guardrails with Sandboxing - Microsoft Execution Containers (MXC)</title>
 <style>{CSS % (D.BG, D.INK, D.CY, D.CARD, D.CODEBG, D.EDGE, D.MUTED, D.AMB)}</style></head>
 <body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>
+{PRESENTER_UI}
 {LIVE_DEMO}
-<script>window.RECORDED_DEMO={recorded_json};</script>
+<script>window.RECORDED_DEMO={recorded_json};window.SLIDE_NOTES={notes_json};</script>
 <script>{JS}</script></body></html>"""
-    open(out, 'w', encoding='utf-8').write(doc)
+    with open(out, 'w', encoding='utf-8', newline='\n') as f:
+        f.write(doc)
     print(f'Saved {out}  ({len(D.slides)} slides, {os.path.getsize(out)/1e6:.2f} MB)')
 
 if __name__ == '__main__':
@@ -1008,5 +1111,5 @@ if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=os.path.join(root, 'dist', 'html', 'index.html'))
     ap.add_argument('--images', default=os.path.join(here, 'assets', 'images'))
-    ap.add_argument('--maxw', type=int, default=1100, help='max image edge in px (smaller = smaller file)')
+    ap.add_argument('--maxw', type=int, default=1600, help='max image edge in px')
     a = ap.parse_args(); build(a.out, a.images, a.maxw)

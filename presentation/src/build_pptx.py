@@ -22,11 +22,10 @@ from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
 from pptx.oxml import parse_xml
-from pptx.oxml.ns import nsdecls, qn
+from pptx.oxml.ns import nsdecls
 from PIL import Image
 
-# ===================== THEME =====================
-# ===================== LAYOUT ====================
+# ===================== THEME & LAYOUT =====================
 W,H=12192000,6858000; M=457200; CW=W-2*M
 BG='F3EEE4'; CARD='E9E2D4'; CARD2='E9E2D4'; EDGE='C9C0AE'; INK='2B2B2B'; MUTED='57534C'; FOOT='6E685F'
 CY='3F607E'; AMB='A84A35'; CODEBG='FAF7F1'; CODE='2F4B66'
@@ -36,10 +35,10 @@ PANEL=4572000   # width of the side illustration panel
 slides={}  # idx -> list of patches
 notes={}
 def P(s,op): slides.setdefault(s,[]).append(op)
-WF={'Plus Jakarta Sans':0.52,'Newsreader':0.56,'JetBrains Mono':0.6,'Aptos Display':0.55,'Aptos':0.51,'Cascadia Code':0.6,'Georgia':0.6,'Arial':0.56,'Calibri':0.5,'Courier New':0.6}
+WF={'Plus Jakarta Sans':0.55,'Newsreader':0.58,'JetBrains Mono':0.62,'Aptos Display':0.56,'Aptos':0.53,'Cascadia Code':0.62,'Georgia':0.6,'Arial':0.56,'Calibri':0.52,'Courier New':0.62}
 def nlines(text,size,cx,font,bold):
-    f=WF[font]*(1.07 if bold else 1)
-    cpl=max(1,int((cx-182880)/(size*12700*f)))
+    f=WF[font]*(1.08 if bold else 1)
+    cpl=max(1,int((cx-240000)/(size*12700*f)))
     n=0
     for para in text.split('\n'):
         words=para.split(' '); line=0; cnt=1
@@ -49,24 +48,28 @@ def nlines(text,size,cx,font,bold):
             else: line+=L
         n+=cnt
     return n
-def hgt(paras,cx,font):
+def hgt(paras,cx,font,space_after=6.5):
     t=0
-    for p in paras:
-        t+=nlines(p['text'],p['sizePt'],cx,font,p.get('bold',False))*p['sizePt']*12700*1.2
-    return int(t+182880)
-def tb(s,x,y,cx,text=None,size=16,color=INK,font=BF,bold=False,align='left',paras=None,ls=None,cy=None,name=None):
+    for idx,p in enumerate(paras):
+        lh=1.48 if font==MF else (1.16 if p['sizePt']>=29 else 1.42)
+        t+=nlines(p['text'],p['sizePt'],cx,font,p.get('bold',False))*p['sizePt']*12700*lh
+        if idx<len(paras)-1:
+            t+=p.get('spaceAfterPt',space_after)*12700
+    return int(t+240000)
+def tb(s,x,y,cx,text=None,size=16,color=INK,font=BF,bold=False,align='left',paras=None,ls=None,cy=None,name=None,space_after=None):
+    default_sa = (2.0 if font==MF else 6.5) if space_after is None else space_after
     if paras is None:
         paras=[{'text':text,'sizePt':size,'bold':bold,'color':color}]
     else:
         paras=[dict({'sizePt':size,'bold':bold,'color':color},**p) for p in paras]
-    h=cy or hgt(paras,cx,font)
-    op={'op':'add_text_box','slide':s,'x':int(x),'y':int(y),'cx':int(cx),'cy':int(h),'fontFamily':font,'align':align,'color':color}
-    if len(paras)==1 and ls is None:
+    h=cy or hgt(paras,cx,font,default_sa)
+    op={'op':'add_text_box','slide':s,'x':int(x),'y':int(y),'cx':int(cx),'cy':int(h),'fontFamily':font,'align':align,'color':color,'spaceAfterPt':default_sa}
+    if len(paras)==1 and ls is None and 'href' not in paras[0]:
         p=paras[0]; op.update(text=p['text'],sizePt=p['sizePt'],bold=p['bold'],color=p['color'])
     else:
         op['paragraphs']=[{k:v for k,v in p.items()} for p in paras]
         if ls is not None:
-            if len(paras)==1:
+            if len(paras)==1 and 'href' not in paras[0]:
                 p=paras[0]; del op['paragraphs']; op.update(text=p['text'],sizePt=p['sizePt'],bold=p['bold'],color=p['color'])
             op['letterSpacingPt']=ls
     if name: op['name']=name
@@ -79,26 +82,30 @@ def rect(s,x,y,cx,cy,fill=CARD,line=None,lw=None,preset='rect',text=None,size=16
     if shadow: op['shadow']=shadow
     if rot: op['rot']=rot
     P(s,op)
-def img(s,path,x,y,cx,cy,alt):
-    P(s,{'op':'add_image','slide':s,'path':path,'x':int(x),'y':int(y),'cx':int(cx),'cy':int(cy),'fit':'cover','altText':alt})
+def img(s,path,x,y,cx,cy,alt,fit='cover'):
+    P(s,{'op':'add_image','slide':s,'path':path,'x':int(x),'y':int(y),'cx':int(cx),'cy':int(cy),'fit':fit,'altText':alt})
 def header(s,eyebrow,title,x=M,cx=CW,title_cy=None):
-    tb(s,x,400000,cx,eyebrow,size=13,color=CY,font=HF,bold=True,ls=2)
-    tb(s,x,760000,cx,title,size=32,color=INK,font=HF,bold=True,cy=title_cy)
+    tb(s,x,310000,cx,eyebrow,size=12,color=CY,font=HF,bold=True,ls=2,cy=280000,name='eyebrow')
+    tb(s,x,640000,cx,title,size=29.5,color=INK,font=HF,bold=True,cy=title_cy or 640000,name='slide_title')
 def footer(s,src,num,x=M,cx=CW):
-    if src: tb(s,x,6180000,cx-900000,src,size=12,color=FOOT)
-    tb(s,x+cx-800000,6180000,800000,str(num),size=12,color=FOOT,align='right')
+    if src: tb(s,x,6260000,cx-900000,src,size=11.5,color=FOOT,cy=340000,name='footer_src')
+    tb(s,x+cx-800000,6260000,800000,f'{num:02d}',size=11.5,color=FOOT,align='right',cy=340000,name='footer_num')
 def note(s,t): notes[s]=t
+
+def card_box(s,x,y,cx,cy,paras,fill=CARD,line=None,lw=19050,pad_x=240000,pad_y=120000,font=BF,space_after=6.5,align='left'):
+    rect(s,x,y,cx,cy,fill=fill,line=line,lw=lw if line else None)
+    tb(s,x+pad_x,y+pad_y,cx-2*pad_x,None,paras=paras,font=font,align=align,cy=cy-2*pad_y,space_after=space_after)
 
 # ===================== SLIDES ====================
 # ---------- 0 COVER
 s=0
 img(s,'hd-cover.jpg',0,0,W,H,'Hand-drawn sketch illustration: a friendly robot AI agent standing inside a glass cube, with files, cloud and keys kept outside the boundary')
 x=M+150000; cx=5900000
-tb(s,x,1250000,cx,'MICROSOFT EXECUTION CONTAINERS (MXC)',size=13,color=CY,font=HF,bold=True,ls=2)
-y=tb(s,x,1650000,cx,'Guardrails with\nSandboxing',size=46,color=INK,font=HF,bold=True)
-y=tb(s,x,y+150000,cx,'Keeping AI agents inside safe boundaries: isolating execution and controlling access to files, network and credentials on Windows',size=18,color=MUTED)
-y=tb(s,x,y+350000,cx,'Yingting Huang  |  Sr. Cloud Solution Architect, Microsoft',size=16,color=INK,bold=True)
-tb(s,x,y+30000,cx,'November 2026  ·  45 minutes  ·  L300 → L400',size=14,color=MUTED)
+tb(s,x,1250000,cx,'MICROSOFT EXECUTION CONTAINERS (MXC)',size=12,color=CY,font=HF,bold=True,ls=2,cy=300000)
+tb(s,x,1650000,cx,'Guardrails with\nSandboxing',size=45,color=INK,font=HF,bold=True,cy=1480000)
+tb(s,x,3280000,cx,'Keeping AI agents inside safe boundaries: isolating execution and controlling access to files, network and credentials on Windows',size=17,color=MUTED,cy=1300000)
+tb(s,x,4850000,cx,'Yingting Huang  |  Sr. Cloud Solution Architect, Microsoft',size=15,color=INK,bold=True,cy=500000)
+tb(s,x,5400000,cx,'November 2026  ·  45 minutes  ·  L300 → L400',size=13.5,color=MUTED,cy=340000)
 note(s,'AI Agent 已从内容生成工具演进为具备执行能力的系统，可以读取文件、运行命令、修改状态并调用外部服务。因此，安全目标不仅是减少错误回答，还必须限制错误或恶意动作的影响范围。\nMicrosoft Execution Containers，简称 MXC，为不完全可信或 AI 生成的工作负载提供操作系统级执行边界。其核心思想是保留必要的任务能力，同时将文件、网络、凭据和用户界面访问限制在明确授权范围内。')
 
 # ---------- 1 AGENDA
@@ -143,7 +150,7 @@ rows=[('Prompt injection','A poisoned README tells the agent to run the attacker
 y=1650000
 for i,(h_,d) in enumerate(rows):
     tb(s,M,y,700000,f'0{i+1}',size=24,color=AMB,font=HF,bold=True)
-    yy=tb(s,M+800000,y,cxl-800000,None,paras=[{'text':h_,'sizePt':19,'bold':True,'color':INK},{'text':d,'sizePt':15,'color':MUTED}])
+    yy=tb(s,M+800000,y,cxl-800000,None,paras=[{'text':h_,'sizePt':18,'bold':True,'color':INK},{'text':d,'sizePt':14,'color':MUTED}],cy=960000)
     y=yy+130000
 footer(s,'Scenario 04 adapted from the Windows Developer Blog, Oct 7, 2026',4,cx=cxl)
 note(s,'主要威胁包括四类。Prompt Injection 来自工作负载读取的不可信文档、网页或仓库内容，可诱导模型执行额外指令。凭据窃取源于 Agent 对 token、SSH key 和浏览器资料的读取能力。数据外传要求同时考虑文件可读范围和网络出口，而不仅检查输入内容。越权操作则表现为任务语义上相似、但超出授权边界的动作，例如为更新网站直接修改生产配置。\n这些风险既可能由攻击者触发，也可能由模型选择错误路径导致，因此不能仅依赖内容分类或提示词约束。')
@@ -155,7 +162,7 @@ y=tb(s,M,1650000,9500000,'"An agent cannot be its own security authority."',size
 y=tb(s,M,y+20000,9500000,'Windows Developer Blog, October 7, 2026',size=14,color=MUTED)
 lab=1900000; chw=2240000; gap=120000
 def chiprow(yv,label,chips,lifted):
-    tb(s,M,yv+70000,lab-100000,label,size=16,bold=True,color=CY if lifted else MUTED)
+    tb(s,M,yv+70000,lab-100000,label,size=15,bold=True,color=CY if lifted else MUTED)
     for i,c in enumerate(chips):
         x=M+lab+i*(chw+gap)
         if lifted: rect(s,x,yv,chw,560000,fill=CARD2,line=CY,lw=19050,text=c,size=15,color=INK)
@@ -193,7 +200,7 @@ facts=[('MIT','Open source on GitHub'),('GA','Generally available since Oct 7, 2
 for i,(v,l) in enumerate(facts):
     x=xl+(i%2)*(tw+200000); yy=ty+(i//2)*(th+150000)
     rect(s,x,yy,tw,th,fill=CARD)
-    tb(s,x+250000,yy+90000,tw-400000,None,paras=[{'text':v,'sizePt':32,'bold':True,'color':CY},{'text':l,'sizePt':14,'color':INK}],font=BF)
+    tb(s,x+250000,yy,tw-400000,None,paras=[{'text':v,'sizePt':30,'bold':True,'color':CY},{'text':l,'sizePt':13,'color':INK}],font=BF,cy=th)
 tb(s,xl,ty+2*th+150000+250000,cxr,'One JSON policy, mapped to the right OS sandbox on every host.',size=17,bold=True,color=INK)
 footer(s,'Sources: Microsoft Learn; Windows Developer Blog, Oct 2026',7,x=xl,cx=cxr)
 note(s,'MXC 是开源、策略驱动的执行层，用于运行 AI 生成代码、第三方工具、插件或其他不完全可信的工作负载。Host 提交文件、网络、UI、命令和生命周期配置，MXC 将统一请求映射到当前平台支持的 Backend。\nContainer 不等同于 Docker 镜像或虚拟机。底层实现可以是进程沙箱、独立会话、WSL 环境或实验性虚拟化机制。MXC 采用 MIT 许可证，提供 .NET、TypeScript 和 Rust SDK，并支持 Windows、macOS 与 Linux。')
@@ -201,15 +208,15 @@ note(s,'MXC 是开源、策略驱动的执行层，用于运行 AI 生成代码�
 # ---------- 7 FIVE CONCEPTS
 s=7
 header(s,'02 · UNDERSTANDING MXC','Five concepts to remember')
-gap=150000; cw5=(CW-4*gap)/5; y0=1650000; ch=3600000
+gap=150000; cw5=(CW-4*gap)/5; y0=1650000; ch=3900000
 cons=[('Host app','Your trusted app or agent runtime. Picks permissions, supplies inputs, handles results.'),('Workload','The command, script or process that runs under containment.'),('Policy','The access you permit: readable files, writable folders, network destinations, UI.'),('Execution config','The policy plus command, working directory, runtime settings and containment choice.'),('Backend','The OS mechanism that enforces it: process sandbox, separate session or VM.')]
 for i,(t,d) in enumerate(cons):
     x=M+i*(cw5+gap)
     rect(s,x,y0,cw5,ch,fill=CARD)
-    y=tb(s,x+200000,y0+250000,cw5-400000,f'0{i+1}',size=28,color=CY,font=HF,bold=True)
-    y=tb(s,x+200000,y+80000,cw5-400000,t,size=19,bold=True,cy=hgt([{'text':'Execution config','sizePt':19,'bold':True}],cw5-400000,BF))
-    tb(s,x+200000,y+100000,cw5-400000,d,size=14,color=MUTED)
-tb(s,M,5450000,CW,'The host decides. The policy describes. The backend enforces.',size=20,bold=True)
+    tb(s,x+200000,y0+180000,cw5-400000,f'0{i+1}',size=26,color=CY,font=HF,bold=True,cy=480000)
+    tb(s,x+200000,y0+700000,cw5-400000,t,size=18,bold=True,cy=850000)
+    tb(s,x+200000,y0+1590000,cw5-400000,d,size=14,color=MUTED,cy=2160000)
+tb(s,M,5660000,CW,'The host decides. The policy describes. The backend enforces.',size=19,bold=True,cy=500000)
 footer(s,'Source: Microsoft Learn, Microsoft Execution Containers overview',8)
 note(s,'MXC 包含五个核心对象。Host app 是可信决策方，负责分类任务和选择权限。Workload 是实际执行的命令、脚本或进程。Policy 以默认拒绝方式描述文件、网络与 UI 权限。Execution config 将 Policy、命令、工作目录、超时和隔离选择组合为一次请求。Backend 是实施限制的操作系统机制。\n权限必须由 Host 或人工审批授予。Workload 只能建议需求，不能自行选择或扩大 Policy；否则隔离边界可以被工作负载主动覆盖。')
 
@@ -238,7 +245,7 @@ for i,(t,d) in enumerate(lays):
     rect(s,M+lw_+100000,y,CW-lw_-100000,lh,fill=CARD)
     tb(s,M+lw_+400000,y,CW-lw_-700000,d,size=16,color=MUTED,cy=lh)
     y+=lh+110000
-tb(s,M,y+120000,CW,'Rule #1: an agent may suggest a permission, but only trusted host logic or a human can grant it.',size=18,bold=True,color=INK)
+tb(s,M,y+120000,CW,'Rule #1: an agent may suggest a permission, but only trusted host logic or a human can grant it.',size=16,bold=True,color=INK,cy=780000)
 footer(s,'Source: Microsoft Learn, MXC architecture and containment models',10)
 note(s,'架构分为 Host app、MXC SDK 与策略契约、MXC 执行层和 Containment Backend 四层。Host 选择授权；SDK 处理能力发现、配置转换和生命周期；执行层校验请求并选择 Backend；Backend 创建环境并执行平台限制。\n信任边界位于 Host 与 Backend 之间。Agent 可以提出权限需求，但只有 Host 的策略逻辑或人工审批可以批准。Host 自身位于容器外，因此仍需验证输入、输出和工具调用，其实现不受 MXC 自动保护。')
 
@@ -258,9 +265,9 @@ for i,(t,p,d,st) in enumerate(bx):
     yy=y0+250000
     if st:
         rect(s,x+250000,yy,1500000,380000,fill=AMB,preset='roundRect',text=st,size=13,bold=True,color=BG); yy+=500000
-    yy=tb(s,x+250000,yy,cw4-500000,t,size=20,bold=True)
-    yy=tb(s,x+250000,yy+40000,cw4-500000,p,size=14,color=CY,bold=True)
-    tb(s,x+250000,yy+120000,cw4-500000,d,size=15,color=MUTED)
+    yy=tb(s,x+250000,yy,cw4-500000,t,size=18,bold=True,cy=700000)
+    yy=tb(s,x+250000,yy+40000,cw4-500000,p,size=12.5,color=CY,bold=True,cy=550000)
+    tb(s,x+250000,yy+120000,cw4-500000,d,size=13,color=MUTED,cy=y0+ch-yy-240000)
 footer(s,'Sources: Windows Developer Blog, Oct 7, 2026; Microsoft Learn, MXC architecture',11)
 note(s,'隔离方式应按工作负载需求选择。Process container 启动开销较低，适合 Coding Agent；Windows、macOS 和 Linux 分别映射到 AppContainer、Seatbelt 和 Bubblewrap。\nSession container 创建独立 Windows 用户和 OS Session，Session 内窗口、GDI 与剪贴板可工作，但 Host 的 UI 和用户 Profile 不属于该 Session。官方实现拒绝文件策略，要求网络明确为 egress、ingress、host loopback 全部 allow，并阻止 SendInput。因此它解决身份、会话和桌面分离，不解决精细文件/网络最小权限，也不是通用凭据隔离器。')
 
@@ -268,9 +275,9 @@ note(s,'隔离方式应按工作负载需求选择。Process container 启动开
 s=11
 header(s,'03 · FEATURES & PLATFORMS','Where MXC runs today')
 c1=M; w1=3000000; c2=c1+w1+150000; w2=3000000; c3=c2+w2+150000; w3=W-M-c3
-hy=1600000
+hy=1500000
 for x,w,t in [(c1,w1,'HOST'),(c2,w2,'DEFAULT PROCESS BACKEND'),(c3,w3,'ALSO IN THE V1 SDK / NOTES')]:
-    tb(s,x+200000,hy,w-200000,t,size=12,color=CY,font=HF,bold=True,ls=1)
+    tb(s,x+200000,hy,w-200000,t,size=11,color=CY,font=HF,bold=True,ls=1,cy=400000)
 rowsd=[('Windows 11','ProcessContainer','IsolationSession and WSLc; Learning Mode activity reports'),('Linux','Bubblewrap','LXC'),('macOS','Seatbelt','Check each release for other options'),('Windows 365 Cloud PC','ProcessContainer','Same as a physical PC; session or VM backends need nested virtualization')]
 y=1980000; rh=720000
 for i,(a,b,c) in enumerate(rowsd):
@@ -289,7 +296,7 @@ s=12
 header(s,'03 · FEATURES & PLATFORMS','Files: read in, write out')
 cx_=6000000; cy0=1600000; chh=4300000
 rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
-tb(s,M+250000,cy0+120000,cx_-500000,'policy.json',size=12,color=FOOT,font=MF)
+tb(s,M+250000,cy0+120000,cx_-500000,'policy.json',size=12,color=FOOT,font=MF,cy=340000)
 code='{\n  "version": "1.0.0",\n  "containment": "processcontainer",\n  "process": {\n    "commandLine": "python summarize.py"\n  },\n  "filesystem": {\n    "readwritePaths": ["C:\\\\demo\\\\output"],\n    "deniedPaths": ["C:\\\\Users\\\\me\\\\.ssh"]\n  }\n}'
 tb(s,M+250000,cy0+550000,cx_-500000,None,paras=[{'text':l} for l in code.split('\n')],size=14,color=CODE,font=MF)
 rx=M+cx_+400000; rw=W-M-rx
@@ -306,7 +313,7 @@ header(s,'03 · FEATURES & PLATFORMS','Network: deny by default')
 bx0=M; by0=1900000; bw=2400000; bh=3400000
 rect(s,bx0,by0,bw,bh,fill=CARD2,line=CY,lw=28575)
 tb(s,bx0+200000,by0+1000000,bw-400000,None,paras=[{'text':'Agent workload','sizePt':19,'bold':True,'color':INK},{'text':'egress: deny','sizePt':15,'color':CY},{'text':'ingress: deny','sizePt':15,'color':CY}])
-dx=bx0+bw+1250000; dw=2900000; dh=780000
+dx=bx0+bw+1250000; dw=2900000; dh=840000
 dests=[('140.82.114.6 : 443','Allowed by CIDR + port',CY,'✓'),('Any other address','Blocked',AMB,'✕'),('Local proxy 127.0.0.1:8080','Domain allow-list lives here',CY,'→')]
 for i,(t,d,c,g) in enumerate(dests):
     yy=by0+120000+i*(dh+380000)
@@ -384,7 +391,7 @@ s=17
 img(s,'hd-coding.jpg',0,0,PANEL,H,'Hand-drawn sketch panel: a robot coding inside a fenced project folder while a locked vault with a key sits outside')
 xl=PANEL+M; cxr=W-xl-M
 header(s,'04 · USE CASES','Secure coding agents',x=xl,cx=cxr)
-y=tb(s,xl,1550000,cxr,'Build, test and push, without touching anything else.',size=18,color=INK)
+y=tb(s,xl,1550000,cxr,'Build, test and push, without touching anything else.',size=18,color=INK,cy=600000)
 perm=[('Project repo  C:\\src\\app','Read / write',CY),('Toolchain: node, python, git','Allowed',CY),('Package registry via proxy','Allowed',CY),('~/.ssh, tokens, Documents','Denied',AMB),('Any other network destination','Blocked',AMB)]
 y+=200000; rh=560000
 for t,st,c in perm:
@@ -392,7 +399,7 @@ for t,st,c in perm:
     tb(s,xl+250000,y,cxr-2200000,t,size=15,color=INK,cy=rh)
     rect(s,xl+cxr-1750000,y+90000,1550000,rh-180000,fill=c,preset='roundRect',text=st,size=13,bold=True,color=BG)
     y+=rh+90000
-tb(s,xl,y+150000,cxr,'In production: GitHub Copilot CLI uses MXC process isolation.',size=17,bold=True,color=CY)
+tb(s,xl,y+150000,cxr,'In production: GitHub Copilot CLI uses MXC process isolation.',size=14,bold=True,color=CY,cy=500000)
 footer(s,'Source: Windows Developer Blog, Jun 2026 · example policy',18,x=xl,cx=cxr)
 note(s,'Coding Agent 需要访问当前仓库、执行工具链、调用 git 并可能下载依赖，但通常不需要读取 SSH key、其他仓库、个人文档或云凭据。Policy 应围绕当前开发任务授予权限，而不是继承开发者会话的完整权限。\n包管理器访问可通过可信代理限制域名和凭据。GitHub Copilot CLI 使用 MXC 进程隔离来约束动态生成并执行的代码，验证了“任务可执行、主机访问受限”的设计模型。具体路径与工具列表仍需按项目生成，而不是复用固定模板。')
 
@@ -424,8 +431,8 @@ status_rows=[
 y=1550000
 for title,body,h in status_rows:
     rect(s,panel_x,y,panel_w,h,fill=CARD)
-    tb(s,panel_x+220000,y+100000,panel_w-440000,title,size=11,color=CY,font=HF,bold=True,ls=1)
-    tb(s,panel_x+220000,y+420000,panel_w-440000,body,size=13,color=INK,cy=h-500000)
+    tb(s,panel_x+220000,y+40000,panel_w-440000,title,size=11,color=CY,font=HF,bold=True,ls=1,cy=280000)
+    tb(s,panel_x+220000,y+320000,panel_w-440000,body,size=12.5,color=INK,cy=h-340000)
     y+=h+180000
 footer(s,'Ecosystem image: partner logo reference  ·  Status: verify each product before presenting',20)
 note(s,'这张页把生态信息分成两部分。左侧伙伴 Logo 图用于展示 MXC 覆盖范围，右侧保留明确的支持状态，避免只看 Logo 产生误解。\n“Supports MXC today”包括 GitHub Copilot、OpenAI Codex、OpenClaw、Replit、LM Studio 和 Unsloth AI；NVIDIA OpenShell 已集成，OpenAI 和 Meta 正在基于新的隔离能力构建；其余产品属于已宣布支持或仍在推进的生态。支持阶段会持续变化，Logo 图用于说明广度，文字栏用于说明当前成熟度，正式演讲前仍应逐项核实。')
@@ -438,11 +445,11 @@ sdks=[('.NET','Microsoft.Mxc.Sdk','NuGet.org','GetPlatformSupport()'),('TypeScri
 for i,(t,pkg,reg,api) in enumerate(sdks):
     x=M+i*(cw3+g)
     rect(s,x,y0,cw3,ch,fill=CARD)
-    yy=tb(s,x+250000,y0+250000,cw3-500000,t,size=22,bold=True,font=HF)
-    yy=tb(s,x+250000,yy+100000,cw3-500000,pkg,size=15,bold=True,color=CY,font=MF)
-    yy=tb(s,x+250000,yy+20000,cw3-500000,'from '+reg,size=14,color=MUTED)
-    yy=tb(s,x+250000,yy+250000,cw3-500000,'DISCOVERY',size=12,color=FOOT,font=HF,bold=True,ls=1)
-    tb(s,x+250000,yy,cw3-500000,api,size=12,color=INK,font=MF)
+    yy=tb(s,x+250000,y0+150000,cw3-500000,t,size=22,bold=True,font=HF,cy=520000)
+    yy=tb(s,x+250000,yy+40000,cw3-500000,pkg,size=15,bold=True,color=CY,font=MF,cy=650000)
+    yy=tb(s,x+250000,yy+20000,cw3-500000,'from '+reg,size=14,color=MUTED,cy=350000)
+    yy=tb(s,x+250000,yy+120000,cw3-500000,'DISCOVERY',size=12,color=FOOT,font=HF,bold=True,ls=1,cy=280000)
+    tb(s,x+250000,yy+40000,cw3-500000,api,size=12,color=INK,font=MF,cy=400000)
 rect(s,M,4600000,CW,1200000,fill=CARD2,line=CY,lw=19050)
 tb(s,M+300000,4600000,CW-600000,None,paras=[{'text':'The SDK converts your ContainerRequest into the stable 1.0.0 schema, so you never pick a schema version.','sizePt':17,'bold':True,'color':INK},{'text':'Windows 365 prerequisites: Windows 11 24H2 or later; .NET 8+ or Node.js 18+.','sizePt':15,'color':MUTED}],cy=1200000)
 footer(s,'Sources: Microsoft Learn, MXC overview, platform support and Windows 365 support for MXC',21)
@@ -475,11 +482,11 @@ st=[('Discover','getPlatformSupport() and probe() before launching.'),('Describe
 lw0=5300000; y=1600000; rh=820000
 for i,(t,d) in enumerate(st):
     tb(s,M,y,700000,str(i+1),size=30,color=CY,font=HF,bold=True,cy=rh)
-    tb(s,M+700000,y,lw0-700000,None,paras=[{'text':t,'sizePt':18,'bold':True,'color':INK},{'text':d,'sizePt':14,'color':MUTED}],cy=rh)
+    tb(s,M+700000,y,lw0-700000,None,paras=[{'text':t,'sizePt':17,'bold':True,'color':INK},{'text':d,'sizePt':13.5,'color':MUTED}],cy=rh)
     y+=rh+60000
 cx0=M+lw0+300000; cw_=W-M-cx0; cy0=1600000; chh=4300000
 rect(s,cx0,cy0,cw_,chh,fill=CODEBG,line=EDGE)
-tb(s,cx0+250000,cy0+120000,cw_-500000,'host.ts  ·  illustrative pseudocode',size=12,color=FOOT,font=MF)
+tb(s,cx0+250000,cy0+120000,cw_-500000,'host.ts  ·  illustrative pseudocode',size=12,color=FOOT,font=MF,cy=340000)
 code=['const support = await getPlatformSupport();','if (!support.isSupported) throw support.reason;','','const request = {','  command: "npm test",','  workingDirectory: repo,','  filesystem: { readwritePaths: [repo] },','  network: { egress: { default: "deny" } },','  timeoutMs: 120_000,','};','const result = await runContained(request);','validate(result); // never trust blindly']
 tb(s,cx0+250000,cy0+520000,cw_-400000,None,paras=[{'text':l if l else ' '} for l in code],size=13,color=CODE,font=MF)
 footer(s,'Code is illustrative; check the MXC SDK guides for exact type and method names',23)
@@ -505,9 +512,9 @@ cx_=5550000; cy0=1620000; chh=4300000
 rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
 tb(s,M+250000,cy0+140000,cx_-500000,'policy.json  ·  @microsoft/mxc-sdk/v1',size=12,color=FOOT,font=MF,cy=340000)
 pc_code='{\n  "containment": { "type": "processcontainer" },\n  "filesystem": {\n    "readonlyPaths": ["demo/input"],\n    "readwritePaths": ["demo/output"],\n    "deniedPaths": ["demo/protected/denied.txt"]\n  },\n  "network": {\n    "egress": { "default": "deny" },\n    "ingress": { "hostLoopback": "allow" }\n  }\n}'
-tb(s,M+250000,cy0+480000,cx_-500000,None,paras=[{'text':l} for l in pc_code.split('\n')],size=12.5,color=CODE,font=MF)
-rect(s,M+250000,cy0+3340000,cx_-500000,720000,fill=CARD2,line=CY,lw=12700)
-tb(s,M+420000,cy0+3340000,cx_-840000,None,paras=[
+tb(s,M+250000,cy0+480000,cx_-500000,pc_code,size=11,color=CODE,font=MF,cy=2960000)
+rect(s,M+250000,cy0+3480000,cx_-500000,720000,fill=CARD2,line=CY,lw=12700)
+tb(s,M+420000,cy0+3480000,cx_-840000,None,paras=[
     {'text':'PS> npm --prefix demo run demo:process','sizePt':12,'bold':True,'color':INK},
     {'text':'getPlatformSupport() → probe() → run()','sizePt':12,'color':CY},
 ],font=MF,cy=720000)
@@ -532,13 +539,13 @@ note(s,'Demo 1 将文件最小权限与方向性网络控制合并为一个完�
 s=25
 img(s,'hd-blocked.jpg',W-PANEL,0,PANEL,H,'Hand-drawn sketch panel: a sneaky amber tentacle pulls a robot agent toward a door, but a force field blocks it')
 cxl=W-PANEL-2*M
-header(s,'06 · LIVE DEMO 2','Incident triage in isolation',cx=cxl,title_cy=600000)
+header(s,'06 · LIVE DEMO 2','Isolated incident triage',cx=cxl)
 beats=[('Stage','Host places INC-1042 and its read-only approval in the shared workspace.'),('Open PTY','A dedicated Windows operator session launches PowerShell with MXC-owned I/O.'),('Triage','Check Spooler and W32Time, retain context, and write auditable evidence.'),('Close','Host validates the report, stops the session and deprovisions the operator.')]
-railx=M+150000; y=1650000
+railx=M+150000; y=1550000
 ys=[]
 for i,(t,d) in enumerate(beats):
     ys.append(y)
-    y=tb(s,M+600000,y,cxl-600000,None,paras=[{'text':t,'sizePt':19,'bold':True,'color':CY if i!=3 else AMB},{'text':d,'sizePt':15,'color':MUTED}])+200000
+    y=tb(s,M+600000,y,cxl-600000,None,paras=[{'text':t,'sizePt':18,'bold':True,'color':CY if i!=3 else AMB},{'text':d,'sizePt':13.5,'color':MUTED}],cy=1060000)+80000
 rect(s,railx+100000-12700,ys[0]+200000,25400,ys[-1]-ys[0],fill=EDGE)
 for i,yy in enumerate(ys):
     rect(s,railx,yy+100000,200000,200000,fill=CY if i!=3 else AMB,preset='ellipse')
@@ -553,9 +560,9 @@ rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
 rect(s,M+cx_-1700000,cy0+140000,1450000,340000,fill=AMB,preset='roundRect',text='Experimental',size=11,bold=True,color=BG)
 tb(s,M+250000,cy0+140000,cx_-2000000,'hyperlight-policy.json',size=12,color=FOOT,font=MF,cy=340000)
 vm_code='{\n  "version": "1.1.0-alpha",\n  "containment": "hyperlight",\n  "hyperlight": {\n    "runtime": "python"\n  },\n  "process": {\n    "commandLine": "python eval_untrusted.py",\n    "timeout": 30000\n  }\n}'
-tb(s,M+250000,cy0+580000,cx_-500000,None,paras=[{'text':l} for l in vm_code.split('\n')],size=13.5,color=CODE,font=MF)
-rect(s,M+250000,cy0+3320000,cx_-500000,740000,fill=CARD2,line=CY,lw=12700)
-tb(s,M+420000,cy0+3320000,cx_-840000,None,paras=[
+tb(s,M+250000,cy0+580000,cx_-500000,vm_code,size=12.5,color=CODE,font=MF,cy=2840000)
+rect(s,M+250000,cy0+3480000,cx_-500000,740000,fill=CARD2,line=CY,lw=12700)
+tb(s,M+420000,cy0+3480000,cx_-840000,None,paras=[
     {'text':'PS> npm --prefix demo run demo:microvm','sizePt':12,'bold':True,'color':INK},
     {'text':'Warm snapshot restore: ~90 ms · Unikraft 5.15','sizePt':12,'color':CY},
 ],font=MF,cy=740000)
@@ -580,42 +587,91 @@ note(s,'Demo 3 展示最强的硬件虚拟化隔离边界——Hyperlight MicroV
 s=27
 img(s,'hd-closer.jpg',0,0,W,H,'Hand-drawn sketch illustration: three robot agents in bubbles and an engineer giving a thumbs up at sunrise over a city')
 x=M+150000; cx=5900000
-tb(s,x,650000,cx,'KEY TAKEAWAYS',size=13,color=CY,font=HF,bold=True,ls=2)
-y=tb(s,x,1000000,cx,'Box the agent,\nnot the ambition',size=38,color=INK,font=HF,bold=True)
+tb(s,x,650000,cx,'KEY TAKEAWAYS',size=12,color=CY,font=HF,bold=True,ls=2,cy=280000)
+tb(s,x,1000000,cx,'Box the agent,\nnot the ambition',size=38,color=INK,font=HF,bold=True,cy=1300000)
 tk=['1   Push guardrails down to the OS. Prompts alone can\'t enforce.','2   MXC: one policy, the right sandbox on Windows, macOS and Linux.','3   Learn first, then enforce least privilege.','4   Containment isn\'t trust. Validate every result.']
-y=tb(s,x,y+150000,cx,None,paras=[{'text':t} for t in tk],size=16,color=INK)
-y=tb(s,x,y+150000,cx,None,paras=[{'text':'learn.microsoft.com/windows/apps/develop/mxc'},{'text':'github.com/microsoft/mxc'}],size=14,color=CY)
-tb(s,x,y+150000,cx,'Thank you  ·  Q&A',size=24,color=INK,font=HF,bold=True)
+tb(s,x,2500000,cx,None,paras=[{'text':t} for t in tk],size=14.5,color=INK,cy=2200000)
+tb(s,x,4850000,cx,None,paras=[{'text':'learn.microsoft.com/windows/apps/develop/mxc'},{'text':'github.com/microsoft/mxc'}],size=14,color=CY,cy=850000)
+tb(s,x,5850000,cx,'Thank you  ·  Q&A',size=24,color=INK,font=HF,bold=True,cy=700000)
 note(s,'实施 Agent 执行隔离应遵循四项原则：AI 层约束与操作系统层强制控制并用；采用统一 Policy，由平台选择合适 Backend；先观察并人工审核，再收紧为最小权限 Enforcement；隔离后仍需验证输出和副作用。\n建议从 Coding Agent 或敏感文档处理场景开始 PoC，先定义精确的文件与网络权限，再覆盖正常执行、越权拒绝、异常清理和审计路径。稳定后再扩展身份、企业治理和桌面自动化能力。')
 
 
+# ===================== BUILD-TIME LAYOUT VALIDATOR =====================
+def validate_layout():
+    errors=[]
+    for k in sorted(slides):
+        ops=slides[k]
+        for o in ops:
+            if o['cx']<=0 or o['cy']<=0 or o['x']<0 or o['y']<0 or o['x']+o['cx']>W or o['y']+o['cy']>H:
+                errors.append(f'Slide {k+1}: {o["op"]} has invalid bounds')
+        tbs=[o for o in ops if o['op']=='add_text_box']
+        for o in tbs:
+            if o.get('name')=='slide_title':
+                txt=o.get('text') or o['paragraphs'][0]['text']
+                if nlines(txt,o.get('sizePt',29.5),o['cx'],'Newsreader',True)>1:
+                    errors.append(f'Slide {k+1}: header title wraps >1 line ({txt!r})')
+        for i in range(len(tbs)):
+            for j in range(i+1,len(tbs)):
+                a,b=tbs[i],tbs[j]
+                x_ov=min(a['x']+a['cx'],b['x']+b['cx'])-max(a['x'],b['x'])
+                y_ov=min(a['y']+a['cy'],b['y']+b['cy'])-max(a['y'],b['y'])
+                if x_ov>20000 and y_ov>0:
+                    ta=(a.get('text') or a['paragraphs'][0]['text'])[:30]
+                    tb_=(b.get('text') or b['paragraphs'][0]['text'])[:30]
+                    errors.append(f'Slide {k+1}: textbox overlap ({y_ov} EMU) between {ta!r} and {tb_!r}')
+    if errors:
+        raise ValueError('Layout validation failed:\n  ' + '\n  '.join(errors))
+
 # ===================== WRITER (python-pptx) =====================
 PRESETS={'rect':MSO_SHAPE.RECTANGLE,'roundRect':MSO_SHAPE.ROUNDED_RECTANGLE,'ellipse':MSO_SHAPE.OVAL,
-         'rightArrow':MSO_SHAPE.RIGHT_ARROW,'leftArrow':MSO_SHAPE.LEFT_ARROW,
+         'rightArrow':MSO_SHAPE.RIGHT_ARROW,'leftArrow':MSO_SHAPE.LEFT_ARROW,'downArrow':MSO_SHAPE.DOWN_ARROW,
          'chevron':MSO_SHAPE.CHEVRON,'homePlate':MSO_SHAPE.PENTAGON}
 ALIGN={'left':PP_ALIGN.LEFT,'center':PP_ALIGN.CENTER,'right':PP_ALIGN.RIGHT}
 rgb=lambda h:RGBColor.from_string(h)
 
 def write_text(tf,o):
     tf.word_wrap=True; tf.vertical_anchor=MSO_ANCHOR.MIDDLE
+    tf.margin_left=Emu(76200); tf.margin_right=Emu(76200)
+    tf.margin_top=Emu(57150); tf.margin_bottom=Emu(57150)
     paras=o.get('paragraphs') or [{'text':o['text']}]
+    raw_font=o.get('fontFamily',BF)
+    default_sa=o.get('spaceAfterPt', 2.0 if raw_font==MF else 6.5)
     for i,p in enumerate(paras):
         para=tf.paragraphs[0] if i==0 else tf.add_paragraph()
         para.alignment=ALIGN[p.get('align',o.get('align','center'))]
+        sz=p.get('sizePt',o.get('sizePt',16))
+        para.line_spacing=1.35 if raw_font==MF else (1.12 if sz>=29 else 1.24)
+        if i<len(paras)-1:
+            para.space_after=Pt(p.get('spaceAfterPt',default_sa))
         lines=p['text'].split('\n')
         for j,line in enumerate(lines):
             if j: para.add_line_break()
-            r=para.add_run(); r.text=line; f=r.font
-            f.name=o.get('fontFamily',BF); f.size=Pt(p.get('sizePt',o.get('sizePt',16)))
+            r=para.add_run(); r.text=line
+            if p.get('href'): r.hyperlink.address=p['href']
+            f=r.font
+            f.name=raw_font; f.size=Pt(sz)
             f.bold=p.get('bold',o.get('bold',False)); f.color.rgb=rgb(p.get('color',o.get('color',INK)))
             if o.get('letterSpacingPt'): r._r.get_or_add_rPr().set('spc',str(int(o['letterSpacingPt']*100)))
 
 def add_picture(sl,o,img_dir):
     path=os.path.join(img_dir,os.path.basename(o['path']))
-    pic=sl.shapes.add_picture(path,Emu(o['x']),Emu(o['y']),Emu(o['cx']),Emu(o['cy']))
-    iw,ih=Image.open(path).size; fr=o['cx']/o['cy']; ir=iw/ih
-    if ir>fr: c=(1-fr/ir)/2; pic.crop_left=pic.crop_right=c        # centre-crop ("cover")
-    else:     c=(1-ir/fr)/2; pic.crop_top=pic.crop_bottom=c
+    if path.lower().endswith('.svg'):
+        path=path[:-4]+'.png'
+    with Image.open(path) as image:
+        iw,ih=image.size
+    x,y,cx,cy=o['x'],o['y'],o['cx'],o['cy']
+    fr=cx/cy; ir=iw/ih
+    if o.get('fit')=='contain':
+        if ir>fr:
+            nh=int(cx/ir); y=int(y+(cy-nh)/2); cy=nh
+        else:
+            nw=int(cy*ir); x=int(x+(cx-nw)/2); cx=nw
+        pic=sl.shapes.add_picture(path,Emu(x),Emu(y),Emu(cx),Emu(cy))
+    else:
+        pic=sl.shapes.add_picture(path,Emu(x),Emu(y),Emu(cx),Emu(cy))
+        if abs(ir-fr)>1e-4:
+            if ir>fr: c=(1-fr/ir)/2; pic.crop_left=pic.crop_right=c
+            else:     c=(1-ir/fr)/2; pic.crop_top=pic.crop_bottom=c
     pic._element.nvPicPr.cNvPr.set('descr',o.get('altText',''))
 
 def add_appear_animation(sl,item_shapes):
@@ -675,6 +731,7 @@ def add_appear_animation(sl,item_shapes):
     sl._element.insert_element_before(timing,'p:extLst')
 
 def build(out,img_dir):
+    validate_layout()
     out_dir=os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir,exist_ok=True)
     prs=Presentation(); prs.slide_width,prs.slide_height=Emu(W),Emu(H)

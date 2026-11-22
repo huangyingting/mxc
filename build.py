@@ -24,7 +24,7 @@ def build_presentation() -> None:
 
 
 def build_site() -> None:
-    build_html.build(str(HTML_OUT), str(IMAGES), 1100)
+    build_html.build(str(HTML_OUT), str(IMAGES), 1600)
     PAGES_OUT.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(HTML_OUT, PAGES_OUT)
     print(f"Saved GitHub Pages site {PAGES_OUT}")

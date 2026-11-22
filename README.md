@@ -50,7 +50,9 @@ Session Container 解决的是独立 Windows 用户/Session 与状态隔离，�
 
 仓库中使用 GitHub Actions 发布 `docs/`。首次发布时，在仓库的 **Settings → Pages → Source** 中选择 **GitHub Actions**。`main` 分支更新后，工作流会重新生成 `docs/index.html` 并部署。
 
-HTML 为包含图片、样式和脚本的单文件，画面中不显示控件或演讲者备注。使用方向键、Space、点击切换幻灯片；第 6、8 页会先逐项 Appear，再进入下一页。`F` 全屏，`Ctrl+P` 可打印为 PDF；中文讲者备注仅保留在 PPTX 中。
+HTML 为包含图片、样式、脚本与中文讲者备注的单文件。底部低干扰工具栏显示页码、`Notes` 与 `Studio`；按 `N` 或点击 `Notes` 展开/收起备注，翻页时备注同步更新，`Esc` 关闭备注，打开 Studio 时自动收起。备注与 PPTX 共用 `note()` 内容，打印时工具栏和备注均隐藏。
+
+使用方向键、PageUp/PageDown、Space/Shift+Space 或点击切换幻灯片，Home/End 跳至首页/末页；第 6、8 页会先逐项 Appear，再进入下一页。`F` 全屏，`D` 打开 Studio，`Ctrl+P` 可打印为 PDF。画面按完整 16:9 幻灯片适配窗口，宽屏或竖屏不会裁切内容。
 
 `.gitignore` 已排除 `dist/`、生成的 `docs/index.html`、Demo 运行输出、Python 缓存、虚拟环境及本地 IDE 文件；源码、素材、Lab 和 Pages 配置仍会纳入版本控制。
 
@@ -60,6 +62,17 @@ HTML 为包含图片、样式和脚本的单文件，画面中不显示控件或
 - HTML 布局和交互位于 `presentation/src/build_html.py`。
 - 图片位于 `presentation/assets/images/`。
 - 不要手工修改 `docs/index.html` 或 `dist/`，它们都是构建产物。
+
+## 演示框架
+
+本仓库与 `auto-routing` 保持一致的 HTML/PPTX 基础框架，以 `auto-routing` 为参照：主题字体、文本与代码间距、页眉页脚、图片 cover/contain、讲者工具栏、备注浮层、快捷键和打印样式。幻灯片内容、逐项动画与 Demo Studio 保留各自主题；两个仓库可独立构建，不依赖相邻目录。
+
+HTML 与 PPTX 构建前都会检查元素边界、标题换行和文本框重叠。修改框架后，在两个仓库分别运行：
+
+```text
+python -m unittest discover -s presentation/tests
+python build.py --target presentation
+```
 
 ## 视觉系统
 
