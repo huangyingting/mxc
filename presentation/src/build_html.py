@@ -25,16 +25,21 @@ SVG_POINTS = {
     'homePlate':'0,0 82,0 100,50 82,100 0,100',
 }
 FALLBACK = {
-    'Plus Jakarta Sans':'"Plus Jakarta Sans","Inter","Segoe UI Variable Display","Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif',
-    'Newsreader':'"Newsreader","Fraunces",Georgia,"Times New Roman",serif',
-    'JetBrains Mono':'"JetBrains Mono","Cascadia Code","Fira Code",Consolas,monospace',
-    'Aptos Display':'"Plus Jakarta Sans","Aptos Display","Segoe UI Variable Display","Segoe UI",sans-serif',
-    'Aptos':'"Plus Jakarta Sans",Aptos,"Segoe UI Variable Text","Segoe UI",sans-serif',
-    'Cascadia Code':'"JetBrains Mono","Cascadia Code","Cascadia Mono",Consolas,monospace',
-    'Georgia':'"Newsreader",Georgia,"Times New Roman",serif',
-    'Calibri':'"Plus Jakarta Sans",Calibri,"Segoe UI",sans-serif',
-    'Courier New':'"JetBrains Mono","Courier New",Consolas,monospace',
-    'Arial':'"Plus Jakarta Sans",Arial,Helvetica,sans-serif',
+    'Inter Tight':'"Inter Tight","Segoe UI Variable Text","PingFang SC","Microsoft YaHei UI",-apple-system,BlinkMacSystemFont,sans-serif',
+    'Segoe UI Variable Display':'"Inter Tight","Segoe UI Variable Display","PingFang SC","Microsoft YaHei UI",sans-serif',
+    'Segoe UI Variable Text':'"Inter Tight","Segoe UI Variable Text","PingFang SC","Microsoft YaHei UI",sans-serif',
+    'Calibri':'"Inter Tight","Segoe UI Variable Text",Calibri,"PingFang SC","Microsoft YaHei UI",sans-serif',
+    'Consolas':'"Inconsolata",Consolas,"Cascadia Mono",monospace',
+    'Inconsolata':'"Inconsolata",Consolas,"Cascadia Mono",monospace',
+    'Plus Jakarta Sans':'"Inter Tight","Segoe UI Variable Text","Segoe UI",sans-serif',
+    'Newsreader':'"Inter Tight","Segoe UI Variable Display",sans-serif',
+    'JetBrains Mono':'"Inconsolata",Consolas,"Cascadia Mono",monospace',
+    'Aptos Display':'"Inter Tight","Segoe UI Variable Display",sans-serif',
+    'Aptos':'"Inter Tight","Segoe UI Variable Text",sans-serif',
+    'Cascadia Code':'"Inconsolata",Consolas,"Cascadia Mono",monospace',
+    'Georgia':'"Inter Tight","Segoe UI Variable Display",sans-serif',
+    'Courier New':'"Inconsolata",Consolas,monospace',
+    'Arial':'"Inter Tight",Arial,Helvetica,sans-serif',
 }
 e = lambda s: html.escape(s, quote=True)
 
@@ -59,11 +64,18 @@ def box(o):
 def text_html(o):
     paras = o.get('paragraphs') or [{'text': o['text']}]
     raw_font = o.get('fontFamily', D.BF)
-    font = FALLBACK.get(raw_font, FALLBACK['Plus Jakarta Sans'])
+    font = FALLBACK.get(raw_font, FALLBACK['Inter Tight'])
     is_display = any(p.get('sizePt', o.get('sizePt', 16)) >= 29 for p in paras)
     if is_display and raw_font != D.MF:
-        font = '"Newsreader","Plus Jakarta Sans",Georgia,serif'
-    ls = f"letter-spacing:{o['letterSpacingPt']*4/3:.1f}px;" if o.get('letterSpacingPt') else ('letter-spacing:-0.02em;' if is_display else '')
+        font = FALLBACK['Segoe UI Variable Display']
+    if o.get('letterSpacingPt'):
+        ls = f"letter-spacing:{o['letterSpacingPt']*4/3:.1f}px;"
+    elif raw_font == D.MF:
+        ls = "font-variation-settings:'wdth' 90;"
+    elif is_display:
+        ls = 'letter-spacing:-0.028em;'
+    else:
+        ls = 'letter-spacing:-0.008em;'
     ws = 'white-space:pre-wrap;' if raw_font == D.MF else ''
     default_gap_pt = o.get('spaceAfterPt', 2 if raw_font == D.MF else 6.5)
     out = []
@@ -340,16 +352,17 @@ LIVE_DEMO = """
 """
 
 CSS = """
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@450;600&family=Newsreader:ital,opsz,wght@0,6..72,600;0,6..72,700;1,6..72,500&family=Plus+Jakarta+Sans:wght@450;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wdth,wght@50..200,500..700&family=Inter+Tight:ital,wght@0,400..800;1,400..600&display=swap');
 :root{
   --bg:#%s;--ink:#%s;--accent:#%s;--card:#%s;--codebg:#%s;--edge:#%s;--muted:#%s;--warn:#%s;
   --surface:#fbf8f2;--surface-strong:#efe9dc;--ink-soft:#4a463f;
-  --font-sans:'Plus Jakarta Sans','Inter','Segoe UI Variable Text','Segoe UI',system-ui,sans-serif;
-  --font-display:'Newsreader','Plus Jakarta Sans',Georgia,serif;
-  --font-mono:'JetBrains Mono','Cascadia Code',Consolas,monospace;
+  --font-sans:'Inter Tight','Segoe UI Variable Text','PingFang SC','Microsoft YaHei UI',system-ui,sans-serif;
+  --font-display:'Inter Tight','Segoe UI Variable Display','PingFang SC','Microsoft YaHei UI',system-ui,sans-serif;
+  --font-mono:'Inconsolata','Consolas','Cascadia Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{width:100%%;height:100%%;background:var(--bg);color:var(--ink);font-family:var(--font-sans);overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+html,body{width:100%%;height:100%%;background:var(--bg);color:var(--ink);font-family:var(--font-sans);letter-spacing:-0.006em;overflow:hidden;overscroll-behavior:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+code,pre,kbd,.pages-qr-kicker,.pages-qr-url{font-variation-settings:"wdth" 90}
 #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;background:radial-gradient(circle at 18%% 12%%,rgba(255,255,255,.55),transparent 48%%),var(--bg)}
 .slide{position:absolute;width:1280px;height:720px;background:linear-gradient(180deg,rgba(255,255,255,.28) 0%%,rgba(255,255,255,0) 38%%),var(--bg);overflow:hidden;display:none;transform-origin:center center}
 .slide.on{display:block;animation:slideFade .24s cubic-bezier(.2,.8,.2,1)}

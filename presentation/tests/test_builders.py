@@ -107,6 +107,7 @@ class BuilderTests(unittest.TestCase):
     def test_cover_omits_duration_footer_and_renders_pages_qr_code(self):
         cover_texts = [op.get('text', '') for op in D.slides[0] if op['op'] == 'add_text_box']
         self.assertFalse(any('November 2026' in t or '45 minutes' in t for t in cover_texts))
+        self.assertTrue(all(op.get('name') != 'footer_src' for ops in D.slides.values() for op in ops))
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             url = 'https://huangyingting.github.io/mxc/'
