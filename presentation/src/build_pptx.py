@@ -88,7 +88,7 @@ def header(s,eyebrow,title,x=M,cx=CW,title_cy=None):
     tb(s,x,310000,cx,eyebrow,size=12,color=CY,font=HF,bold=True,ls=0.9,cy=280000,name='eyebrow')
     tb(s,x,640000,cx,title,size=29.5,color=INK,font=HF,bold=True,cy=title_cy or 640000,name='slide_title')
 def footer(s,src,num,x=M,cx=CW):
-    tb(s,x+cx-800000,6260000,800000,f'{num:02d}',size=11.5,color=FOOT,align='right',cy=340000,name='footer_num')
+    tb(s,W-940000,H-430000,700000,f'{num:02d}',size=11.5,color=FOOT,font=MF,bold=True,align='right',cy=290000,name='footer_num')
 def note(s,t): notes[s]=t
 
 def card_box(s,x,y,cx,cy,paras,fill=CARD,line=EDGE,lw=12700,pad_x=240000,pad_y=120000,font=BF,space_after=6.5,align='left'):
@@ -113,6 +113,7 @@ tb(s,x,940000,cx,'MICROSOFT EXECUTION CONTAINERS (MXC)',size=12,color=CY,font=HF
 tb(s,x,1300000,cx,'Guardrails with\nSandboxing',size=45,color=INK,font=HF,bold=True,cy=1460000)
 tb(s,x,2880000,cx,'Keeping AI agents inside safe boundaries: isolating execution and controlling access to files, network and credentials on Windows',size=17,color=MUTED,cy=1300000)
 tb(s,x,4360000,cx,'Yingting Huang  |  Sr. Cloud Solution Architect, Microsoft',size=15,color=INK,bold=True,cy=420000)
+footer(s,'',1)
 note(s,'大家好，欢迎来到今天的分享。这两年大家都在做 Agent，你会发现它的角色已经变了——以前大模型只是陪你聊天、写段代码让你自己复制粘贴；现在的 Agent 是真正在你的电脑或服务器上干活，自己读文件、跑命令、调接口。\n能力变强之后，安全问题也跟着变了：万一它理解错了意图，或者读到了别人埋了坑的文档，怎么保证它不会把系统搞乱、把密钥传出去？今天我们就来聊微软开源的沙箱执行层 MXC，看看怎么在放手让 Agent 干活的同时，在操作系统这一层把安全边界牢牢守住。')
 
 # ---------- 1 AGENDA

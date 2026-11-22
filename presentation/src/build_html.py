@@ -177,7 +177,8 @@ def slide_html(k, ops, img_dir, maxw, pages_url=None):
             src = data_uri(os.path.join(img_dir, os.path.basename(o['path'])), maxw)
             parts.append(f'<img class="{classes}{extra_cls}"{reveal} style="{box(o)}" src="{src}" alt="{e(o.get("altText",""))}">')
         elif o['op'] == 'add_text_box':
-            parts.append(f'<div class="{classes}"{reveal} style="{box(o)}">{text_html(o)}</div>')
+            fn_cls = ' page-num' if o.get('name') == 'footer_num' else ''
+            parts.append(f'<div class="{classes}{fn_cls}"{reveal} style="{box(o)}">{text_html(o)}</div>')
         elif o['op'] == 'add_shape':
             pr = o['preset']
             inner = text_html(o) if 'text' in o else ''
@@ -379,6 +380,7 @@ code,pre,kbd,.pages-qr-kicker,.pages-qr-url{font-variation-settings:"wdth" 90}
 img.a{object-fit:cover}
 .t{position:absolute;inset:0;padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
 .a[style*="border-radius:50%%"]>.t{padding:0;align-items:center;text-align:center}
+.page-num{z-index:6}.page-num>.t{padding:2px 8px;align-items:flex-end}.page-num>.t>p{background:rgba(243,238,228,.82);padding:2px 7px;border-radius:999px}
 .ref-link{color:inherit;text-decoration:underline;text-decoration-color:rgba(63,96,126,.42);text-underline-offset:3px;transition:color .14s ease,text-decoration-color .14s ease}
 .ref-link:hover{color:#1f384e;text-decoration-color:currentColor}
 .pages-qr-card{display:inline-flex;align-items:center;gap:14px;padding:10px 18px 10px 10px;border-radius:14px;background:rgba(251,248,242,.92);border:1px solid var(--edge);box-shadow:0 10px 26px rgba(35,30,22,.07);text-decoration:none;color:var(--ink);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;z-index:5}

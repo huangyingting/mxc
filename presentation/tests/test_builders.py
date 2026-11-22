@@ -108,6 +108,10 @@ class BuilderTests(unittest.TestCase):
         cover_texts = [op.get('text', '') for op in D.slides[0] if op['op'] == 'add_text_box']
         self.assertFalse(any('November 2026' in t or '45 minutes' in t for t in cover_texts))
         self.assertTrue(all(op.get('name') != 'footer_src' for ops in D.slides.values() for op in ops))
+        for slide_idx, ops in D.slides.items():
+            nums = [op for op in ops if op.get('name') == 'footer_num']
+            self.assertEqual(len(nums), 1, f'Slide {slide_idx + 1} missing footer_num')
+            self.assertEqual((nums[0]['x'], nums[0]['y']), (D.W - 940000, D.H - 430000))
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             url = 'https://huangyingting.github.io/mxc/'
