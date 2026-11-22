@@ -104,6 +104,20 @@ class BuilderTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'invalid bounds'):
                 D.validate_layout()
 
+    def test_cover_omits_duration_footer_and_renders_pages_qr_code(self):
+        cover_texts = [op.get('text', '') for op in D.slides[0] if op['op'] == 'add_text_box']
+        self.assertFalse(any('November 2026' in t or '45 minutes' in t for t in cover_texts))
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            url = 'https://huangyingting.github.io/mxc/'
+            with patch.object(D, 'slides', {0: [], 1: []}), patch.object(D, 'notes', {}):
+                H.build(str(root / 'index.html'), str(root), 1600, pages_url=url)
+            doc = (root / 'index.html').read_text(encoding='utf-8')
+            self.assertEqual(doc.count('class="a pages-qr-card"'), 1)
+            self.assertIn('href="https://huangyingting.github.io/mxc/"', doc)
+            self.assertIn('huangyingting.github.io/mxc', doc)
+            self.assertIn('<svg class="pages-qr-svg"', doc)
+
     @unittest.skipUnless(shutil.which('node'), 'node is required to syntax-check embedded JS')
     def test_embedded_javascript_has_valid_syntax(self):
         with tempfile.TemporaryDirectory() as directory:

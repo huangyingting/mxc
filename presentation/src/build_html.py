@@ -8,8 +8,9 @@ Keys in the browser: <- / -> or Space to navigate, F = fullscreen,
 Home/End = first/last, N = speaker notes, D = open interactive MXC Studio.
 Print (Ctrl+P) gives one slide per page.
 """
-import argparse, base64, html, io, json, os
+import argparse, base64, html, io, json, os, re
 from PIL import Image
+import qrcode
 try:
     from . import build_pptx as D
 except ImportError:
@@ -111,7 +112,45 @@ def reveal_attrs(slide_index, operation_index):
         return 'a reveal', f' data-reveal="{item}"'
     return 'a', ''
 
-def slide_html(k, ops, img_dir, maxw):
+def qr_badge_html(pages_url, left_px=77.7, top_px=520.0):
+    clean_url = pages_url.strip()
+    if not clean_url:
+        return ''
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=1,
+        border=2,
+    )
+    qr.add_data(clean_url)
+    qr.make(fit=True)
+    matrix = qr.get_matrix()
+    n = len(matrix)
+    cmds = ''.join(
+        f'M{x},{y}h1v1h-1z'
+        for y, row in enumerate(matrix)
+        for x, cell in enumerate(row)
+        if cell
+    )
+    display_url = re.sub(r'^https?://', '', clean_url).rstrip('/')
+    svg = (
+        f'<svg class="pages-qr-svg" xmlns="http://www.w3.org/2000/svg" '
+        f'viewBox="0 0 {n} {n}" shape-rendering="crispEdges" role="img" '
+        f'aria-label="QR code for {e(clean_url)}">'
+        f'<rect width="{n}" height="{n}" fill="#FFFFFF"/>'
+        f'<path d="{cmds}" fill="#1E242B"/></svg>'
+    )
+    return (
+        f'<a class="a pages-qr-card" style="left:{left_px:.1f}px;top:{top_px:.1f}px;" '
+        f'href="{e(clean_url)}" target="_blank" rel="noreferrer">'
+        f'{svg}'
+        f'<span class="pages-qr-meta">'
+        f'<span class="pages-qr-kicker">SCAN FOR LIVE SLIDES &amp; DEMO</span>'
+        f'<strong class="pages-qr-url">{e(display_url)}</strong>'
+        f'</span></a>'
+    )
+
+def slide_html(k, ops, img_dir, maxw, pages_url=None):
     parts = []
     for operation_index, o in enumerate(ops):
         classes, reveal = reveal_attrs(k, operation_index)
@@ -164,7 +203,8 @@ def slide_html(k, ops, img_dir, maxw):
             f'<span class="pulse-dot" aria-hidden="true"></span><span>{e(label)}</span>'
             f'<span class="trigger-arrow" aria-hidden="true">↗</span></button>'
         )
-    return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="Slide {k+1}">{"".join(parts)}{action}</section>'
+    qr_html = qr_badge_html(pages_url, left_px=77.7, top_px=520.0) if (k == 0 and pages_url) else ''
+    return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="Slide {k+1}">{"".join(parts)}{qr_html}{action}</section>'
 
 PRESENTER_UI = """
 <div id="deck-hud" class="deck-hud" aria-label="Presenter toolbar">
@@ -327,6 +367,12 @@ img.a{object-fit:cover}
 .t{position:absolute;inset:0;padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
 .ref-link{color:inherit;text-decoration:underline;text-decoration-color:rgba(63,96,126,.42);text-underline-offset:3px;transition:color .14s ease,text-decoration-color .14s ease}
 .ref-link:hover{color:#1f384e;text-decoration-color:currentColor}
+.pages-qr-card{display:inline-flex;align-items:center;gap:14px;padding:10px 18px 10px 10px;border-radius:14px;background:rgba(251,248,242,.92);border:1px solid var(--edge);box-shadow:0 10px 26px rgba(35,30,22,.07);text-decoration:none;color:var(--ink);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;z-index:5}
+.pages-qr-card:hover{transform:translateY(-1px);border-color:var(--accent);box-shadow:0 14px 30px rgba(35,30,22,.11)}
+.pages-qr-svg{width:88px;height:88px;border-radius:8px;border:1px solid rgba(201,192,174,.65);flex-shrink:0;display:block;background:#fff}
+.pages-qr-meta{display:flex;flex-direction:column;gap:5px;min-width:0}
+.pages-qr-kicker{font:700 10.5px/1.1 var(--font-mono);letter-spacing:.08em;color:var(--accent)}
+.pages-qr-url{font:600 13.5px/1.25 var(--font-mono);color:var(--ink);word-break:break-all}
 
 #deck-progress{position:fixed;left:0;top:0;height:3px;width:0;z-index:40;background:linear-gradient(90deg,var(--accent),#5d8aa8);transition:width .25s ease;pointer-events:none}
 
@@ -1147,11 +1193,12 @@ def load_recorded_demo(img_dir):
             return json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     return 'null'
 
-def build(out, img_dir, maxw):
+def build(out, img_dir, maxw, pages_url=None):
     D.validate_layout()
     out_dir = os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir, exist_ok=True)
-    body = ''.join(slide_html(k, D.slides[k], img_dir, maxw) for k in sorted(D.slides))
+    effective_url = pages_url if pages_url is not None else os.environ.get('PAGES_URL')
+    body = ''.join(slide_html(k, D.slides[k], img_dir, maxw, pages_url=effective_url) for k in sorted(D.slides))
     recorded_json = load_recorded_demo(img_dir)
     notes_json = json.dumps({str(k): v for k, v in D.notes.items()}, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     doc = f"""<!DOCTYPE html>
@@ -1176,4 +1223,5 @@ if __name__ == '__main__':
     ap.add_argument('--out', default=os.path.join(root, 'dist', 'html', 'index.html'))
     ap.add_argument('--images', default=os.path.join(here, 'assets', 'images'))
     ap.add_argument('--maxw', type=int, default=1600, help='max image edge in px')
-    a = ap.parse_args(); build(a.out, a.images, a.maxw)
+    ap.add_argument('--pages-url', default=None, help='GitHub Pages URL for Slide 1 QR code')
+    a = ap.parse_args(); build(a.out, a.images, a.maxw, pages_url=a.pages_url)

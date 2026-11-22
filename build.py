@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -19,15 +20,40 @@ HTML_OUT = ROOT / "dist" / "html" / "index.html"
 PAGES_OUT = ROOT / "docs" / "index.html"
 
 
+def resolve_pages_url(explicit_url: str | None = None) -> str | None:
+    raw = (explicit_url or os.environ.get("PAGES_URL") or "").strip()
+    if not raw:
+        try:
+            remote = subprocess.check_output(
+                ["git", "config", "--get", "remote.origin.url"],
+                cwd=str(ROOT),
+                text=True,
+                stderr=subprocess.DEVNULL,
+            ).strip()
+            match = re.search(r"github\.com[:/](?P<owner>[^/]+)/(?P<repo>[^/.]+?)(?:\.git)?$", remote)
+            if match:
+                owner = match.group("owner")
+                repo = match.group("repo")
+                raw = f"https://{owner}.github.io/" if repo.lower() == f"{owner.lower()}.github.io" else f"https://{owner}.github.io/{repo}/"
+        except Exception:
+            raw = ""
+    if not raw:
+        return None
+    if not raw.endswith(".html"):
+        raw = raw.rstrip("/") + "/"
+    return raw
+
+
 def build_presentation() -> None:
     build_pptx.build(str(PPTX_OUT), str(IMAGES))
 
 
-def build_site() -> None:
-    build_html.build(str(HTML_OUT), str(IMAGES), 1600)
+def build_site(pages_url: str | None = None) -> None:
+    resolved_url = resolve_pages_url(pages_url)
+    build_html.build(str(HTML_OUT), str(IMAGES), 1600, pages_url=resolved_url)
     PAGES_OUT.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(HTML_OUT, PAGES_OUT)
-    print(f"Saved GitHub Pages site {PAGES_OUT}")
+    print(f"Saved GitHub Pages site {PAGES_OUT}" + (f" (QR -> {resolved_url})" if resolved_url else ""))
 
 
 def build_demo() -> None:
@@ -54,12 +80,17 @@ def main() -> None:
         choices=("all", "presentation", "pptx", "html", "demo"),
         default="all",
     )
+    parser.add_argument(
+        "--pages-url",
+        default=None,
+        help="Final GitHub Pages URL encoded as a QR code on Slide 1",
+    )
     args = parser.parse_args()
 
     if args.target in ("all", "presentation", "pptx"):
         build_presentation()
     if args.target in ("all", "presentation", "html"):
-        build_site()
+        build_site(args.pages_url)
     if args.target in ("all", "demo"):
         build_demo()
 
