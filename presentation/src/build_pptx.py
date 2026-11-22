@@ -250,22 +250,58 @@ note(s,'看清了静态分层，我们再看一次真实请求是怎么穿过这
 # ---------- 10 PICK THE RIGHT BOX
 s=10
 header(s,'03 · FEATURES & PLATFORMS','Pick the right box')
-ry=1900000
-tb(s,M,1550000,4000000,'Lighter and faster',size=14,color=MUTED)
-tb(s,W-M-4000000,1550000,4000000,'Stronger isolation',size=14,color=MUTED,align='right')
-rect(s,M,ry-80000,CW,220000,fill=EDGE,preset='rightArrow')
-gap=180000; cw4=(CW-3*gap)/4; y0=2350000; ch=3550000
-bx=[('Process container','Windows 11 · macOS · Linux','AppContainer, Seatbelt or Bubblewrap. Fast startup and fine-grained file/network rules; default for coding agents.',None),('Session container','Windows 11 only','Separate Windows login and desktop for GUI apps. Protects your screen & clipboard (open network; blocks fake keystrokes).',None),('WSL container','Windows 11','Runs Linux workloads and toolchains on a Windows host through WSL.',None),('MicroVM','Windows 11 · Linux','Hardware-virtualized unikernel boundary; never shares the host OS kernel.','Experimental')]
-for i,(t,p,d,st) in enumerate(bx):
+
+# Clean spectrum bar: left pill ───▸ right pill (zero stretched arrow polygon or text collision)
+spec_y=1470000; spec_h=380000; pill_w=3250000
+rect(s,M,spec_y,pill_w,spec_h,fill=CODEBG,line=CY,lw=12700,preset='roundRect',
+     text='←  LIGHTER  ·  FASTER STARTUP',size=10.8,bold=True,color=CY,font=MF)
+rect(s,W-M-pill_w,spec_y,pill_w,spec_h,fill=CODEBG,line=AMB,lw=12700,preset='roundRect',
+     text='STRONGER KERNEL ISOLATION  →',size=10.8,bold=True,color=AMB,font=MF)
+line_x1=M+pill_w+160000; line_x2=W-M-pill_w-160000; line_w=line_x2-line_x1; mid_y=spec_y+spec_h//2
+# Graduated 3-step connector track between the two pills
+seg_gap=90000; seg_w=(line_w-2*seg_gap)//3
+for seg_i,seg_col in enumerate([CY,'6B7C8C',AMB]):
+    sx=line_x1+seg_i*(seg_w+seg_gap)
+    rect(s,sx,mid_y-22000,seg_w,44000,fill=seg_col,preset='roundRect')
+
+gap=180000; cw4=(CW-3*gap)/4; y0=2040000; ch=3960000
+bx=[
+    ('Process container','Windows 11 · macOS · Linux',
+     'AppContainer, Seatbelt or Bubblewrap. Millisecond startup and fine-grained file & network rules — default for coding agents.',
+     'Shared kernel · Process ACL','GA · Default',CY,1),
+    ('Session container','Windows 11 only',
+     'Separate local Windows login and desktop for GUI apps. Protects your screen & clipboard and blocks synthetic input.',
+     'Shared kernel · Own desktop','GA · GUI',CY,2),
+    ('WSL container','Windows 11',
+     'Runs Linux CLI workloads, compilers and toolchains on a Windows host inside an isolated WSL environment.',
+     'Isolated Linux subsystem','GA · Linux',CY,3),
+    ('MicroVM','Windows 11 · Linux',
+     'Hardware-virtualized unikernel boundary with ~90 ms warm snapshot restore; never shares the host OS kernel.',
+     'Dedicated VM kernel','Experimental',AMB,4),
+]
+for i,(t,p,d,boundary,badge,accent_col,level) in enumerate(bx):
     x=M+i*(cw4+gap)
-    rect(s,x+cw4/2-110000,ry-80000,220000,220000,fill=CY,line=BG,lw=25400,preset='ellipse')
-    rect(s,x,y0,cw4,ch,fill=CARD)
-    yy=y0+250000
-    if st:
-        rect(s,x+250000,yy,1500000,380000,fill=AMB,preset='roundRect',text=st,size=13,bold=True,color=BG); yy+=500000
-    yy=tb(s,x+250000,yy,cw4-500000,t,size=18,bold=True,cy=700000)
-    yy=tb(s,x+250000,yy+40000,cw4-500000,p,size=12.5,color=CY,bold=True,cy=550000)
-    tb(s,x+250000,yy+120000,cw4-500000,d,size=13,color=MUTED,cy=y0+ch-yy-240000)
+    rect(s,x,y0,cw4,ch,fill=CARD,line=AMB if level==4 else EDGE,lw=19050 if level==4 else 12700)
+    pad=210000
+    # Top row inside card: 4-bar isolation strength meter + aligned status pill
+    meter_y=y0+230000; bar_w=175000; bar_g=48000
+    for m_idx in range(4):
+        bx_m=x+pad+m_idx*(bar_w+bar_g)
+        active=m_idx<level
+        rect(s,bx_m,meter_y+55000,bar_w,95000,
+             fill=(AMB if level==4 else CY) if active else EDGE,preset='roundRect')
+    pill_bw=1180000
+    rect(s,x+cw4-pad-pill_bw,meter_y,pill_bw,210000,
+         fill=AMB if level==4 else CODEBG,
+         line=None if level==4 else EDGE,lw=12700,preset='roundRect',
+         text=badge,size=9.8,bold=True,color=BG if level==4 else INK)
+    # Aligned title, platform subtitle, divider, description, and bottom boundary tag
+    tb(s,x+pad,y0+560000,cw4-2*pad,t,size=18.5,bold=True,color=INK,font=HF,cy=420000)
+    tb(s,x+pad,y0+1010000,cw4-2*pad,p,size=12,color=accent_col,bold=True,cy=340000)
+    rect(s,x+pad,y0+1430000,cw4-2*pad,14000,fill=EDGE)
+    tb(s,x+pad,y0+1540000,cw4-2*pad,d,size=13,color=MUTED,cy=1720000)
+    rect(s,x+pad,y0+ch-560000,cw4-2*pad,360000,fill=CODEBG,line=EDGE,lw=12700)
+    tb(s,x+pad+60000,y0+ch-560000,cw4-2*pad-120000,boundary,size=10.8,bold=True,color=accent_col,font=MF,align='center',cy=360000)
 footer(s,'',11)
 note(s,'MXC 提供了四种不同分量的隔离盒子，怎么选就看你的业务场景。平时做代码生成、跑测试、处理本地文档，首选最左边的 Process Container，它在 Windows、macOS、Linux 上分别映射成 AppContainer、Seatbelt 和 Bubblewrap，毫秒级启动，文件和网络权限都能卡得很细。\n但如果你的 Agent 需要操作传统桌面软件、得有自己的窗口和剪贴板，那就选 Windows 专属的 Session Container。它会建一个独立的本地账号和登录会话，跟员工正在用的桌面完全隔开，还封死了模拟键鼠输入；不过它不做细粒度的文件和网络限制。再往右，要在 Windows 上跑 Linux 工具链可以用 WSL 容器；要跑高风险的陌生代码、连操作系统内核都不想共享，那就上最右边实验性的硬件级 MicroVM。')
 
