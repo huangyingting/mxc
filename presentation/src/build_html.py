@@ -193,7 +193,7 @@ def slide_html(k, ops, img_dir, maxw, pages_url=None):
                 fill = o['fill']
                 is_card = pr == 'rect' and o['cx'] > 900000 and o['cy'] > 450000
                 extra_cls = ' surface-card' if is_card else ''
-                if fill == D.CODEBG:
+                if is_card and fill == D.CODEBG:
                     extra_cls += ' surface-code'
                 st = box(o) + f"background:#{fill};"
                 if pr == 'ellipse':
@@ -370,7 +370,7 @@ code,pre,kbd,.pages-qr-kicker,.pages-qr-url{font-variation-settings:"wdth" 90}
 @keyframes slideFade{from{opacity:.88}to{opacity:1}}
 .a{position:absolute}
 .surface-card{box-shadow:0 10px 28px rgba(38,33,26,.055),inset 0 1px 0 rgba(255,255,255,.55)}
-.surface-code{border-radius:14px!important;box-shadow:0 12px 30px rgba(32,45,58,.07),inset 0 1px 0 rgba(255,255,255,.8)!important}
+.surface-code{border-radius:14px;box-shadow:0 12px 30px rgba(32,45,58,.06),inset 0 1px 0 rgba(255,255,255,.8)}
 .framed-img{border-radius:14px;box-shadow:0 14px 34px rgba(35,30,22,.10);object-fit:cover}
 .contain-img{border-radius:10px;object-fit:contain!important}
 .reveal{opacity:0;visibility:hidden;transform:translateY(10px);transition:opacity .28s ease,transform .28s cubic-bezier(.2,.8,.2,1),visibility .28s}
