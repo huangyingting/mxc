@@ -127,12 +127,27 @@ class BuilderTests(unittest.TestCase):
             prs = Presentation(str(root / 'deck.pptx'))
             self.assertGreaterEqual(len(prs.slides[0].shapes), 5)
 
+    def test_public_pages_build_omits_notes_studio_and_shortcuts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            url = 'https://huangyingting.github.io/mxc/'
+            with patch.object(D, 'slides', {0: [], 24: []}), patch.object(D, 'notes', {0: 'secret note'}):
+                H.build(str(root / 'local.html'), str(root), 1600, pages_url=url, presenter_tools=True)
+                H.build(str(root / 'pages.html'), str(root), 1600, pages_url=url, presenter_tools=False)
+            local_doc = (root / 'local.html').read_text(encoding='utf-8')
+            pages_doc = (root / 'pages.html').read_text(encoding='utf-8')
+            for marker in ('id="deck-hud"', 'id="hud-notes-btn"', 'id="hud-demo-btn"', 'id="notes-drawer"', 'id="live-demo"', 'class="live-demo-trigger"', 'window.SLIDE_NOTES', 'window.RECORDED_DEMO', 'toggleNotes', 'openLiveDemo'):
+                self.assertIn(marker, local_doc)
+                self.assertNotIn(marker, pages_doc)
+            self.assertIn('isLocalOrigin', local_doc)
+
     @unittest.skipUnless(shutil.which('node'), 'node is required to syntax-check embedded JS')
     def test_embedded_javascript_has_valid_syntax(self):
         with tempfile.TemporaryDirectory() as directory:
-            js_path = Path(directory) / 'deck.js'
-            js_path.write_text(H.JS, encoding='utf-8')
-            subprocess.run(['node', '--check', str(js_path)], check=True)
+            for name, src in (('deck_only.js', H.DECK_JS), ('deck.js', H.JS)):
+                js_path = Path(directory) / name
+                js_path.write_text(src, encoding='utf-8')
+                subprocess.run(['node', '--check', str(js_path)], check=True)
 
 
 if __name__ == '__main__':

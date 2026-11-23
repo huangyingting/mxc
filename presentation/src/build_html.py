@@ -157,12 +157,12 @@ def qr_badge_html(pages_url, left_px=77.7, top_px=440.0):
         f'href="{e(clean_url)}" target="_blank" rel="noreferrer">'
         f'{svg}'
         f'<span class="pages-qr-meta">'
-        f'<span class="pages-qr-kicker">SCAN FOR LIVE SLIDES &amp; DEMO</span>'
+        f'<span class="pages-qr-kicker">SCAN FOR WEB SLIDES</span>'
         f'<strong class="pages-qr-url">{e(display_url)}</strong>'
         f'</span></a>'
     )
 
-def slide_html(k, ops, img_dir, maxw, pages_url=None):
+def slide_html(k, ops, img_dir, maxw, pages_url=None, presenter_tools=True):
     parts = []
     for operation_index, o in enumerate(ops):
         classes, reveal = reveal_attrs(k, operation_index)
@@ -208,7 +208,7 @@ def slide_html(k, ops, img_dir, maxw, pages_url=None):
                 parts.append(f'<div class="{classes}{extra_cls}"{reveal} style="{st}">{inner}</div>')
     reveal_count = REVEAL_ITEMS[k][2] if k in REVEAL_ITEMS else 0
     action = ''
-    if k in DEMO_LAUNCHERS:
+    if presenter_tools and k in DEMO_LAUNCHERS:
         demo_kind, demo_step, label = DEMO_LAUNCHERS[k]
         action = (
             f'<button class="live-demo-trigger" type="button" '
@@ -530,22 +530,61 @@ img.a{object-fit:cover}
  html,body{overflow:visible;background:#fff}#deck-progress,.deck-hud,.notes-drawer,.live-demo,.live-demo-trigger{display:none!important}
  #stage{position:static;display:block}.slide{position:relative;display:block!important;transform:none!important;box-shadow:none;page-break-after:always;break-after:page;print-color-adjust:exact;-webkit-print-color-adjust:exact}.reveal{opacity:1!important;visibility:visible!important;transform:none!important}}
 """
-JS = """
+DECK_JS = """
 (function(){
-var S=[].slice.call(document.querySelectorAll('.slide')),i=0,steps=S.map(function(){return 0;}),liveOpen=false,notesOpen=false;
-var bar=document.getElementById('deck-progress'),hudCount=document.getElementById('hud-count'),hud=document.getElementById('deck-hud'),notesDrawer=document.getElementById('notes-drawer');
-function byId(id){return document.getElementById(id);}
+var S=[].slice.call(document.querySelectorAll('.slide')),i=0,steps=S.map(function(){return 0;});
+var bar=document.getElementById('deck-progress');
+var deck={S:S,getIndex:function(){return i;},isOverlayOpen:function(){return false;},onRender:null};
+window.__DECK__=deck;
 function fit(){var v=window.visualViewport,w=v?v.width:innerWidth,h=v?v.height:innerHeight,s=Math.min(w/1280,h/720);S.forEach(function(x){x.style.transform='scale('+s+')';});}
 function toggleFullscreen(){if(document.fullscreenElement){document.exitFullscreen();}else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}}
+function renderSteps(){var shown=steps[i];S[i].querySelectorAll('.reveal').forEach(function(x){x.classList.toggle('shown',Number(x.dataset.reveal)<shown);});if(bar)bar.style.width=((i+1)/S.length*100).toFixed(2)+'%';if(deck.onRender)deck.onRender(i,S.length);}
+function parseHash(){var h=location.hash.slice(1),m=/^(?:slide-)?(\\d+)$/.exec(h);return m?Number(m[1])-1:0;}
+function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(x,j){x.classList.toggle('on',j===i);});renderSteps();if(history.replaceState)history.replaceState(null,'','#'+(i+1));}
+function next(){var total=Number(S[i].dataset.reveals||0);if(steps[i]<total){steps[i]++;renderSteps();}else{go(i+1);}}
+function previous(){if(steps[i]>0){steps[i]--;renderSteps();}else{go(i-1);}}
+document.getElementById('stage').addEventListener('click',function(ev){if(deck.isOverlayOpen()||ev.target.closest('button,a'))return;ev.clientX<innerWidth/3?previous():next();});
+addEventListener('keydown',function(ev){
+ if(ev.defaultPrevented||ev.altKey||ev.ctrlKey||ev.metaKey)return;
+ var k=ev.key;
+ if(ev.target&&ev.target.closest('input,textarea,select,[contenteditable="true"]')&&k!=='Escape')return;
+ if(deck.isOverlayOpen())return;
+ if(k===' '&&ev.target&&ev.target.closest('button,a'))return;
+ if(k==='ArrowRight'||k==='ArrowDown'||k==='PageDown'||(k===' '&&!ev.shiftKey)){ev.preventDefault();next();}
+ else if(k==='ArrowLeft'||k==='ArrowUp'||k==='PageUp'||(k===' '&&ev.shiftKey)){ev.preventDefault();previous();}
+ else if(k==='Home'){ev.preventDefault();go(0);}
+ else if(k==='End'){ev.preventDefault();go(S.length-1);}
+ else if(k==='f'||k==='F'){ev.preventDefault();toggleFullscreen();}});
+addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
+addEventListener('hashchange',function(){var n=parseHash();if(n!==i)go(n);});
+fit();go(parseHash());
+})();
+"""
+
+STUDIO_JS = """
+(function(){
+var isLocalOrigin=location.protocol==='file:'||['127.0.0.1','localhost','[::1]','::1'].includes(location.hostname);
+if(!isLocalOrigin){
+ ['deck-hud','notes-drawer','live-demo'].forEach(function(id){var el=document.getElementById(id);if(el)el.remove();});
+ document.querySelectorAll('.live-demo-trigger').forEach(function(el){el.remove();});
+ return;
+}
+var deck=window.__DECK__;if(!deck)return;
+var S=deck.S,liveOpen=false,notesOpen=false;
+var hudCount=document.getElementById('hud-count'),hud=document.getElementById('deck-hud'),notesDrawer=document.getElementById('notes-drawer');
+function byId(id){return document.getElementById(id);}
 function pad2(n){return n<10?'0'+n:String(n);}
 function syncNotes(){
  if(!notesDrawer)return;
- var num=pad2(i+1);
+ var idx=deck.getIndex(),num=pad2(idx+1);
  if(hudCount)hudCount.textContent=num+' / '+pad2(S.length);
  byId('notes-title').textContent='讲者备注 · Slide '+num;
- var txt=(window.SLIDE_NOTES&&window.SLIDE_NOTES[String(i)])||'（本页无备注）';
+ var txt=(window.SLIDE_NOTES&&window.SLIDE_NOTES[String(idx)])||'（本页无备注）';
  byId('notes-body').textContent=txt;
 }
+deck.isOverlayOpen=function(){return liveOpen;};
+deck.onRender=function(){syncNotes();};
+syncNotes();
 function toggleNotes(force){
  notesOpen=typeof force==='boolean'?force:!notesOpen;
  notesDrawer.hidden=!notesOpen;
@@ -556,15 +595,9 @@ function toggleNotes(force){
 function defaultDemoForSlide(idx){
  return idx===25?'pty':(idx===26?'microvm':'process');
 }
-function renderSteps(){var shown=steps[i];S[i].querySelectorAll('.reveal').forEach(function(x){x.classList.toggle('shown',Number(x.dataset.reveal)<shown);});if(bar)bar.style.width=((i+1)/S.length*100).toFixed(2)+'%';syncNotes();}
-function parseHash(){var h=location.hash.slice(1),m=/^(?:slide-)?(\\d+)$/.exec(h);return m?Number(m[1])-1:0;}
-function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(x,j){x.classList.toggle('on',j===i);});renderSteps();if(history.replaceState)history.replaceState(null,'','#'+(i+1));}
-function next(){var total=Number(S[i].dataset.reveals||0);if(steps[i]<total){steps[i]++;renderSteps();}else{go(i+1);}}
-function previous(){if(steps[i]>0){steps[i]--;renderSteps();}else{go(i-1);}}
-byId('stage').addEventListener('click',function(ev){if(liveOpen||ev.target.closest('button,a'))return;ev.clientX<innerWidth/3?previous():next();});
 byId('hud-notes-btn').addEventListener('click',function(ev){ev.stopPropagation();toggleNotes();});
 byId('notes-close').addEventListener('click',function(){toggleNotes(false);});
-byId('hud-demo-btn').addEventListener('click',function(ev){ev.stopPropagation();openLiveDemo(defaultDemoForSlide(i),1);});
+byId('hud-demo-btn').addEventListener('click',function(ev){ev.stopPropagation();openLiveDemo(defaultDemoForSlide(deck.getIndex()),1);});
 addEventListener('keydown',function(ev){
  if(ev.altKey||ev.ctrlKey||ev.metaKey)return;
  var k=ev.key;
@@ -578,17 +611,9 @@ addEventListener('keydown',function(ev){
   return;
  }
  if(k==='Escape'&&notesOpen){ev.preventDefault();toggleNotes(false);return;}
- if(k===' '&&ev.target&&ev.target.closest('button,a'))return;
- if(k==='ArrowRight'||k==='ArrowDown'||k==='PageDown'||(k===' '&&!ev.shiftKey)){ev.preventDefault();next();}
- else if(k==='ArrowLeft'||k==='ArrowUp'||k==='PageUp'||(k===' '&&ev.shiftKey)){ev.preventDefault();previous();}
- else if(k==='Home'){ev.preventDefault();go(0);}
- else if(k==='End'){ev.preventDefault();go(S.length-1);}
- else if(k==='n'||k==='N'){ev.preventDefault();toggleNotes();}
- else if(k==='d'||k==='D'){ev.preventDefault();openLiveDemo(defaultDemoForSlide(i),1);}
- else if(k==='f'||k==='F'){ev.preventDefault();toggleFullscreen();}});
-addEventListener('resize',fit);document.addEventListener('fullscreenchange',fit);if(window.visualViewport)window.visualViewport.addEventListener('resize',fit);
-addEventListener('hashchange',function(){var n=parseHash();if(n!==i)go(n);});
-fit();go(parseHash());
+ if(k==='n'||k==='N'){ev.preventDefault();toggleNotes();}
+ else if(k==='d'||k==='D'){ev.preventDefault();openLiveDemo(defaultDemoForSlide(deck.getIndex()),1);}
+},true);
 
 function cleanLive(value){
  return value
@@ -1197,6 +1222,8 @@ byId('live-demo-close').addEventListener('click',closeLiveDemo);
 })();
 """
 
+JS = DECK_JS + "\n" + STUDIO_JS
+
 def load_recorded_demo(img_dir):
     candidates = [
         os.path.join(os.path.dirname(os.path.abspath(img_dir)), 'demo-recordings.json'),
@@ -1209,25 +1236,25 @@ def load_recorded_demo(img_dir):
             return json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     return 'null'
 
-def build(out, img_dir, maxw, pages_url=None):
+def build(out, img_dir, maxw, pages_url=None, presenter_tools=True):
     D.validate_layout()
     out_dir = os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir, exist_ok=True)
     effective_url = pages_url if pages_url is not None else os.environ.get('PAGES_URL')
-    body = ''.join(slide_html(k, D.slides[k], img_dir, maxw, pages_url=effective_url) for k in sorted(D.slides))
-    recorded_json = load_recorded_demo(img_dir)
-    notes_json = json.dumps({str(k): v for k, v in D.notes.items()}, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+    body = ''.join(slide_html(k, D.slides[k], img_dir, maxw, pages_url=effective_url, presenter_tools=presenter_tools) for k in sorted(D.slides))
+    if presenter_tools:
+        recorded_json = load_recorded_demo(img_dir)
+        notes_json = json.dumps({str(k): v for k, v in D.notes.items()}, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+        extras = f"""\n{PRESENTER_UI}\n{LIVE_DEMO}\n<script>window.RECORDED_DEMO={recorded_json};window.SLIDE_NOTES={notes_json};</script>\n<script>{JS}</script>"""
+    else:
+        extras = f"\n<script>{DECK_JS}</script>"
     doc = f"""<!DOCTYPE html>
 <html lang="en" dir="ltr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Guardrails with Sandboxing - Microsoft Execution Containers (MXC)</title>
 <style>{CSS % (D.BG, D.INK, D.CY, D.CARD, D.CODEBG, D.EDGE, D.MUTED, D.AMB)}</style></head>
-<body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>
-{PRESENTER_UI}
-{LIVE_DEMO}
-<script>window.RECORDED_DEMO={recorded_json};window.SLIDE_NOTES={notes_json};</script>
-<script>{JS}</script></body></html>"""
+<body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>{extras}</body></html>"""
     with open(out, 'w', encoding='utf-8', newline='\n') as f:
         f.write(doc)
     print(f'Saved {out}  ({len(D.slides)} slides, {os.path.getsize(out)/1e6:.2f} MB)')
@@ -1240,4 +1267,5 @@ if __name__ == '__main__':
     ap.add_argument('--images', default=os.path.join(here, 'assets', 'images'))
     ap.add_argument('--maxw', type=int, default=1600, help='max image edge in px')
     ap.add_argument('--pages-url', default=None, help='GitHub Pages URL for Slide 1 QR code')
-    a = ap.parse_args(); build(a.out, a.images, a.maxw, pages_url=a.pages_url)
+    ap.add_argument('--public-pages', action='store_true', help='omit Notes, Studio, and N/D shortcuts for public GitHub Pages')
+    a = ap.parse_args(); build(a.out, a.images, a.maxw, pages_url=a.pages_url, presenter_tools=not a.public_pages)

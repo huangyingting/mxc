@@ -967,7 +967,7 @@ def add_pages_qr(sl, pages_url):
     img_buf.seek(0)
     sl.shapes.add_picture(img_buf, Emu(875000), Emu(4325000), Emu(1660000), Emu(1660000))
     cap = sl.shapes.add_textbox(Emu(2710000), Emu(4780000), Emu(2640000), Emu(280000))
-    write_text(cap.text_frame, {'text': 'SCAN FOR LIVE SLIDES & DEMO', 'size': 8.5, 'bold': True, 'color': CY, 'font': BF})
+    write_text(cap.text_frame, {'text': 'SCAN FOR WEB SLIDES', 'size': 8.5, 'bold': True, 'color': CY, 'font': BF})
     url_tb = sl.shapes.add_textbox(Emu(2710000), Emu(5060000), Emu(2640000), Emu(380000))
     write_text(url_tb.text_frame, {'text': display, 'size': 11, 'bold': True, 'color': INK, 'font': MF})
     url_tb.text_frame.paragraphs[0].runs[0].hyperlink.address = clean

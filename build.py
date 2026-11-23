@@ -50,10 +50,10 @@ def build_presentation(pages_url: str | None = None) -> None:
 
 def build_site(pages_url: str | None = None) -> None:
     resolved_url = resolve_pages_url(pages_url)
-    build_html.build(str(HTML_OUT), str(IMAGES), 1600, pages_url=resolved_url)
+    build_html.build(str(HTML_OUT), str(IMAGES), 1600, pages_url=resolved_url, presenter_tools=True)
     PAGES_OUT.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(HTML_OUT, PAGES_OUT)
-    print(f"Saved GitHub Pages site {PAGES_OUT}" + (f" (QR -> {resolved_url})" if resolved_url else ""))
+    build_html.build(str(PAGES_OUT), str(IMAGES), 1600, pages_url=resolved_url, presenter_tools=False)
+    print(f"Saved GitHub Pages site {PAGES_OUT} (public slides only" + (f", QR -> {resolved_url})" if resolved_url else ")"))
 
 
 def build_demo() -> None:
