@@ -53,7 +53,7 @@ def build_site(pages_url: str | None = None) -> None:
     build_html.build(str(HTML_OUT), str(IMAGES), 1600, pages_url=resolved_url, presenter_tools=True)
     PAGES_OUT.parent.mkdir(parents=True, exist_ok=True)
     build_html.build(str(PAGES_OUT), str(IMAGES), 1600, pages_url=resolved_url, presenter_tools=False)
-    print(f"Saved GitHub Pages site {PAGES_OUT} (public slides only" + (f", QR -> {resolved_url})" if resolved_url else ")"))
+    print(f"Saved GitHub Pages site {PAGES_OUT} (no bottom Notes/Studio HUD" + (f", QR -> {resolved_url})" if resolved_url else ")"))
 
 
 def build_demo() -> None:

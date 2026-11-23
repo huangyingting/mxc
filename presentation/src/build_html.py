@@ -157,12 +157,12 @@ def qr_badge_html(pages_url, left_px=77.7, top_px=440.0):
         f'href="{e(clean_url)}" target="_blank" rel="noreferrer">'
         f'{svg}'
         f'<span class="pages-qr-meta">'
-        f'<span class="pages-qr-kicker">SCAN FOR WEB SLIDES</span>'
+        f'<span class="pages-qr-kicker">SCAN FOR LIVE SLIDES &amp; DEMO</span>'
         f'<strong class="pages-qr-url">{e(display_url)}</strong>'
         f'</span></a>'
     )
 
-def slide_html(k, ops, img_dir, maxw, pages_url=None, presenter_tools=True):
+def slide_html(k, ops, img_dir, maxw, pages_url=None):
     parts = []
     for operation_index, o in enumerate(ops):
         classes, reveal = reveal_attrs(k, operation_index)
@@ -208,7 +208,7 @@ def slide_html(k, ops, img_dir, maxw, pages_url=None, presenter_tools=True):
                 parts.append(f'<div class="{classes}{extra_cls}"{reveal} style="{st}">{inner}</div>')
     reveal_count = REVEAL_ITEMS[k][2] if k in REVEAL_ITEMS else 0
     action = ''
-    if presenter_tools and k in DEMO_LAUNCHERS:
+    if k in DEMO_LAUNCHERS:
         demo_kind, demo_step, label = DEMO_LAUNCHERS[k]
         action = (
             f'<button class="live-demo-trigger" type="button" '
@@ -563,56 +563,17 @@ fit();go(parseHash());
 
 STUDIO_JS = """
 (function(){
-var isLocalOrigin=location.protocol==='file:'||['127.0.0.1','localhost','[::1]','::1'].includes(location.hostname);
-if(!isLocalOrigin){
- ['deck-hud','notes-drawer','live-demo'].forEach(function(id){var el=document.getElementById(id);if(el)el.remove();});
- document.querySelectorAll('.live-demo-trigger').forEach(function(el){el.remove();});
- return;
-}
 var deck=window.__DECK__;if(!deck)return;
-var S=deck.S,liveOpen=false,notesOpen=false;
-var hudCount=document.getElementById('hud-count'),hud=document.getElementById('deck-hud'),notesDrawer=document.getElementById('notes-drawer');
+var liveOpen=false;
 function byId(id){return document.getElementById(id);}
-function pad2(n){return n<10?'0'+n:String(n);}
-function syncNotes(){
- if(!notesDrawer)return;
- var idx=deck.getIndex(),num=pad2(idx+1);
- if(hudCount)hudCount.textContent=num+' / '+pad2(S.length);
- byId('notes-title').textContent='讲者备注 · Slide '+num;
- var txt=(window.SLIDE_NOTES&&window.SLIDE_NOTES[String(idx)])||'（本页无备注）';
- byId('notes-body').textContent=txt;
-}
 deck.isOverlayOpen=function(){return liveOpen;};
-deck.onRender=function(){syncNotes();};
-syncNotes();
-function toggleNotes(force){
- notesOpen=typeof force==='boolean'?force:!notesOpen;
- notesDrawer.hidden=!notesOpen;
- hud.classList.toggle('notes-open',notesOpen);
- byId('hud-notes-btn').setAttribute('aria-expanded',String(notesOpen));
- syncNotes();
-}
-function defaultDemoForSlide(idx){
- return idx===25?'pty':(idx===26?'microvm':'process');
-}
-byId('hud-notes-btn').addEventListener('click',function(ev){ev.stopPropagation();toggleNotes();});
-byId('notes-close').addEventListener('click',function(){toggleNotes(false);});
-byId('hud-demo-btn').addEventListener('click',function(ev){ev.stopPropagation();openLiveDemo(defaultDemoForSlide(deck.getIndex()),1);});
 addEventListener('keydown',function(ev){
  if(ev.altKey||ev.ctrlKey||ev.metaKey)return;
- var k=ev.key;
- if(ev.target&&ev.target.closest('input,textarea,select,[contenteditable="true"]')&&k!=='Escape')return;
- if(liveOpen){
-  if(k==='Escape'){
-   ev.preventDefault();
-   if(document.querySelector('.cs-menu:not([hidden])')){closeAllSelects();return;}
-   closeLiveDemo();
-  }
-  return;
+ if(liveOpen&&ev.key==='Escape'){
+  ev.preventDefault();
+  if(document.querySelector('.cs-menu:not([hidden])')){closeAllSelects();return;}
+  closeLiveDemo();
  }
- if(k==='Escape'&&notesOpen){ev.preventDefault();toggleNotes(false);return;}
- if(k==='n'||k==='N'){ev.preventDefault();toggleNotes();}
- else if(k==='d'||k==='D'){ev.preventDefault();openLiveDemo(defaultDemoForSlide(deck.getIndex()),1);}
 },true);
 
 function cleanLive(value){
@@ -1114,7 +1075,7 @@ async function connectLive(){
 }
 
 async function openLiveDemo(preferredKind,preferredStep){
- if(notesOpen)toggleNotes(false);
+ if(deck.closeNotes)deck.closeNotes();
  byId('live-demo').hidden=false;liveOpen=true;
  replayMode=!isLocalDemoHost();
  if(preferredKind)setKindVal(preferredKind);
@@ -1218,11 +1179,60 @@ document.querySelectorAll('.live-demo-trigger').forEach(function(button){
   openLiveDemo(button.dataset.demo||'pty',Number(button.dataset.step||1));
  });
 });
+deck.openStudio=openLiveDemo;
 byId('live-demo-close').addEventListener('click',closeLiveDemo);
 })();
 """
 
-JS = DECK_JS + "\n" + STUDIO_JS
+PRESENTER_JS = """
+(function(){
+var isLocalOrigin=location.protocol==='file:'||['127.0.0.1','localhost','[::1]','::1'].includes(location.hostname);
+if(!isLocalOrigin){
+ ['deck-hud','notes-drawer'].forEach(function(id){var el=document.getElementById(id);if(el)el.remove();});
+ return;
+}
+var deck=window.__DECK__;if(!deck)return;
+var hudCount=document.getElementById('hud-count'),hud=document.getElementById('deck-hud'),notesDrawer=document.getElementById('notes-drawer');
+if(!hud||!notesDrawer)return;
+var S=deck.S,notesOpen=false;
+function byId(id){return document.getElementById(id);}
+function pad2(n){return n<10?'0'+n:String(n);}
+function syncNotes(){
+ var idx=deck.getIndex(),num=pad2(idx+1);
+ if(hudCount)hudCount.textContent=num+' / '+pad2(S.length);
+ byId('notes-title').textContent='讲者备注 · Slide '+num;
+ var txt=(window.SLIDE_NOTES&&window.SLIDE_NOTES[String(idx)])||'（本页无备注）';
+ byId('notes-body').textContent=txt;
+}
+function toggleNotes(force){
+ notesOpen=typeof force==='boolean'?force:!notesOpen;
+ notesDrawer.hidden=!notesOpen;
+ hud.classList.toggle('notes-open',notesOpen);
+ byId('hud-notes-btn').setAttribute('aria-expanded',String(notesOpen));
+ syncNotes();
+}
+function defaultDemoForSlide(idx){
+ return idx===25?'pty':(idx===26?'microvm':'process');
+}
+deck.closeNotes=function(){if(notesOpen)toggleNotes(false);};
+deck.onRender=function(){syncNotes();};
+syncNotes();
+byId('hud-notes-btn').addEventListener('click',function(ev){ev.stopPropagation();toggleNotes();});
+byId('notes-close').addEventListener('click',function(){toggleNotes(false);});
+byId('hud-demo-btn').addEventListener('click',function(ev){ev.stopPropagation();if(deck.openStudio)deck.openStudio(defaultDemoForSlide(deck.getIndex()),1);});
+addEventListener('keydown',function(ev){
+ if(ev.altKey||ev.ctrlKey||ev.metaKey||deck.isOverlayOpen())return;
+ var k=ev.key;
+ if(ev.target&&ev.target.closest('input,textarea,select,[contenteditable="true"]')&&k!=='Escape')return;
+ if(k==='Escape'&&notesOpen){ev.preventDefault();toggleNotes(false);return;}
+ if(k==='n'||k==='N'){ev.preventDefault();toggleNotes();}
+ else if(k==='d'||k==='D'){ev.preventDefault();if(deck.openStudio)deck.openStudio(defaultDemoForSlide(deck.getIndex()),1);}
+},true);
+})();
+"""
+
+PUBLIC_JS = DECK_JS + "\n" + STUDIO_JS
+JS = PUBLIC_JS + "\n" + PRESENTER_JS
 
 def load_recorded_demo(img_dir):
     candidates = [
@@ -1241,20 +1251,27 @@ def build(out, img_dir, maxw, pages_url=None, presenter_tools=True):
     out_dir = os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir, exist_ok=True)
     effective_url = pages_url if pages_url is not None else os.environ.get('PAGES_URL')
-    body = ''.join(slide_html(k, D.slides[k], img_dir, maxw, pages_url=effective_url, presenter_tools=presenter_tools) for k in sorted(D.slides))
+    body = ''.join(slide_html(k, D.slides[k], img_dir, maxw, pages_url=effective_url) for k in sorted(D.slides))
+    recorded_json = load_recorded_demo(img_dir)
     if presenter_tools:
-        recorded_json = load_recorded_demo(img_dir)
         notes_json = json.dumps({str(k): v for k, v in D.notes.items()}, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-        extras = f"""\n{PRESENTER_UI}\n{LIVE_DEMO}\n<script>window.RECORDED_DEMO={recorded_json};window.SLIDE_NOTES={notes_json};</script>\n<script>{JS}</script>"""
+        presenter_block = f"\n{PRESENTER_UI}"
+        data_script = f"<script>window.RECORDED_DEMO={recorded_json};window.SLIDE_NOTES={notes_json};</script>"
+        script_body = JS
     else:
-        extras = f"\n<script>{DECK_JS}</script>"
+        presenter_block = ""
+        data_script = f"<script>window.RECORDED_DEMO={recorded_json};</script>"
+        script_body = PUBLIC_JS
     doc = f"""<!DOCTYPE html>
 <html lang="en" dir="ltr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
 <title>Guardrails with Sandboxing - Microsoft Execution Containers (MXC)</title>
 <style>{CSS % (D.BG, D.INK, D.CY, D.CARD, D.CODEBG, D.EDGE, D.MUTED, D.AMB)}</style></head>
-<body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>{extras}</body></html>"""
+<body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>{presenter_block}
+{LIVE_DEMO}
+{data_script}
+<script>{script_body}</script></body></html>"""
     with open(out, 'w', encoding='utf-8', newline='\n') as f:
         f.write(doc)
     print(f'Saved {out}  ({len(D.slides)} slides, {os.path.getsize(out)/1e6:.2f} MB)')

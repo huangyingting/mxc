@@ -35,13 +35,13 @@ python build.py --target demo
 ```
 
 - PPTX：`dist/pptx/Guardrails with Sandboxing - MXC.pptx`
-- 本地讲者版 HTML：`dist/html/index.html`（含讲者备注 `Notes N`、交互式 `Studio D` 及 `N`/`D` 快捷键，仅在本机 `file://` 或 `localhost` / `127.0.0.1` 下启用）
-- GitHub Pages 公开版 HTML：`docs/index.html`（纯净公开幻灯片，不含底部 `Notes`、`Studio` 栏及 `N`/`D` 快捷键）
+- 本地讲者版 HTML：`dist/html/index.html`（含底部讲者工具栏 `Notes N` / `Studio D` 及 `N`/`D` 快捷键，仅在本机 `file://` 或 `localhost` / `127.0.0.1` 下启用）
+- GitHub Pages 公开版 HTML：`docs/index.html`（保留页面右上角 Demo 入口按钮与录制回放工作台，不含底部 `Notes`、`Studio` 栏、讲者备注及 `N`/`D` 快捷键）
 - Demo 1（ProcessContainer 文件 + 网络护栏）：`npm --prefix demo run demo:process`
 - Demo 2（IsolationSession 有状态 PTY）：`npm --prefix demo run demo:pty`；交互模式为 `npm --prefix demo run demo:pty:interactive`
 - Demo 3（Hyperlight MicroVM 实验性硬件微虚拟机）：`npm --prefix demo run demo:microvm`
-- 本地网页集成交互式 Demo Studio：
-  - **本地静态网页回放**：直接在本机打开 `dist/html/index.html`，在第 25、26、27 页点击按钮（或任意页按 `D`），即可逐步回放（或点击 `Auto-Play All` 自动连播）在 Windows 11 真机上录制的 Demo 1（`ProcessContainer`）、Demo 2（`IsolationSession PTY`）与 Demo 3（`Hyperlight MicroVM`）完整执行轨迹
+- 网页集成交互式 Demo Studio：
+  - **GitHub Pages / 静态网页回放**：打开在线 Pages 或本地 `dist/html/index.html`，在第 25、26、27 页点击右上角按钮（本地版还可在任意页按 `D`），即可逐步回放（或点击 `Auto-Play All` 自动连播）在 Windows 11 真机上录制的 Demo 1（`ProcessContainer`）、Demo 2（`IsolationSession PTY`）与 Demo 3（`Hyperlight MicroVM`）完整执行轨迹
   - **本机实时沙箱桥接**：运行 `npm --prefix demo run demo:web` 后打开 `http://127.0.0.1:8787/#25`、`#26` 或 `#27`，同一个界面会自动切换为 `live bridge`，驱动本机真实容器与 MicroVM（重新录制静态回放数据可运行 `npm --prefix demo run demo:record`）
 
 Session Container 解决的是独立 Windows 用户/Session 与状态隔离，不是凭据保险箱；文件策略不可用、网络必须全开放、`SendInput` 被阻止。ERP 凭据仍应由 Host/Broker 或专用低权限账号管理。
