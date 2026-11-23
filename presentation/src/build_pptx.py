@@ -331,13 +331,13 @@ for seg_i in range(3):
 gap=180000; cw4=(CW-3*gap)/4; y0=2040000; ch=3960000
 bx=[
     ('Process container','Windows 11 · macOS · Linux',
-     'AppContainer, Seatbelt or Bubblewrap. Millisecond startup and fine-grained file & network rules — default for coding agents.',
+     'AppContainer, Seatbelt or Bubblewrap. Millisecond startup and fine-grained file, network & UI rules — default for coding agents.',
      'Shared kernel · Process ACL','GA · Default',CY,1),
     ('Session container','Windows 11 only',
-     'Separate local Windows login and desktop for GUI apps. Protects your screen & clipboard and blocks synthetic input.',
+     'Separate local Windows login and desktop for GUI apps; blocks clipboard/input bleed (does not filter paths or IPs).',
      'Shared kernel · Own desktop','GA · GUI',CY,2),
     ('WSL container','Windows 11',
-     'Runs Linux CLI workloads, compilers and toolchains on a Windows host inside an isolated WSL environment.',
+     'Runs Linux CLI workloads and toolchains on a Windows host; networking is all-isolated or bridged (no per-IP rules).',
      'Isolated Linux subsystem','GA · Linux',CY,3),
     ('MicroVM','Windows 11 · Linux',
      'Hardware-virtualized unikernel boundary with ~90 ms warm snapshot restore; never shares the host OS kernel.',
@@ -410,8 +410,8 @@ def lane(y,label,sub,stepsL,desc,is_default):
         if i<n-1:
             medallion(s,x+bw+g//2,y+430000,diam=170000,glyph='→',fill=CY,size=9.5)
     tb(s,ax,y+760000,aw,desc,size=13.8,color=INK if is_default else MUTED,cy=420000)
-lane(1520000,'One-shot','DEFAULT CHOICE',['Create','Run one workload','Tear down'],'Builds, tests & generated commands: spin up a fresh, narrow sandbox for every action.',True)
-lane(2960000,'State-aware','PERSISTENT STATE',['Provision','Start','Execute','Stop','Deprovision'],'Interactive shells & multi-step triage via IsolationSession or WSLc — always deprovision.',False)
+lane(1520000,'One-shot','DEFAULT CHOICE',['Create','Run one workload','Tear down'],'Builds, tests & generated commands: spin up a fresh, narrow ProcessContainer for every action.',True)
+lane(2960000,'State-aware','PERSISTENT STATE',['Provision','Start','Execute','Stop','Deprovision'],'ProvisionRequest → ContainerId on IsolationSession (session/UI only) or WSLc — always deprovision.',False)
 ry=4440000; g=160000; cw3=(CW-2*g)/3
 for i,(t,api_lbl,d) in enumerate([('run()','CAPTURED RESULT','Returns stdout, stderr & exit code once the workload finishes.'),('spawn()','LIVE STREAMING','Streams stdin, stdout and stderr in real time while running.'),('PTY','INTERACTIVE SHELL','Full pseudo-terminal session for stateful shells & human handoff.')]):
     x=M+i*(cw3+g)
@@ -422,27 +422,46 @@ for i,(t,api_lbl,d) in enumerate([('run()','CAPTURED RESULT','Returns stdout, st
         {'text':d,'sizePt':13.5,'color':MUTED},
     ],cy=900000)
 footer(s,'',13)
-note(s,'选好了跑哪种容器、在哪套系统上跑，下一步就是决定这个容器该活多久。MXC 支持用完即焚的 One-shot 和保留现场的 State-aware 两种生命周期。日常百分之八九十的动作，像跑一次编译、执行一遍测试、生成一份报告，都应该优先选 One-shot：每次调用现拉一个全新的窄权限沙箱，干完立刻销毁，不给潜在问题留任何驻留空间。\n只有当你确实需要跨多步保留上下文，比如预装好一套复杂环境，或者开着终端连续排查故障时，才用 IsolationSession 或 WSLc 这种有状态容器。用的时候一定记得，停止运行 stop 不代表释放资源，不管中间成没成功，最后都要调 deprovision 把临时账号和环境清理干净。底下的三种执行接口也很清晰：等完整结果用 run，盯实时输出流用 spawn，做交互式命令行终端就用 PTY。')
+note(s,'选好了跑哪种容器、在哪套系统上跑，下一步就是决定这个容器该活多久。MXC 支持用完即焚的 One-shot 和保留现场的 State-aware 两种生命周期。日常百分之八九十的动作，像跑一次编译、执行一遍测试、生成一份报告，都应该优先选 One-shot：每次调用现拉一个全新的窄权限沙箱，干完立刻销毁，不给潜在问题留任何驻留空间。\n只有当你确实需要跨多步保留上下文时，才用 IsolationSession 或 WSLc 这种有状态容器：先发 ProvisionRequest 拿到一个不透明的 ContainerId，后续每条命令单独发 ExecutionRequest，并且一定先确认后端能力边界——比如 IsolationSession 只隔离账号和桌面，不做 MXC 文件和网络过滤，而 WSLc 网络只能全断或全通。不管中间成功、报错还是取消，最后都必须调 deprovision 把临时账号清理干净。\n\n参考来源：Microsoft Learn — MXC policy examples（Reuse a state-aware sandbox）。')
 
 # ---------- 13 FILES
 s=13
 header(s,'03 · FEATURES & PLATFORMS','Files: read in, write out')
 cx_=5850000; cy0=1540000; chh=4460000
 rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
-tb(s,M+240000,cy0+120000,cx_-480000,'policy.json  ·  filesystem guardrails',size=11.5,color=FOOT,font=MF,cy=300000)
-rect(s,M+240000,cy0+450000,cx_-480000,14000,fill=EDGE)
-code='{\n  "version": "1.0.0",\n  "containment": "processcontainer",\n  "process": {\n    "commandLine": "python summarize.py"\n  },\n  "filesystem": {\n    "readonlyPaths": ["C:\\\\demo\\\\input"],\n    "readwritePaths": ["C:\\\\demo\\\\output"],\n    "deniedPaths": ["C:\\\\Users\\\\me\\\\.ssh"]\n  }\n}'
-tb(s,M+240000,cy0+540000,cx_-480000,code,size=13,color=CODE,font=MF,cy=3700000)
+tb(s,M+240000,cy0+120000,cx_-480000,'mxc-config.1.0.0.json  ·  repo-scoped tool',size=11.5,color=FOOT,font=MF,cy=300000)
+rect(s,M+240000,cy0+440000,cx_-480000,14000,fill=EDGE)
+code=('{\n'
+      '  "version": "1.0.0", "containment": "process",\n'
+      '  "process": {\n'
+      '    "commandLine": "C:\\\\Windows\\\\System32\\\\cmd.exe /d /c build.cmd",\n'
+      '    "cwd": "C:\\\\src\\\\my-app",\n'
+      '    "env": ["SystemRoot=C:\\\\Windows",\n'
+      '            "LOCALAPPDATA=C:\\\\src\\\\mxc-output",\n'
+      '            "TEMP=C:\\\\src\\\\mxc-output"]\n'
+      '  },\n'
+      '  "filesystem": {\n'
+      '    "readonlyPaths": ["C:\\\\src\\\\my-app"],\n'
+      '    "readwritePaths": ["C:\\\\src\\\\mxc-output"],\n'
+      '    "deniedPaths": ["C:\\\\src\\\\my-app\\\\.env",\n'
+      '                    "C:\\\\src\\\\my-app\\\\secrets"]\n'
+      '  }\n'
+      '}')
+tb(s,M+240000,cy0+490000,cx_-440000,code,size=11.1,color=CODE,font=MF,cy=3840000)
 rx=M+cx_+280000; rw=W-M-rx
-rules=[('01 · Read in, write out','Separate readable input folders from one dedicated, empty writable output directory.',CY),('02 · Deny the crown jewels','Explicitly block secrets, ~/.ssh, cloud credentials, system and user profile paths.',AMB),('03 · Teardown is not undo','Writes to granted host folders survive container exit — treat output folders as a staging zone.',CY)]
+rules=[
+    ('01 · Read in, write out (& redirect TEMP)','Keep source read-only; route outputs, tool caches, TEMP & LOCALAPPDATA to a dedicated mxc-output folder.',CY),
+    ('02 · Carve out secrets inside grants','Ungranted paths (~/.ssh) stay blocked by default; use deniedPaths for .env or secrets/ inside a granted repo.',AMB),
+    ('03 · Teardown is not undo','Writes to granted host folders survive container exit — validate mxc-output as an untrusted staging zone.',CY),
+]
 for i,(h_,d,col_) in enumerate(rules):
     yy=1540000+i*1540000
     card_box(s,rx,yy,rw,1380000,[
-        {'text':h_,'sizePt':17,'bold':True,'color':col_,'spaceAfterPt':7},
-        {'text':d,'sizePt':13.8,'color':MUTED},
-    ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=110000)
+        {'text':h_,'sizePt':16.2,'bold':True,'color':col_,'spaceAfterPt':7},
+        {'text':d,'sizePt':13.4,'color':MUTED},
+    ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=105000)
 footer(s,'',14)
-note(s,'容器的形态和生命周期定下来之后，我们来看里面的安全策略具体管哪三件事——首先是文件。核心思路就六个字：读入、写出分离。给 Agent 看的参考资料一律挂成只读，再单独建一个空的专用目录让它写产出物；同时用 deniedPaths 把 .ssh、各类密钥和用户隐私目录明确拉黑，千万别图省事把整个用户主目录直接放开。\n还有个细节特别容易踩坑：销毁沙箱不等于撤销落盘。容器退出时清掉的是它自己的临时运行环境，只要你允许它往宿主机的输出目录写了文件，那些改动在容器销毁后是实打实留下的。所以一定要把输出目录当成待检区，宿主程序先验完格式和内容，再拿去正式使用。\n\n参考来源：github.com/microsoft/mxc 官方策略示例（docs/examples.md）。')
+note(s,'容器形态和生命周期定下来之后，我们对照官方文档里的标准策略示例，看它具体管哪三件事——首先是文件。核心思路是读入和写出彻底拆开：代码库目录只给只读权限，另外建一个专用的 mxc-output 目录放产出；跑编译或分析工具时，如果显式传了环境变量列表，Windows 的 ProcessContainer 要求必须带上 SystemRoot 和 LOCALAPPDATA，顺手把 TEMP 和各类缓存也都指到这个可写目录里，就不用把整个代码库放开成可写了。\n再看 deniedPaths：像 ~/.ssh 或别的项目目录，只要你没放进白名单，默认本来就碰不到；deniedPaths 最实用的地方，是在已经放行只读的仓库目录里把 .env 或 secrets 子目录单独挖掉（也要在目标后端实测一下嵌套拒绝行为，个别挂载式后端会直接报错拒绝而不是静默屏蔽）。最后切记，容器退出不会撤回已经落到宿主机输出目录里的文件，一定要把输出目录当成待检区先验再收。\n\n参考来源：Microsoft Learn — MXC policy examples（learn.microsoft.com/en-us/windows/apps/develop/mxc/examples）。')
 
 # ---------- 14 NETWORK
 s=14
@@ -451,12 +470,12 @@ bx0=M; by0=1620000; bw=2550000; bh=4180000
 rect(s,bx0,by0,bw,bh,fill=CARD2,line=CY,lw=19050)
 rect(s,bx0+200000,by0+260000,bw-400000,290000,fill=CY,preset='roundRect',text='SANDBOXED WORKLOAD',size=9.8,bold=True,color=BG,font=MF)
 tb(s,bx0+200000,by0+760000,bw-400000,'Agent process',size=20,bold=True,color=INK,align='center',cy=480000)
-rect(s,bx0+220000,by0+1420000,bw-440000,520000,fill=CARD,line=EDGE,lw=12700,preset='roundRect',text='egress: "deny"',size=12.5,bold=True,color=CY,font=MF)
-rect(s,bx0+220000,by0+2080000,bw-440000,520000,fill=CARD,line=EDGE,lw=12700,preset='roundRect',text='ingress: "deny"',size=12.5,bold=True,color=CY,font=MF)
-tb(s,bx0+180000,by0+2840000,bw-360000,'Only explicit rules punch a narrow hole.',size=13,color=MUTED,align='center',cy=1000000)
+rect(s,bx0+200000,by0+1420000,bw-400000,520000,fill=CARD,line=EDGE,lw=12700,preset='roundRect',text='egress: "deny"',size=12,bold=True,color=CY,font=MF)
+rect(s,bx0+200000,by0+2080000,bw-400000,520000,fill=CARD,line=EDGE,lw=12700,preset='roundRect',text='hostLoopback: "deny"',size=11.5,bold=True,color=CY,font=MF)
+tb(s,bx0+180000,by0+2840000,bw-360000,'Only explicit CIDR or proxy rules open a path.',size=12.8,color=MUTED,align='center',cy=1000000)
 
 conn_w=880000; dx=bx0+bw+conn_w; dw=3100000; dh=1160000; dgap=350000
-dests=[('140.82.114.6 : 443','Explicitly allowed by IP/CIDR + port',CY,'✓'),('Any other address','Blocked at the OS firewall layer',AMB,'✕'),('127.0.0.1 : 8080 proxy','Domain allow-list & audit live here',CY,'→')]
+dests=[('192.0.2.0/24 : tcp 443','Direct egress.allow CIDR + port (no proxy)',CY,'✓'),('Any other IP / loopback','Blocked at OS firewall (default: deny)',AMB,'✕'),('http://127.0.0.1:8080','App-started proxy via networkProxy',CY,'→')]
 for i,(t,d,c,g) in enumerate(dests):
     yy=by0+i*(dh+dgap)
     cy_mid=yy+dh//2
@@ -464,19 +483,19 @@ for i,(t,d,c,g) in enumerate(dests):
     medallion(s,bx0+bw+conn_w//2,cy_mid,diam=300000,glyph=g,fill=c,size=13)
     rect(s,dx,yy,dw,dh,fill=CARD,line=EDGE,lw=12700)
     tb(s,dx+200000,yy+110000,dw-360000,None,paras=[
-        {'text':t,'sizePt':15,'bold':True,'color':INK,'spaceAfterPt':5},
-        {'text':d,'sizePt':12.8,'bold':True,'color':c},
+        {'text':t,'sizePt':14.8,'bold':True,'color':INK,'spaceAfterPt':5},
+        {'text':d,'sizePt':12.4,'bold':True,'color':c},
     ],cy=dh-220000)
 fx=dx+dw+260000; fw=W-M-fx
 card_box(s,fx,by0,fw,bh,[
-    {'text':'NETWORK GUARDRAIL RULES','sizePt':10.5,'bold':True,'color':CY,'spaceAfterPt':10},
-    {'text':'• Directional rules: separate defaults for egress, ingress & loopback.','sizePt':13.8,'color':INK,'spaceAfterPt':10},
-    {'text':'• OS firewall filters IP/CIDR, protocol & port — not hostnames.','sizePt':13.8,'color':INK,'spaceAfterPt':10},
-    {'text':'• Need domain filtering? Route via runtimeConfig.networkProxy.','sizePt':13.8,'color':INK,'spaceAfterPt':10},
-    {'text':'• Lock proxy traffic to your host PID with allowedProxyPeer.','sizePt':13.8,'bold':True,'color':CY},
-],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=160000)
+    {'text':'NETWORK POLICY PATTERNS','sizePt':10.5,'bold':True,'color':CY,'spaceAfterPt':9},
+    {'text':'• Direct CIDR: egress.allow[{ to:[{cidr}], ports }] opens TCP port, not one hostname — don’t mix with networkProxy.','sizePt':12.8,'color':INK,'spaceAfterPt':9},
+    {'text':'• Hostname rules: start your host proxy first and point runtimeConfig.networkProxy to it.','sizePt':12.8,'color':INK,'spaceAfterPt':9},
+    {'text':'• Windows proxy peer: allowedProxyPeer binds a package family or AppContainer profile name (not a PID).','sizePt':12.8,'bold':True,'color':CY,'spaceAfterPt':9},
+    {'text':'• Windows mapping: proxy path needs ingress.default: "allow" while hostLoopback: "deny" blocks general loopback.','sizePt':12.6,'color':MUTED},
+],fill=CARD,line=EDGE,lw=12700,pad_x=210000,pad_y=130000)
 footer(s,'',15)
-note(s,'光锁住文件还不够，网络出口要是不管，Agent 读到的任何一点东西都能顺着网线发走。MXC 把网络拆成出站、入站和本机回环三个方向，上手第一步就是把默认规则全设成拒绝。\n这里要注意，操作系统底层的防火墙规则认的是 IP、网段和端口号，它没法直接认域名。如果业务上必须按域名放行，比如只允许连公司的内部网关或者指定的包管理源，标准做法是在宿主机起一个受控的本地代理，通过 networkProxy 把沙箱流量引过去，由代理来做域名白名单和日志审计；在生产环境里还可以加上 allowedProxyPeer 校验代理进程身份，防止本机其他程序冒名顶替。')
+note(s,'光锁住文件还不够，网络出口要是不管，Agent 读到的东西照样能顺着网线发走。MXC 的网络策略默认把 egress、ingress 和 hostLoopback 全部设成 deny，常见放行只有两条路，而且这两条路不要混用：\n第一条是直连网段，在 egress.allow 里填好受信任的 CIDR 和端口，注意系统防火墙只认 IP 和 TCP 端口，不认具体域名或某一个应用服务；第二条是走代理做域名级白名单，由宿主程序先在外面启动代理，再配 runtimeConfig.networkProxy。在 Windows 的 ProcessContainer 下走这条受控代理路径时，有两个很关键的官方细节：一是 allowedProxyPeer 填的是代理程序的包家族名（Package Family Name）或 AppContainer 配置文件名，而不是进程 PID；二是这套 Windows 映射要求把 ingress.default 设成 allow，同时靠 hostLoopback 设为 deny 来封住普通本机回环端口，只让指定的代理身份连通。\n\n参考来源：Microsoft Learn — MXC policy examples（Allow direct access to an IP range & Use an application-provided proxy）。')
 
 # ---------- 15 KEYS & UI
 s=15
@@ -492,18 +511,26 @@ rect(s,ox+200000,by0+220000,ow-400000,300000,fill=AMB,preset='roundRect',text='O
 for i,t in enumerate(['✕  API tokens & cloud keys','✕  ~/.ssh private keys','✕  Saved browser secrets','✕  Employee clipboard','✕  Host desktop & input']):
     rect(s,ox+200000,by0+720000+i*700000,ow-400000,540000,fill=CODEBG,line=EDGE,lw=12700,text=t,size=13.8,color=INK,align='left')
 ex=ox+ow+220000; ew=W-M-ex
-for idx_k,(kt,kd,kcol) in enumerate([
-    ('Credentials stay on the host','Keep raw keys out of sandbox env & disk. Let your trusted host or proxy attach credentials to approved calls.',CY),
-    ('UI & synthetic input blocked','Process sandboxes cannot read employee windows, scrape the clipboard, or inject fake mouse/keystroke events.',CY),
-    ('Need a GUI desktop?','Session containers get their own separate Windows desktop & clipboard — use a dedicated bot account.',CY),
-]):
-    ky=by0+idx_k*1510000
-    card_box(s,ex,ky,ew,1380000,[
-        {'text':kt,'sizePt':16,'bold':True,'color':kcol,'spaceAfterPt':6},
-        {'text':kd,'sizePt':13.2,'color':MUTED},
-    ],fill=CARD,line=EDGE,lw=12700,pad_x=200000,pad_y=100000)
+card_box(s,ex,by0,ew,1220000,[
+    {'text':'Credentials stay on the host','sizePt':15.8,'bold':True,'color':CY,'spaceAfterPt':5},
+    {'text':'Keep raw keys out of sandbox env & disk. Let your trusted host or proxy attach credentials outside.',  'sizePt':12.8,'color':MUTED},
+],fill=CARD,line=EDGE,lw=12700,pad_x=200000,pad_y=90000)
+card_box(s,ex,by0+1340000,ew,1220000,[
+    {'text':'Visible UI vs. full GUI desktop','sizePt':15.8,'bold':True,'color':CY,'spaceAfterPt':5},
+    {'text':'Use SessionContainer + bot login for full desktop apps, or scope ProcessContainer UI explicitly:',  'sizePt':12.8,'color':MUTED},
+],fill=CARD,line=EDGE,lw=12700,pad_x=200000,pad_y=90000)
+ui_y=by0+2680000; ui_h=bh-2680000
+rect(s,ex,ui_y,ew,ui_h,fill=CODEBG,line=EDGE,lw=12700)
+tb(s,ex+200000,ui_y+80000,ew-400000,'ui policy  ·  1.0.0 JSON / V1 SDK',size=10.5,color=FOOT,font=MF,cy=240000)
+rect(s,ex+200000,ui_y+340000,ew-400000,14000,fill=EDGE)
+ui_code=('"ui": {\n'
+         '  "disable": true,     // false = visible tool\n'
+         '  "clipboard": "none", // or "read" only\n'
+         '  "injection": false   // allowInputInjection\n'
+         '}')
+tb(s,ex+200000,ui_y+380000,ew-360000,ui_code,size=11.4,color=CODE,font=MF,cy=ui_h-440000)
 footer(s,'',16)
-note(s,'文件与网络之外，最敏感的就是密钥和用户的桌面环境了。有一条铁律可以省掉九成的泄密风险：永远别把 API Key、SSH 私钥直接塞进沙箱的环境变量或配置文件里。沙箱里只放干活必需的代码和工具；真要调受保护的外部接口，让沙箱外的宿主程序或者刚刚说的本地代理在审完请求后，在外面替它把凭证签上去。\n用户界面也是一样，普通沙箱碰不到你的窗口和剪贴板，也没法伪造鼠标键盘敲击。就算用了带独立桌面的 Session Container，它的窗口和剪贴板也只属于那个临时账号自己；而且一旦在那个会话里登录了 ERP 等业务系统，里面的 Agent 是能摸到当前登录态的，所以务必给它配专门的低权限机器人账号，别拿员工本人的账号去登。')
+note(s,'文件与网络之外，最敏感的就是密钥和用户的桌面环境了。有一条铁律可以省掉九成的泄密风险：永远别把 API Key、SSH 私钥直接塞进沙箱的环境变量或配置文件里；真要调受保护的外部接口，让外面的宿主程序或受控代理在审完请求后替它挂上凭证。\n至于桌面与交互控制，策略里的 ui 段给了三个非常精准的开关：默认把 disable 设为 true、clipboard 设为 none、injection（在 V1 SDK 里对应 allowInputInjection）设为 false，彻底封死窗口访问、剪贴板读写和伪造键鼠输入；如果某个工具确实需要弹窗并读取剪贴板输入，也可以只把 disable 改成 false、clipboard 设成单向的 read，依然严禁写剪贴板和注入按键。要是跑整套传统桌面客户端，那就直接放进配好专用机器人账号的 Session Container。\n\n参考来源：Microsoft Learn — MXC policy examples（Allow a visible tool without broad UI access）。')
 
 # ---------- 16 LEARNING MODE (image right)
 s=16
@@ -642,7 +669,7 @@ note(s,'聚焦到刚才架构图中间那块 MXC SDK，工程接入其实非常�
 # ---------- 22 FIVE STEPS + CODE
 s=22
 header(s,'05 · INTEGRATING MXC','Integrate in five steps')
-st=[('Discover','Call getPlatformSupport() and probe() before launching.'),('Describe','Build a ContainerRequest: files, network, UI, command & timeout.'),('Learn','Run in Learning Mode first; review the blocked-access report.'),('Enforce','Switch to Enforcement; verify both allowed and denied cases.'),('Operate','Handle timeouts cleanly; surface clear denial reasons to users.')]
+st=[('Discover','Call getPlatformSupport() and probe(request) before launch.'),('Describe','Build a V1 ContainerRequest: files, network, ui & timeoutMs.'),('Learn','Run in Learning Mode first; review the blocked-access report.'),('Enforce','Switch to Enforcement; verify allowed AND denied cases.'),('Operate','Handle timeouts & cleanup across success, failure & cancel.')]
 lw0=5350000; y=1560000; rh=780000
 for i,(t,d) in enumerate(st):
     rect(s,M,y,lw0,rh,fill=CARD,line=EDGE,lw=12700)
@@ -654,12 +681,25 @@ for i,(t,d) in enumerate(st):
     y+=rh+110000
 cx0=M+lw0+260000; cw_=W-M-cx0; cy0=1560000; chh=4340000
 rect(s,cx0,cy0,cw_,chh,fill=CODEBG,line=EDGE,lw=12700)
-tb(s,cx0+240000,cy0+120000,cw_-480000,'host.ts  ·  @microsoft/mxc-sdk',size=11.5,color=FOOT,font=MF,cy=300000)
-rect(s,cx0+240000,cy0+450000,cw_-480000,14000,fill=EDGE)
-code=['const support = await getPlatformSupport();','if (!support.isSupported) throw support.reason;','','const request = {','  command: "npm test",','  workingDirectory: repo,','  filesystem: { readwritePaths: [repo] },','  network: { egress: { default: "deny" } },','  timeoutMs: 120_000,','};','const result = await runContained(request);','validate(result); // never trust blindly']
-tb(s,cx0+240000,cy0+540000,cw_-400000,None,paras=[{'text':l if l else ' '} for l in code],size=12.8,color=CODE,font=MF,cy=3660000)
+tb(s,cx0+240000,cy0+120000,cw_-480000,'host.ts  ·  @microsoft/mxc-sdk/v1',size=11.5,color=FOOT,font=MF,cy=300000)
+rect(s,cx0+240000,cy0+440000,cw_-480000,14000,fill=EDGE)
+code=[
+    'const support = getPlatformSupport();',
+    'if (!support.isSupported) throw new Error(support.reason);',
+    'const request: ContainerRequest = {',
+    '  containment: { type: "process" }, command: "npm test",',
+    '  workingDirectory: outDir, timeoutMs: 30_000,',
+    '  filesystem: { readonlyPaths: [repo], readwritePaths: [outDir] },',
+    '  network: { egress: { default: "deny" },',
+    '             ingress: { default: "deny", hostLoopback: "deny" } },',
+    '  ui: { disable: true, clipboard: "none", allowInputInjection: false },',
+    '};',
+    'if (probe(request).error) throw new Error("Probe failed");',
+    'const result = await run(request); // validate output next!',
+]
+tb(s,cx0+240000,cy0+490000,cw_-400000,None,paras=[{'text':l} for l in code],size=11.1,color=CODE,font=MF,cy=3740000)
 footer(s,'',23)
-note(s,'具体到研发团队写代码，接进项目里基本就是右边这十几行的五步闭环：先调 getPlatformSupport 和 probe 摸清当前机器能力，不支持就明确报错，绝不静默降级成裸跑；接着按默认拒绝写好 ContainerRequest，把命令、工作目录、读写边界和超时定死；开发期打开 Learning Mode 收集真实访问需求；人工审完策略后关掉学习开关，把允许路径和越权拦截路径都测通过；最后在运行期把超时、异常和权限被拒的原因清晰返给上层，别让沙箱正常拦住了危险动作，外面的 Agent 却以为出了故障在那儿盲目重试。')
+note(s,'具体到研发团队写代码，用 V1 SDK 接进项目里基本就是右边这十几行的五步闭环：先调同步的 getPlatformSupport 和 probe(request) 摸清当前机器和策略的支撑情况，不支持就明确报错，绝不静默降级成裸跑；接着按默认拒绝写好 ContainerRequest，把 containment、只读代码库与可写输出目录、双向网络拒绝、UI 剪贴板禁令和 timeoutMs 一次定死；开发期先打开 Learning Mode 收集真实访问需求，人工审完再切回强制模式，把正常路径、越权读密钥、直连外网和剪贴板限制正反两面都测过一遍；最后调 run(request) 执行，并在成功、报错和取消三种分支下都做好超时与清理。')
 
 # ---------- 23 HOST JOB LIST
 s=23
@@ -681,8 +721,8 @@ cx_=5550000; cy0=1560000; chh=4400000
 rect(s,M,cy0,cx_,chh,fill=CODEBG,line=EDGE,lw=12700)
 tb(s,M+240000,cy0+120000,cx_-480000,'policy.json  ·  @microsoft/mxc-sdk/v1',size=11.5,color=FOOT,font=MF,cy=300000)
 rect(s,M+240000,cy0+440000,cx_-480000,14000,fill=EDGE)
-pc_code='{\n  "containment": { "type": "processcontainer" },\n  "filesystem": {\n    "readonlyPaths": ["demo/input"],\n    "readwritePaths": ["demo/output"],\n    "deniedPaths": ["demo/protected/denied.txt"]\n  },\n  "network": {\n    "egress": { "default": "deny" },\n    "ingress": { "hostLoopback": "allow" }\n  }\n}'
-tb(s,M+240000,cy0+500000,cx_-480000,pc_code,size=11.2,color=CODE,font=MF,cy=2840000)
+pc_code='{\n  "containment": { "type": "process" },\n  "filesystem": {\n    "readonlyPaths": ["demo/input"],\n    "readwritePaths": ["demo/output"],\n    "deniedPaths": ["demo/protected/denied.txt"]\n  },\n  "network": {\n    "egress": { "default": "deny" },\n    "ingress": { "default": "deny", "hostLoopback": "allow" }\n  },\n  "ui": { "disable": true, "clipboard": "none", "allowInputInjection": false }\n}'
+tb(s,M+240000,cy0+480000,cx_-440000,pc_code,size=10.8,color=CODE,font=MF,cy=2900000)
 rect(s,M+240000,cy0+3460000,cx_-480000,740000,fill=CARD,line=EDGE,lw=12700)
 tb(s,M+400000,cy0+3460000,cx_-800000,None,paras=[
     {'text':'PS> npm --prefix demo run demo:process','sizePt':12,'bold':True,'color':INK,'spaceAfterPt':4},
