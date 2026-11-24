@@ -13,8 +13,10 @@ from PIL import Image
 import qrcode
 try:
     from . import build_pptx as D
+    from .i18n import ZH_DEMO_LAUNCHERS, ZH_TEXT_MAP
 except ImportError:
     import build_pptx as D
+    from i18n import ZH_DEMO_LAUNCHERS, ZH_TEXT_MAP
 
 PX = 9525  # EMU per CSS px  (slide = 1280 x 720 px)
 SVG_POINTS = {
@@ -124,7 +126,7 @@ def reveal_attrs(slide_index, operation_index):
         return 'a reveal', f' data-reveal="{item}"'
     return 'a', ''
 
-def qr_badge_html(pages_url, left_px=77.7, top_px=440.0):
+def qr_badge_html(pages_url, left_px=77.7, top_px=440.0, lang='en'):
     clean_url = pages_url.strip()
     if not clean_url:
         return ''
@@ -145,6 +147,7 @@ def qr_badge_html(pages_url, left_px=77.7, top_px=440.0):
         if cell
     )
     display_url = re.sub(r'^https?://', '', clean_url).rstrip('/')
+    kicker = ZH_TEXT_MAP.get('SCAN FOR LIVE SLIDES & DEMO', 'SCAN FOR LIVE SLIDES & DEMO') if lang == 'zh' else 'SCAN FOR LIVE SLIDES & DEMO'
     svg = (
         f'<svg class="pages-qr-svg" xmlns="http://www.w3.org/2000/svg" '
         f'viewBox="0 0 {n} {n}" shape-rendering="crispEdges" role="img" '
@@ -157,12 +160,12 @@ def qr_badge_html(pages_url, left_px=77.7, top_px=440.0):
         f'href="{e(clean_url)}" target="_blank" rel="noreferrer">'
         f'{svg}'
         f'<span class="pages-qr-meta">'
-        f'<span class="pages-qr-kicker">SCAN FOR LIVE SLIDES &amp; DEMO</span>'
+        f'<span class="pages-qr-kicker">{e(kicker)}</span>'
         f'<strong class="pages-qr-url">{e(display_url)}</strong>'
         f'</span></a>'
     )
 
-def slide_html(k, ops, img_dir, maxw, pages_url=None):
+def slide_html(k, ops, img_dir, maxw, pages_url=None, lang='en'):
     parts = []
     for operation_index, o in enumerate(ops):
         classes, reveal = reveal_attrs(k, operation_index)
@@ -208,30 +211,49 @@ def slide_html(k, ops, img_dir, maxw, pages_url=None):
                 parts.append(f'<div class="{classes}{extra_cls}"{reveal} style="{st}">{inner}</div>')
     reveal_count = REVEAL_ITEMS[k][2] if k in REVEAL_ITEMS else 0
     action = ''
-    if k in DEMO_LAUNCHERS:
-        demo_kind, demo_step, label = DEMO_LAUNCHERS[k]
+    launchers = ZH_DEMO_LAUNCHERS if lang == 'zh' else DEMO_LAUNCHERS
+    if k in launchers:
+        demo_kind, demo_step, label = launchers[k]
         action = (
             f'<button class="live-demo-trigger" type="button" '
             f'data-demo="{demo_kind}" data-step="{demo_step}">'
             f'<span class="pulse-dot" aria-hidden="true"></span><span>{e(label)}</span>'
             f'<span class="trigger-arrow" aria-hidden="true">↗</span></button>'
         )
-    qr_html = qr_badge_html(pages_url, left_px=77.7, top_px=440.0) if (k == 0 and pages_url) else ''
-    return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="Slide {k+1}">{"".join(parts)}{qr_html}{action}</section>'
+    qr_html = qr_badge_html(pages_url, left_px=77.7, top_px=440.0, lang=lang) if (k == 0 and pages_url) else ''
+    slide_lbl = f'第 {k+1} 页' if lang == 'zh' else f'Slide {k+1}'
+    return f'<section class="slide" data-n="{k+1}" data-reveals="{reveal_count}" aria-label="{slide_lbl}">{"".join(parts)}{qr_html}{action}</section>'
 
-PRESENTER_UI = """
+def presenter_ui_html(lang='en'):
+    if lang == 'zh':
+        return """
+<div id="deck-hud" class="deck-hud" aria-label="讲者工具栏">
+  <span class="hud-count" id="hud-count"></span>
+  <button type="button" class="hud-btn" id="hud-notes-btn" title="展开/收起中文讲者备注 (N)" aria-controls="notes-drawer" aria-expanded="false">备注 <kbd>N</kbd></button>
+  <button type="button" class="hud-btn hud-btn-accent" id="hud-demo-btn" title="打开交互式 MXC 工作台 (D)">工作台 <kbd>D</kbd></button>
+</div>
+
+<aside id="notes-drawer" class="notes-drawer" aria-label="讲者备注" hidden>
+  <div class="notes-head">
+    <strong id="notes-title" lang="zh-CN">讲者备注</strong>
+    <button type="button" class="notes-close" id="notes-close" aria-label="关闭讲者备注">✕</button>
+  </div>
+  <div class="notes-body" id="notes-body" lang="zh-CN"></div>
+</aside>
+"""
+    return """
 <div id="deck-hud" class="deck-hud" aria-label="Presenter toolbar">
   <span class="hud-count" id="hud-count"></span>
-  <button type="button" class="hud-btn" id="hud-notes-btn" title="Toggle Chinese speaker notes (N)" aria-controls="notes-drawer" aria-expanded="false">Notes <kbd>N</kbd></button>
+  <button type="button" class="hud-btn" id="hud-notes-btn" title="Toggle English speaker notes (N)" aria-controls="notes-drawer" aria-expanded="false">Notes <kbd>N</kbd></button>
   <button type="button" class="hud-btn hud-btn-accent" id="hud-demo-btn" title="Open Interactive MXC Studio (D)">Studio <kbd>D</kbd></button>
 </div>
 
 <aside id="notes-drawer" class="notes-drawer" aria-label="Speaker notes" hidden>
   <div class="notes-head">
-    <strong id="notes-title" lang="zh-CN">讲者备注</strong>
+    <strong id="notes-title" lang="en">Speaker Notes</strong>
     <button type="button" class="notes-close" id="notes-close" aria-label="Close speaker notes">✕</button>
   </div>
-  <div class="notes-body" id="notes-body" lang="zh-CN"></div>
+  <div class="notes-body" id="notes-body" lang="en"></div>
 </aside>
 """
 
@@ -381,6 +403,11 @@ img.a{object-fit:cover}
 .t{position:absolute;inset:0;padding:10px 14px;display:flex;flex-direction:column;justify-content:center}
 .a[style*="border-radius:50%%"]>.t{padding:0;align-items:center;text-align:center}
 .page-num{z-index:6}.page-num>.t{padding:2px 8px;align-items:flex-end}.page-num>.t>p{background:rgba(243,238,228,.82);padding:2px 7px;border-radius:999px}
+.lang-switch{position:fixed;left:12px;bottom:10px;z-index:46;display:inline-flex;align-items:center;gap:2px;padding:3px;border-radius:999px;background:rgba(251,248,242,.86);backdrop-filter:blur(8px);border:1px solid rgba(201,192,174,.78);box-shadow:0 4px 14px rgba(35,30,22,.07);opacity:.55;transition:opacity .18s ease}
+.lang-switch:hover,.lang-switch:focus-within{opacity:1}
+.lang-pill{border:0;background:transparent;color:var(--muted);text-decoration:none;border-radius:999px;padding:4px 9px;font:700 10.5px/1 var(--font-mono);letter-spacing:.03em;cursor:pointer;transition:background .14s,color .14s}
+.lang-pill:hover{color:var(--ink)}
+.lang-pill.active{background:var(--accent);color:#fff;pointer-events:none}
 .ref-link{color:inherit;text-decoration:underline;text-decoration-color:rgba(63,96,126,.42);text-underline-offset:3px;transition:color .14s ease,text-decoration-color .14s ease}
 .ref-link:hover{color:#1f384e;text-decoration-color:currentColor}
 .pages-qr-card{display:inline-flex;align-items:center;gap:18px;padding:12px 22px 12px 12px;border-radius:16px;background:rgba(251,248,242,.95);border:1.5px solid var(--edge);box-shadow:0 12px 32px rgba(35,30,22,.09);text-decoration:none;color:var(--ink);transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease;z-index:5}
@@ -527,7 +554,7 @@ img.a{object-fit:cover}
   .terminal-card{min-height:300px}
 }
 @media print{@page{size:13.333in 7.5in;margin:0}
- html,body{overflow:visible;background:#fff}#deck-progress,.deck-hud,.notes-drawer,.live-demo,.live-demo-trigger{display:none!important}
+ html,body{overflow:visible;background:#fff}#deck-progress,.deck-hud,.notes-drawer,.live-demo,.live-demo-trigger,.lang-switch{display:none!important}
  #stage{position:static;display:block}.slide{position:relative;display:block!important;transform:none!important;box-shadow:none;page-break-after:always;break-after:page;print-color-adjust:exact;-webkit-print-color-adjust:exact}.reveal{opacity:1!important;visibility:visible!important;transform:none!important}}
 """
 DECK_JS = """
@@ -540,7 +567,11 @@ function fit(){var v=window.visualViewport,w=v?v.width:innerWidth,h=v?v.height:i
 function toggleFullscreen(){if(document.fullscreenElement){document.exitFullscreen();}else if(document.documentElement.requestFullscreen){document.documentElement.requestFullscreen();}}
 function renderSteps(){var shown=steps[i];S[i].querySelectorAll('.reveal').forEach(function(x){x.classList.toggle('shown',Number(x.dataset.reveal)<shown);});if(bar)bar.style.width=((i+1)/S.length*100).toFixed(2)+'%';if(deck.onRender)deck.onRender(i,S.length);}
 function parseHash(){var h=location.hash.slice(1),m=/^(?:slide-)?(\\d+)$/.exec(h);return m?Number(m[1])-1:0;}
-function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(x,j){x.classList.toggle('on',j===i);});renderSteps();if(history.replaceState)history.replaceState(null,'','#'+(i+1));}
+function syncLangLinks(){
+ var h='#'+(i+1);
+ document.querySelectorAll('a.lang-pill[data-base-href]').forEach(function(a){a.href=a.dataset.baseHref+h;});
+}
+function go(n){i=Math.max(0,Math.min(S.length-1,n));S.forEach(function(x,j){x.classList.toggle('on',j===i);});renderSteps();if(history.replaceState)history.replaceState(null,'','#'+(i+1));syncLangLinks();}
 function next(){var total=Number(S[i].dataset.reveals||0);if(steps[i]<total){steps[i]++;renderSteps();}else{go(i+1);}}
 function previous(){if(steps[i]>0){steps[i]--;renderSteps();}else{go(i-1);}}
 document.getElementById('stage').addEventListener('click',function(ev){if(deck.isOverlayOpen()||ev.target.closest('button,a'))return;ev.clientX<innerWidth/3?previous():next();});
@@ -1198,10 +1229,10 @@ var S=deck.S,notesOpen=false;
 function byId(id){return document.getElementById(id);}
 function pad2(n){return n<10?'0'+n:String(n);}
 function syncNotes(){
- var idx=deck.getIndex(),num=pad2(idx+1);
+ var idx=deck.getIndex(),num=pad2(idx+1),isZh=(document.documentElement.lang||'').indexOf('zh')===0;
  if(hudCount)hudCount.textContent=num+' / '+pad2(S.length);
- byId('notes-title').textContent='讲者备注 · Slide '+num;
- var txt=(window.SLIDE_NOTES&&window.SLIDE_NOTES[String(idx)])||'（本页无备注）';
+ byId('notes-title').textContent=(isZh?'讲者备注 · 第 '+num+' 页':'Speaker Notes · Slide '+num);
+ var txt=(window.SLIDE_NOTES&&window.SLIDE_NOTES[String(idx)])||(isZh?'（本页无备注）':'(No notes for this slide)');
  byId('notes-body').textContent=txt;
 }
 function toggleNotes(force){
@@ -1246,35 +1277,61 @@ def load_recorded_demo(img_dir):
             return json.dumps(data, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
     return 'null'
 
-def build(out, img_dir, maxw, pages_url=None, presenter_tools=True):
-    D.validate_layout()
+def lang_switch_html(lang='en', alt_href=None):
+    if not alt_href:
+        return ''
+    if lang == 'zh':
+        return (
+            '<nav class="lang-switch" aria-label="语言切换">'
+            f'<a class="lang-pill" href="{e(alt_href)}" data-base-href="{e(alt_href)}">EN</a>'
+            '<span class="lang-pill active" aria-current="page">中文</span>'
+            '</nav>'
+        )
+    return (
+        '<nav class="lang-switch" aria-label="Language switch">'
+        '<span class="lang-pill active" aria-current="page">EN</span>'
+        f'<a class="lang-pill" href="{e(alt_href)}" data-base-href="{e(alt_href)}">中文</a>'
+        '</nav>'
+    )
+
+def build(out, img_dir, maxw, pages_url=None, presenter_tools=True, lang='en', alt_href=None):
+    loc_slides = D.get_localized_slides(lang)
+    loc_notes = D.get_localized_notes(lang)
+    D.validate_layout(loc_slides)
     out_dir = os.path.dirname(os.path.abspath(out))
     os.makedirs(out_dir, exist_ok=True)
     effective_url = pages_url if pages_url is not None else os.environ.get('PAGES_URL')
-    body = ''.join(slide_html(k, D.slides[k], img_dir, maxw, pages_url=effective_url) for k in sorted(D.slides))
+    body = ''.join(slide_html(k, loc_slides[k], img_dir, maxw, pages_url=effective_url, lang=lang) for k in sorted(loc_slides))
     recorded_json = load_recorded_demo(img_dir)
     if presenter_tools:
-        notes_json = json.dumps({str(k): v for k, v in D.notes.items()}, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
-        presenter_block = f"\n{PRESENTER_UI}"
+        notes_json = json.dumps({str(k): v for k, v in loc_notes.items()}, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
+        presenter_block = f"\n{presenter_ui_html(lang)}"
         data_script = f"<script>window.RECORDED_DEMO={recorded_json};window.SLIDE_NOTES={notes_json};</script>"
         script_body = JS
     else:
         presenter_block = ""
         data_script = f"<script>window.RECORDED_DEMO={recorded_json};</script>"
         script_body = PUBLIC_JS
+    html_lang = 'zh-CN' if lang == 'zh' else 'en'
+    doc_title = (
+        '用操作系统沙箱筑牢 Agent 护栏 — Microsoft Execution Containers (MXC)'
+        if lang == 'zh'
+        else 'Guardrails with Sandboxing - Microsoft Execution Containers (MXC)'
+    )
+    lang_nav = lang_switch_html(lang=lang, alt_href=alt_href)
     doc = f"""<!DOCTYPE html>
-<html lang="en" dir="ltr"><head><meta charset="utf-8">
+<html lang="{html_lang}" dir="ltr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light">
-<title>Guardrails with Sandboxing - Microsoft Execution Containers (MXC)</title>
+<title>{doc_title}</title>
 <style>{CSS % (D.BG, D.INK, D.CY, D.CARD, D.CODEBG, D.EDGE, D.MUTED, D.AMB)}</style></head>
-<body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>{presenter_block}
+<body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>{lang_nav}{presenter_block}
 {LIVE_DEMO}
 {data_script}
 <script>{script_body}</script></body></html>"""
     with open(out, 'w', encoding='utf-8', newline='\n') as f:
         f.write(doc)
-    print(f'Saved {out}  ({len(D.slides)} slides, {os.path.getsize(out)/1e6:.2f} MB)')
+    print(f'Saved {out}  ({len(loc_slides)} slides, lang={lang}, {os.path.getsize(out)/1e6:.2f} MB)')
 
 if __name__ == '__main__':
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1284,5 +1341,7 @@ if __name__ == '__main__':
     ap.add_argument('--images', default=os.path.join(here, 'assets', 'images'))
     ap.add_argument('--maxw', type=int, default=1600, help='max image edge in px')
     ap.add_argument('--pages-url', default=None, help='GitHub Pages URL for Slide 1 QR code')
+    ap.add_argument('--lang', choices=('en', 'zh'), default='en', help='Deck language (en or zh)')
+    ap.add_argument('--alt-href', default=None, help='Alternate language deck link')
     ap.add_argument('--public-pages', action='store_true', help='omit Notes, Studio, and N/D shortcuts for public GitHub Pages')
-    a = ap.parse_args(); build(a.out, a.images, a.maxw, pages_url=a.pages_url, presenter_tools=not a.public_pages)
+    a = ap.parse_args(); build(a.out, a.images, a.maxw, pages_url=a.pages_url, presenter_tools=not a.public_pages, lang=a.lang, alt_href=a.alt_href)

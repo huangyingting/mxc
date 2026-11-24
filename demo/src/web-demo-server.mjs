@@ -15,6 +15,7 @@ import {
 const demoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const repoRoot = path.resolve(demoRoot, "..");
 const htmlPath = path.join(repoRoot, "dist", "html", "index.html");
+const htmlZhPath = path.join(repoRoot, "dist", "html", "index.zh.html");
 const port = Number.parseInt(process.env.MXC_DEMO_PORT ?? "8787", 10);
 const processScript = path.join(demoRoot, "dist", "process-container.js");
 const microvmScript = path.join(demoRoot, "dist", "microvm.js");
@@ -532,9 +533,10 @@ const server = http.createServer(async (request, response) => {
     return;
   }
 
-  if (url.pathname === "/" || url.pathname === "/index.html") {
+  if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/index.zh.html" || url.pathname === "/zh" || url.pathname === "/zh/") {
+    const targetFile = (url.pathname === "/index.zh.html" || url.pathname === "/zh" || url.pathname === "/zh/") ? htmlZhPath : htmlPath;
     try {
-      const html = await readFile(htmlPath);
+      const html = await readFile(targetFile);
       response.writeHead(200, {
         "content-type": "text/html; charset=utf-8",
         "cache-control": "no-store",

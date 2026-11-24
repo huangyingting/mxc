@@ -34,9 +34,13 @@ python build.py --target html
 python build.py --target demo
 ```
 
-- PPTX：`dist/pptx/Guardrails with Sandboxing - MXC.pptx`
-- 本地讲者版 HTML：`dist/html/index.html`（含底部讲者工具栏 `Notes N` / `Studio D` 及 `N`/`D` 快捷键，仅在本机 `file://` 或 `localhost` / `127.0.0.1` 下启用）
-- GitHub Pages 公开版 HTML：`docs/index.html`（保留页面右上角 Demo 入口按钮与录制回放工作台，不含底部 `Notes`、`Studio` 栏、讲者备注及 `N`/`D` 快捷键）
+- 双语 PPTX（英文版配英文 Speaker Notes，中文版配中文 Speaker Notes）：
+  - 英文版：`dist/pptx/Guardrails with Sandboxing - MXC.pptx`
+  - 中文版：`dist/pptx/Guardrails with Sandboxing - MXC (zh-CN).pptx`
+- 本地讲者版双语 HTML（左下角一键 `EN | 中文` 同步页码切换，含底部讲者工具栏 `Notes N` / `Studio D` 及 `N`/`D` 快捷键，仅在本机 `file://` 或 `localhost` / `127.0.0.1` 下启用）：
+  - 英文版：`dist/html/index.html`（英文课件 + 英文讲者备注）
+  - 中文版：`dist/html/index.zh.html`（中文课件 + 中文讲者备注；Live Bridge 下可通过 `/zh/` 访问）
+- GitHub Pages 公开版双语 HTML：`docs/index.html`（英文 `/`）与 `docs/zh/index.html`（中文 `/zh/`，左下角 `EN | 中文` 切换；保留页面右上角 Demo 入口按钮与录制回放工作台，不含底部 `Notes`、`Studio` 栏、讲者备注及 `N`/`D` 快捷键）
 - Demo 1（ProcessContainer 文件 + 网络护栏）：`npm --prefix demo run demo:process`
 - Demo 2（IsolationSession 有状态 PTY）：`npm --prefix demo run demo:pty`；交互模式为 `npm --prefix demo run demo:pty:interactive`
 - Demo 3（Hyperlight MicroVM 实验性硬件微虚拟机）：`npm --prefix demo run demo:microvm`

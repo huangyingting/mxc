@@ -6,6 +6,7 @@ __pycache__/
 dist/*
 !dist/README.md
 docs/index.html
+docs/zh/
 demo/output/*
 !demo/output/.gitkeep
 demo/node_modules/

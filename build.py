@@ -16,8 +16,11 @@ from presentation.src import build_html, build_pptx
 ROOT = Path(__file__).resolve().parent
 IMAGES = ROOT / "presentation" / "assets" / "images"
 PPTX_OUT = ROOT / "dist" / "pptx" / "Guardrails with Sandboxing - MXC.pptx"
+PPTX_ZH_OUT = ROOT / "dist" / "pptx" / "Guardrails with Sandboxing - MXC (zh-CN).pptx"
 HTML_OUT = ROOT / "dist" / "html" / "index.html"
+HTML_ZH_OUT = ROOT / "dist" / "html" / "index.zh.html"
 PAGES_OUT = ROOT / "docs" / "index.html"
+PAGES_ZH_OUT = ROOT / "docs" / "zh" / "index.html"
 
 
 def resolve_pages_url(explicit_url: str | None = None) -> str | None:
@@ -45,15 +48,22 @@ def resolve_pages_url(explicit_url: str | None = None) -> str | None:
 
 
 def build_presentation(pages_url: str | None = None) -> None:
-    build_pptx.build(str(PPTX_OUT), str(IMAGES), pages_url=resolve_pages_url(pages_url))
+    resolved_url = resolve_pages_url(pages_url)
+    zh_url = (resolved_url.rstrip("/") + "/zh/") if resolved_url else None
+    build_pptx.build(str(PPTX_OUT), str(IMAGES), pages_url=resolved_url, lang="en")
+    build_pptx.build(str(PPTX_ZH_OUT), str(IMAGES), pages_url=zh_url, lang="zh")
 
 
 def build_site(pages_url: str | None = None) -> None:
     resolved_url = resolve_pages_url(pages_url)
-    build_html.build(str(HTML_OUT), str(IMAGES), 1600, pages_url=resolved_url, presenter_tools=True)
+    zh_url = (resolved_url.rstrip("/") + "/zh/") if resolved_url else None
+    build_html.build(str(HTML_OUT), str(IMAGES), 1600, pages_url=resolved_url, presenter_tools=True, lang="en", alt_href="index.zh.html")
+    build_html.build(str(HTML_ZH_OUT), str(IMAGES), 1600, pages_url=zh_url, presenter_tools=True, lang="zh", alt_href="index.html")
     PAGES_OUT.parent.mkdir(parents=True, exist_ok=True)
-    build_html.build(str(PAGES_OUT), str(IMAGES), 1600, pages_url=resolved_url, presenter_tools=False)
-    print(f"Saved GitHub Pages site {PAGES_OUT} (no bottom Notes/Studio HUD" + (f", QR -> {resolved_url})" if resolved_url else ")"))
+    PAGES_ZH_OUT.parent.mkdir(parents=True, exist_ok=True)
+    build_html.build(str(PAGES_OUT), str(IMAGES), 1600, pages_url=resolved_url, presenter_tools=False, lang="en", alt_href="zh/")
+    build_html.build(str(PAGES_ZH_OUT), str(IMAGES), 1600, pages_url=zh_url, presenter_tools=False, lang="zh", alt_href="../")
+    print(f"Saved bilingual GitHub Pages site {PAGES_OUT} + {PAGES_ZH_OUT} (no bottom Notes/Studio HUD" + (f", QR -> {resolved_url})" if resolved_url else ")"))
 
 
 def build_demo() -> None:

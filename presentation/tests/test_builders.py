@@ -18,18 +18,36 @@ from presentation.src import build_html as H, build_pptx as D
 
 class BuilderTests(unittest.TestCase):
     def test_notes_share_content_and_cannot_terminate_the_script(self):
-        note = '\u8bb2\u8005\u5907\u6ce8\n</script><script>alert("notes")</script>'
+        zh_note = '\u8bb2\u8005\u5907\u6ce8\n</script><script>alert("zh")</script>'
+        en_note = 'Speaker note\n</script><script>alert("en")</script>'
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            with patch.object(D, 'slides', {0: []}), patch.object(D, 'notes', {0: note}):
-                H.build(str(root / 'index.html'), str(root), 1600)
-                D.build(str(root / 'deck.pptx'), str(root))
-            doc = (root / 'index.html').read_text(encoding='utf-8')
-            match = re.search(r'window\.SLIDE_NOTES=(.*?);</script>', doc)
-            self.assertIsNotNone(match)
-            self.assertEqual(json.loads(match.group(1)), {'0': note})
-            self.assertNotIn(note, doc)
-            self.assertEqual(Presentation(root / 'deck.pptx').slides[0].notes_slide.notes_text_frame.text, note)
+            with patch.object(D, 'slides', {0: []}), patch.object(D, 'notes', {0: zh_note}), patch.object(D, 'EN_NOTES', {0: en_note}):
+                H.build(str(root / 'index.html'), str(root), 1600, lang='en', alt_href='index.zh.html')
+                H.build(str(root / 'index.zh.html'), str(root), 1600, lang='zh', alt_href='index.html')
+                D.build(str(root / 'deck.pptx'), str(root), lang='en')
+                D.build(str(root / 'deck.zh.pptx'), str(root), lang='zh')
+            doc_en = (root / 'index.html').read_text(encoding='utf-8')
+            doc_zh = (root / 'index.zh.html').read_text(encoding='utf-8')
+            self.assertEqual(json.loads(re.search(r'window\.SLIDE_NOTES=(.*?);</script>', doc_en).group(1)), {'0': en_note})
+            self.assertEqual(json.loads(re.search(r'window\.SLIDE_NOTES=(.*?);</script>', doc_zh).group(1)), {'0': zh_note})
+            self.assertNotIn(en_note, doc_en)
+            self.assertNotIn(zh_note, doc_zh)
+            self.assertIn('data-base-href="index.zh.html"', doc_en)
+            self.assertIn('data-base-href="index.html"', doc_zh)
+            self.assertEqual(Presentation(root / 'deck.pptx').slides[0].notes_slide.notes_text_frame.text, en_note)
+            self.assertEqual(Presentation(root / 'deck.zh.pptx').slides[0].notes_slide.notes_text_frame.text, zh_note)
+
+    def test_bilingual_slides_and_notes_both_validate_cleanly(self):
+        en_slides = D.get_localized_slides('en')
+        zh_slides = D.get_localized_slides('zh')
+        D.validate_layout(en_slides)
+        D.validate_layout(zh_slides)
+        self.assertEqual(len(D.get_localized_notes('en')), len(en_slides))
+        self.assertEqual(len(D.get_localized_notes('zh')), len(zh_slides))
+        for k in en_slides:
+            self.assertTrue(any('a' <= ch.lower() <= 'z' for ch in D.get_localized_notes('en')[k]))
+            self.assertTrue(any(ord(ch) > 0x4E00 for ch in D.get_localized_notes('zh')[k]))
 
     def test_paragraph_spacing_and_links_survive_both_renderers(self):
         with patch.object(D, 'slides', {}):
@@ -131,7 +149,7 @@ class BuilderTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             url = 'https://huangyingting.github.io/mxc/'
-            with patch.object(D, 'slides', {0: [], 24: []}), patch.object(D, 'notes', {0: 'secret note'}):
+            with patch.object(D, 'slides', {0: [], 24: []}), patch.object(D, 'notes', {0: 'secret note'}), patch.object(D, 'EN_NOTES', {0: 'secret note'}):
                 H.build(str(root / 'local.html'), str(root), 1600, pages_url=url, presenter_tools=True)
                 H.build(str(root / 'pages.html'), str(root), 1600, pages_url=url, presenter_tools=False)
             local_doc = (root / 'local.html').read_text(encoding='utf-8')
