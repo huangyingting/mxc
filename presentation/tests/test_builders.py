@@ -49,6 +49,16 @@ class BuilderTests(unittest.TestCase):
             self.assertTrue(any('a' <= ch.lower() <= 'z' for ch in D.get_localized_notes('en')[k]))
             self.assertTrue(any(ord(ch) > 0x4E00 for ch in D.get_localized_notes('zh')[k]))
 
+    def test_chinese_demo_studio_localizes_controls_and_explanations(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with patch.object(D, 'slides', {24: []}), patch.object(D, 'notes', {24: '中文备注'}):
+                H.build(str(root / 'index.zh.html'), str(root), 1600, lang='zh')
+            doc = (root / 'index.zh.html').read_text(encoding='utf-8')
+            for expected in ('演示 1 · ProcessContainer', '运行步骤 1', '自动播放', '确认 ProcessContainer 策略可用', '最小权限范围'):
+                self.assertIn(expected, doc)
+            self.assertNotIn('Least-账号权限范围', doc)
+
     def test_paragraph_spacing_and_links_survive_both_renderers(self):
         with patch.object(D, 'slides', {}):
             D.tb(0, 0, 0, 3000000, paras=[

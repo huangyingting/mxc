@@ -13,10 +13,10 @@ from PIL import Image
 import qrcode
 try:
     from . import build_pptx as D
-    from .i18n import ZH_DEMO_LAUNCHERS, ZH_TEXT_MAP
+    from .i18n import ZH_DEMO_LAUNCHERS, ZH_DEMO_TEXT_MAP, ZH_TEXT_MAP
 except ImportError:
     import build_pptx as D
-    from i18n import ZH_DEMO_LAUNCHERS, ZH_TEXT_MAP
+    from i18n import ZH_DEMO_LAUNCHERS, ZH_DEMO_TEXT_MAP, ZH_TEXT_MAP
 
 PX = 9525  # EMU per CSS px  (slide = 1280 x 720 px)
 SVG_POINTS = {
@@ -1294,6 +1294,14 @@ def lang_switch_html(lang='en', alt_href=None):
         '</nav>'
     )
 
+def localize_demo_fragment(fragment, lang='en'):
+    if lang != 'zh':
+        return fragment
+    localized = fragment
+    for source, target in sorted(ZH_DEMO_TEXT_MAP.items(), key=lambda item: len(item[0]), reverse=True):
+        localized = localized.replace(source, target)
+    return localized
+
 def build(out, img_dir, maxw, pages_url=None, presenter_tools=True, lang='en', alt_href=None):
     loc_slides = D.get_localized_slides(lang)
     loc_notes = D.get_localized_notes(lang)
@@ -1307,11 +1315,11 @@ def build(out, img_dir, maxw, pages_url=None, presenter_tools=True, lang='en', a
         notes_json = json.dumps({str(k): v for k, v in loc_notes.items()}, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
         presenter_block = f"\n{presenter_ui_html(lang)}"
         data_script = f"<script>window.RECORDED_DEMO={recorded_json};window.SLIDE_NOTES={notes_json};</script>"
-        script_body = JS
+        script_body = localize_demo_fragment(JS, lang)
     else:
         presenter_block = ""
         data_script = f"<script>window.RECORDED_DEMO={recorded_json};</script>"
-        script_body = PUBLIC_JS
+        script_body = localize_demo_fragment(PUBLIC_JS, lang)
     html_lang = 'zh-CN' if lang == 'zh' else 'en'
     doc_title = (
         '用系统级沙箱隔离 Agent 执行风险 — Microsoft Execution Containers (MXC)'
@@ -1319,6 +1327,7 @@ def build(out, img_dir, maxw, pages_url=None, presenter_tools=True, lang='en', a
         else 'Guardrails with Sandboxing - Microsoft Execution Containers (MXC)'
     )
     lang_nav = lang_switch_html(lang=lang, alt_href=alt_href)
+    live_demo_html = localize_demo_fragment(LIVE_DEMO, lang)
     doc = f"""<!DOCTYPE html>
 <html lang="{html_lang}" dir="ltr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1326,7 +1335,7 @@ def build(out, img_dir, maxw, pages_url=None, presenter_tools=True, lang='en', a
 <title>{doc_title}</title>
 <style>{CSS % (D.BG, D.INK, D.CY, D.CARD, D.CODEBG, D.EDGE, D.MUTED, D.AMB)}</style></head>
 <body><div id="deck-progress" aria-hidden="true"></div><main id="stage">{body}</main>{lang_nav}{presenter_block}
-{LIVE_DEMO}
+{live_demo_html}
 {data_script}
 <script>{script_body}</script></body></html>"""
     with open(out, 'w', encoding='utf-8', newline='\n') as f:
