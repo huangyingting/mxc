@@ -1314,7 +1314,7 @@ def build(out, img_dir, maxw, pages_url=None, presenter_tools=True, lang='en', a
         script_body = PUBLIC_JS
     html_lang = 'zh-CN' if lang == 'zh' else 'en'
     doc_title = (
-        '用操作系统沙箱筑牢 Agent 护栏 — Microsoft Execution Containers (MXC)'
+        '用系统级沙箱隔离 Agent 执行风险 — Microsoft Execution Containers (MXC)'
         if lang == 'zh'
         else 'Guardrails with Sandboxing - Microsoft Execution Containers (MXC)'
     )
