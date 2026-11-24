@@ -115,7 +115,7 @@ tb(s,x,920000,cx,'Guardrails with\nSandboxing',size=44,color=INK,font=HF,bold=Tr
 tb(s,x,2400000,cx,'Keeping AI agents inside safe boundaries: isolating execution and controlling access to files, network and credentials on Windows',size=16.2,color=MUTED,cy=1100000)
 tb(s,x,3620000,cx,'Yingting Huang  |  Sr. Cloud Solution Architect, Microsoft',size=15,color=INK,bold=True,cy=360000)
 footer(s,'',1)
-note(s,'大家好，欢迎来到今天的分享。这两年大家都在做 Agent，你会发现它的角色已经变了——以前大模型只是陪你聊天、写段代码让你自己复制粘贴；现在的 Agent 是真正在你的电脑或服务器上干活，自己读文件、跑命令、调接口。\n能力变强之后，安全问题也跟着变了：万一它理解错了意图，或者读到了别人埋了坑的文档，怎么保证它不会把系统搞乱、把密钥传出去？今天我们就来聊微软开源的沙箱执行层 MXC，看看怎么在放手让 Agent 干活的同时，在操作系统这一层把安全边界牢牢守住。')
+note(s,'大家好，欢迎来到今天的分享。这两年大家都在做 Agent，你会发现它的角色变了——以前大模型只是陪你聊天，写段代码让你自己复制去跑；现在的 Agent 是直接在你的电脑或服务器上动手干活，自己读文件、跑命令、调接口。\n一旦它开始自己动手，安全问题就完全不一样了：万一它理解偏了，或者读到了别人埋坑的文档，怎么保证它不把机器搞乱、不把密钥发出去？今天我们就来聊微软开源的沙箱执行层 MXC，看看怎么既放手让 Agent 干活，又在操作系统底层把安全边界守死。')
 
 # ---------- 1 AGENDA
 s=1
@@ -133,7 +133,7 @@ for i,(n,t,d) in enumerate(items):
     rect(s,cx0+pad_a,y0_a+1520000,cw7-2*pad_a,14000,fill=EDGE)
     tb(s,cx0+pad_a,y0_a+1640000,cw7-2*pad_a,d,size=13.2,color=MUTED,cy=1240000)
 footer(s,'',2)
-note(s,'今天这 45 分钟，我们顺着实际工程落地的脉络往下讲。先看看当 Agent 开始动手执行命令之后，到底会带来哪些新风险，为什么光靠写提示词根本防不住；接着拆解 MXC 是什么，以及它怎么把一份权限策略变成操作系统底层的硬隔离；然后聊大家最关心的文件、网络、密钥和四种不同轻重的隔离容器该怎么选；最后结合写代码、桌面操作和敏感数据处理，看看怎么用几行 SDK 代码把它接进你自己的系统，并现场跑三个真机 Demo。')
+note(s,'今天这 45 分钟，我们顺着落地实战的顺序往下讲。先看看 Agent 自己动手执行命令以后会冒出哪些新风险，为什么光写提示词防不住；接着看 MXC 是什么，怎么把一份策略变成系统内核的硬隔离；然后聊文件、网络、密钥怎么控，四种轻重不同的沙箱怎么选；最后结合写代码、桌面操作和敏感文档处理，看看怎么用十几行代码接进项目，并现场跑三个真机 Demo。')
 
 # ---------- 2 AGENTS ACT
 s=2
@@ -161,7 +161,7 @@ for idx_c,(xx,badge,title_c,sub_c,bullets,risk_lbl,is_act) in enumerate([
 medallion(s,W//2,cyy+ch//2,diam=460000,glyph='→',fill=CY,size=18)
 banner_box(s,M,5420000,CW,620000,'Agents execute code they did not write beforehand — and cannot fully predict at runtime.',size=16.5)
 footer(s,'',3)
-note(s,'先看最本质的变化。过去我们用聊天助手，它只负责生成文字，中间永远隔着一个人——命令安不安全，你扫一眼再决定跑不跑，最坏也就是答非所问。但自主 Agent 把中间这道人工把关拿掉了，它会自己翻代码库、装依赖、跑脚本、改配置。\n更棘手的是，它下一步要敲什么命令，往往是运行时根据上下文临时写出来的，你根本没法提前把所有命令都审一遍。如果让它直接顶着你本人的账号权限裸跑，那你能打开的所有文件、保存的所有凭证、能连上的所有内网服务，其实都暴露在它的一次误判或者一次外部注入之下。')
+note(s,'先看最核心的变化。以前用聊天助手，它只管出文字，中间永远隔着一个人——命令安不安全，你扫一眼再决定跑不跑，顶多也就是答错了。但自主 Agent 把中间这道人工审核拿掉了，它会自己翻代码库、装包、跑脚本、改配置。\n更麻烦的是，它下一步要敲什么命令，往往是边跑边根据上下文现编出来的，根本没法提前审完。如果让它直接顶着你本人的账号裸跑，你能打开的文件、存着的密码、能连上的内网，全都会暴露在它的一次误判或者外部注入之下。')
 
 # ---------- 3 THREATS (image right)
 s=3
@@ -176,7 +176,7 @@ for i,(h_,d) in enumerate(rows):
     tb(s,M+900000,y+90000,cxl-1100000,None,paras=[{'text':h_,'sizePt':17.5,'bold':True,'color':INK,'spaceAfterPt':4},{'text':d,'sizePt':13.6,'color':MUTED}],cy=rh_t-180000)
     y+=rh_t+gap_t
 footer(s,'',4,cx=cxl)
-note(s,'具体会出什么乱子呢？最典型的就是这四种情况。比如 Agent 去读一个开源仓库或者网页，里面藏了一句恶意指令，哄着它顺手跑一段外部脚本，这就是提示词注入。再比如它写出来的代码去翻你本机的 SSH 私钥、云平台 Token 或者浏览器里存的登录态，然后悄悄发往外部地址，几秒钟就完成了凭证窃取和数据外传。\n还有一种情况连攻击者都不需要，纯粹是模型太想帮你把事办成了——比如你让它修个网页报错，它觉得直接改线上生产配置最快，结果好心办了坏事。不管是被人下套，还是模型自己抄了近道，只要底下没有硬边界拦着，后果是一样的。\n\n参考来源：第四个越权案例改写自 Windows Developer Blog（2026 年 10 月 7 日）。')
+note(s,'具体会出什么事呢？最常见的就是这四类。第一是提示词注入，比如 Agent 去读开源仓库或网页，里面藏了一句恶意指令，骗它顺手跑一段外部脚本。第二和第三是偷凭证和传数据，生成的脚本去翻你本机的 SSH 私钥、云 Token 或浏览器登录态，转头就悄悄发到外部服务器。\n第四种甚至没有坏人，纯粹是模型太想帮你把活干成了——比如你让它修个测试报错，它觉得直接改线上生产配置最省事，结果好心办了坏事。不管是被人下套还是自己抄近道，只要底下没有硬边界拦着，后果都一样。\n\n参考来源：第四个越权案例改写自 Windows Developer Blog（2026 年 10 月 7 日）。')
 
 # ---------- 4 PROMPTS PERSUADE
 s=4
@@ -201,7 +201,7 @@ chiprow(3040000,'AI-level','Persuasion only',['System prompts','Content filters'
 chiprow(3940000,'Execution-level','Kernel-enforced',['File allow / deny','Network rules','Process isolation','Secrets outside'],True)
 banner_box(s,M,4960000,CW,660000,'Defense in depth: the model decides what to try; the operating system decides what is possible.',size=16)
 footer(s,'',5)
-note(s,'所以做 Agent 架构一定要想明白一句话：不能让 Agent 自己当自己的安全管理员。你在系统提示词里写十遍“绝对不准碰密钥、不准连外网”，再叠加上下文过滤和工具调用规则，这些当然要做，但它们本质上都是在劝模型守规矩，只能降低出错的概率。\n一旦模型被绕晕了，或者它调起的脚本行为超出了预期，提示词是拦不住系统调用的。真正能兜底的只有操作系统：哪个目录能读、哪个端口能通、能不能碰剪贴板，必须由系统内核强制拍板。模型决定它想尝试什么，操作系统决定它实际上能做成什么，这两层缺一不可。')
+note(s,'所以做 Agent 一定要记住一句话：不能让 Agent 自己管自己的权限。你在系统提示词里写十遍“绝对不准碰密钥、不准连外网”，再加内容过滤和工具白名单，这些当然要做，但它们本质上都是在劝模型守规矩，只能减少出错概率。\n一旦模型被绕晕了，或者调起的子进程不老实，提示词是拦不住系统调用的。真正能兜底的只有操作系统：哪个目录能读、哪个端口能连、能不能碰剪贴板，必须由内核说了算。模型决定它想试什么，操作系统决定它真能做成什么，两层缺一不可。')
 
 # ---------- 5 THREE PILLARS
 s=5
@@ -230,7 +230,7 @@ for i,(t,sub,body,state) in enumerate(pill):
     tb(s,x+240000,y0+1780000,cw3-480000,body,size=13.8,color=INK if is_main else MUTED,cy=1760000)
 banner_box(s,M,5380000,CW,620000,'Windows OS primitives wired into Microsoft’s enterprise plane: local MXC containment + Entra Agent ID + Agent 365 & Intune.',size=14.8)
 footer(s,'',6)
-note(s,'放到企业级 Windows 平台上，这三大支柱（隔离 Containment、身份 Identity、可管理性 Manageability）是 Windows 团队明确定义的三大操作系统级底座能力——但它不是把 Windows 做成一座孤岛，而是把本机执行层和微软整体的企业治理平面打通：本机隔离靠我们今天重点讲的开源 MXC，限制它能碰哪些本地资源；身份这一层把微软全局的 Entra Agent ID 延伸到 Windows 本机进程上，别让本地 Agent 借用员工账号；管理这一层则把微软全局的 Agent 365 控制平面和 Intune 终端管理下沉到 Windows 设备上，统一做盘点、审计和沙箱策略下发。\n大家排落地计划的时候也可以留意一下进度：MXC 本身、Windows 365 云电脑上的 MXC，还有云端的 Entra Agent ID 和 Agent 365 都已经正式发布了；而给本机跑的 GitHub Copilot CLI、Claude Code 自动绑定身份，以及通过 Intune 直接给本地 MXC 容器下发文件网络规则，目前还在 Windows 预览阶段。\n\n参考来源：Windows Developer Blog — Logan Iyer（2026 年 10 月 7 日）及《Enterprise Deployment of Governed Agents on Windows》（2026 年 11 月 17 日）。')
+note(s,'放到企业级 Windows 上，隔离、身份、可管理性这三大支柱，是 Windows 团队专门打造的操作系统底座，并且跟微软整套企业治理体系打通了：本机隔离靠开源的 MXC，管住本地能碰哪些文件和网络；身份靠接通 Entra Agent ID，让本机跑的 Agent 有自己独立的审计身份，别再去借员工账号；管理则把 Agent 365 和 Intune 延伸到终端设备上，统一盘点机器上跑了哪些 Agent、统一往下发沙箱策略。\n排落地计划时可以留意一下节奏：MXC 本身、Windows 365 云电脑支持，还有云端的 Entra Agent ID 和 Agent 365 都已经正式发布了；而给本机 Copilot CLI、Claude Code 自动绑身份，以及用 Intune 直接下发 MXC 策略，目前还在 Windows 预览阶段。\n\n参考来源：Windows Developer Blog — Logan Iyer（2026 年 10 月 7 日）及《Enterprise Deployment of Governed Agents on Windows》（2026 年 11 月 17 日）。')
 
 # ---------- 6 MEET MXC (image left)
 s=6
@@ -247,7 +247,7 @@ for i,(v,l) in enumerate(facts):
     tb(s,x+220000,yy+240000,tw-380000,None,paras=[{'text':v,'sizePt':27,'bold':True,'color':CY,'spaceAfterPt':4},{'text':l,'sizePt':13,'color':INK}],font=BF,cy=th-280000)
 banner_box(s,xl,5080000,cxr,680000,'One JSON policy, mapped to the right OS sandbox on every host.',size=15.5)
 footer(s,'',7,x=xl,cx=cxr)
-note(s,'那 MXC 到底是什么？简单讲，它是微软用 MIT 协议开源的一套轻量级沙箱执行层，今年十月已经正式发布。不管你要跑的是大模型现写的代码、第三方插件，还是来路不明的脚本，宿主程序只需要用同一份 JSON 策略说清楚允许读哪儿、写哪儿、连哪儿，MXC 就会自动调用当前操作系统原生的隔离机制去执行。\n注意它虽然名字叫 Execution Containers，但不是让你去装一套笨重的 Docker 镜像——它直接复用 Windows、macOS 和 Linux 内核自带的轻量沙箱能力，官方同时维护了 .NET、TypeScript 和 Rust 三个语言的 SDK。')
+note(s,'那 MXC 到底是什么？简单说，它是微软按 MIT 协议开源的一套轻量级沙箱执行层，今年十月已经正式发布。不管你要跑大模型现写的代码、第三方插件，还是来路不明的脚本，宿主程序只要写一份 JSON 策略说清楚准读哪儿、准写哪儿、准连哪儿，MXC 就会自动调起当前系统自带的原生沙箱去跑。\n注意它虽然叫 Execution Containers，但不用你去装厚重的 Docker——它直接用 Windows、macOS 和 Linux 内核现成的隔离能力，而且官方同步提供了 .NET、TypeScript 和 Rust 三套 SDK。')
 
 # ---------- 7 FIVE CONCEPTS
 s=7
@@ -263,7 +263,7 @@ for i,(t,d) in enumerate(cons):
     tb(s,x+180000,y0+1540000,cw5-360000,d,size=13.5,color=MUTED,cy=1960000)
 banner_box(s,M,5420000,CW,600000,'The host decides. The policy describes. The backend enforces.',size=16.5)
 footer(s,'',8)
-note(s,'看 MXC 的接口之前，把这五个概念对上号就一目了然了。最外层是你自己写的宿主程序 Host，它是唯一可信的调度方，负责定权限、喂输入、收结果；真正被关进沙箱里跑的那条命令或脚本叫 Workload；允许读哪些文件、连哪些地址，写下来就是 Policy；把 Policy 跟具体的命令行、工作目录、超时和隔离方式打包到一块儿，就是一次完整的执行配置；最后在底层真正把隔离墙立起来的系统机制，就是 Backend。\n整套设计里最核心的规矩就是底下这句话：权限只能由 Host 或真人来拍板。Agent 可以提申请说它想读哪个目录，但绝不能让沙箱里的代码自己给自己扩权。')
+note(s,'看具体接口之前，先把这五个词对上号就清楚了。最外层的 Host app 是你自己写的宿主程序，也是唯一可信的一方，负责定权限、喂输入、验结果；真正丢进沙箱里跑的那条命令或脚本叫 Workload；允许访问哪些文件、网络和界面，写下来就是 Policy；把 Policy 跟具体的命令、工作目录、超时打包到一起，就是 Container request；最后在系统底层真正立起隔离墙的机制，就是 Backend。\n整套设计最铁的一条规矩就在页面最下面：宿主拍板，策略描述，内核执行。Agent 可以申请权限，但绝不能自己给自己批权限。')
 
 # ---------- 8 FOUR LAYERS
 s=8
@@ -292,7 +292,7 @@ for i,(tag_l,t,d,trusted) in enumerate(lays):
         y+=lh+95000
 banner_box(s,M,5420000,CW,600000,'Rule #1: an agent may suggest a permission, but only trusted host logic or a human can grant it.',size=15.5)
 footer(s,'',9)
-note(s,'把刚才这五个角色按上下层级叠起来，就是 MXC 的四层架构：从上往下依次是宿主应用、SDK 与策略契约、MXC 执行层，以及最底层的系统隔离后端。真正的信任分界线，就画在宿主应用和底下被隔离的执行环境之间。\n我特别想提醒一点：很多团队接完沙箱容易产生错觉，觉得代码既然在沙箱里跑，拿回来的结果就绝对安全。其实沙箱只管不让里面的进程越界搞破坏，但它打印出来的文本、生成出来的文件里照样可能夹带脏数据或者二次注入。宿主程序站在信任边界外面，收回来的任何结果还是得先校验再往下游传。')
+note(s,'把这五个角色从上往下排开，就是 MXC 的四层结构：最上面是可信的宿主程序，往下依次是 SDK 契约、MXC 运行时和操作系统隔离后端。注意中间那条醒目的红线——信任边界就画在第一层宿主程序脚下。\n这里有个很常见的误区：不少团队觉得代码既然关进沙箱跑了，拿回来的结果就天然可信。其实不是，沙箱只能保证进程在里面折腾不出界，但它打印的文字、写出来的文件里照样可能塞了脏数据或者二次注入。宿主站在红线上面，拿回来的任何产出都必须先验过再用。')
 
 # ---------- 9 REQUEST FLOW
 s=9
@@ -310,7 +310,7 @@ for i,(who,t,d) in enumerate(steps):
         medallion(s,x+sw+gap_rf//2,yc+ch_rf//2,diam=280000,glyph='→',fill=CY,size=12)
 banner_box(s,M,5160000,CW,780000,'Backends have different security properties. Always test both the allowed and the denied operations.',size=16)
 footer(s,'',10)
-note(s,'看清了静态分层，我们再看一次真实请求是怎么穿过这道边界的。Host 先问一下 SDK 当前这台机器支持哪些沙箱后端，然后按默认拒绝的原则拼好策略和请求交给 SDK；MXC 在中间把这份统一请求翻译成对应操作系统的底层调用，等任务跑完，再把标准输出、退出码、拦截记录收集回来，顺手把临时环境清理干净。\n这里有个特别实在的工程经验：不同平台底层沙箱的脾气不完全一样，大家写测试的时候千万别只测正常路径能不能跑通，一定要专门写反向测试，去验证不该读的敏感文件是不是真被拦住了、没放行的网络是不是真断了。那底层到底有哪些沙箱可选？我们接着往下看。')
+note(s,'再看一次调用是怎么从头走到尾的。宿主先问 SDK 当前机器支持哪些沙箱后端，再按默认拒绝的原则拼好策略和请求发出去；MXC 在中间把它翻译成当前操作系统的原生沙箱调用，跑完之后收齐输出、退出码和拦截记录，顺手把环境清干净。\n这里分享一条很实在的实战经验：不同系统底层沙箱的脾气不太一样，写自动化测试时千万别只测正常路径通不通，一定要写反向用例，亲手验证敏感文件是不是真读不了、没放行的网是不是真连不上。那底层具体有哪几种盒子可选？我们翻页看。')
 
 # ---------- 10 PICK THE RIGHT BOX
 s=10
@@ -369,7 +369,7 @@ for i,(t,p,d,boundary,badge,accent_col,level) in enumerate(bx):
     rect(s,x+pad,y0+ch-560000,cw4-2*pad,360000,fill=CODEBG,line=EDGE,lw=12700)
     tb(s,x+pad+60000,y0+ch-560000,cw4-2*pad-120000,boundary,size=10.8,bold=True,color=CY,font=MF,align='center',cy=360000)
 footer(s,'',11)
-note(s,'MXC 提供了四种不同分量的隔离盒子，怎么选就看你的业务场景。平时做代码生成、跑测试、处理本地文档，首选最左边的 Process Container，它在 Windows、macOS、Linux 上分别映射成 AppContainer、Seatbelt 和 Bubblewrap，毫秒级启动，文件和网络权限都能卡得很细。\n但如果你的 Agent 需要操作传统桌面软件、得有自己的窗口和剪贴板，那就选 Windows 专属的 Session Container。它会建一个独立的本地账号和登录会话，跟员工正在用的桌面完全隔开，还封死了模拟键鼠输入；不过它不做细粒度的文件和网络限制。再往右，要在 Windows 上跑 Linux 工具链可以用 WSL 容器；要跑高风险的陌生代码、连操作系统内核都不想共享，那就上最右边实验性的硬件级 MicroVM。')
+note(s,'MXC 从轻到重提供了四种隔离盒子，按场景挑就行。日常写代码、跑单测、处理本地文档，首选最左边的 Process container：它在 Windows、macOS、Linux 上分别对应 AppContainer、Seatbelt 和 Bubblewrap，毫秒级启动，文件和网络都能卡得很细。\n要是你的 Agent 得操作传统桌面软件、需要自己的窗口和剪贴板，就选 Windows 专属的 Session container：它会新建一个独立的本地账号和登录桌面，跟员工自己的桌面完全隔开，也不怕乱发模拟键鼠，但它不管细粒度的路径和 IP 过滤。再往右，在 Windows 上跑 Linux 命令用 WSL 容器；要是跑高危的陌生代码、连系统内核都不敢共用，就选最右边实验性的硬件级 MicroVM。')
 
 # ---------- 11 WHERE MXC RUNS
 s=11
@@ -389,7 +389,7 @@ for i,(a,b,c) in enumerate(rowsd):
     y+=rh+95000
 banner_box(s,M,5440000,CW,580000,'Experimental (explicit opt-in via 1.1-alpha): Windows Sandbox, MicroVM & Hyperlight unikernel.',accent=AMB,size=14.8)
 footer(s,'',12)
-note(s,'做跨平台应用时，统一 SDK 省去了重写业务代码的麻烦，但每个平台底层落到哪儿我们得心里有数。Windows 11 默认走 ProcessContainer，同时支持独立会话、WSL 容器和后面要讲的学习模式；Linux 默认用 Bubblewrap，macOS 用 Seatbelt。如果团队平时在 Windows 365 云电脑上干活，进程级隔离跟物理机完全一致，连嵌套虚拟化都不用开；只有用到会话或虚拟化后端时才需要额外确认环境。\n至于最底下的 Windows Sandbox、MicroVM 和 Hyperlight，目前还属于实验特性，需要显式打开实验开关才能用。所以代码里最稳妥的做法，永远是在启动前先查一次平台支持情况，别硬编码死某一种后端。')
+note(s,'做跨平台应用时，代码虽然只写一套，但落在各家系统底层是什么，心里最好有张图。Windows 11 默认走 ProcessContainer，同时支持独立桌面会话、WSL 容器和学习模式；Linux 默认走 Bubblewrap，macOS 走 Seatbelt。如果团队用的是 Windows 365 云电脑，进程隔离跟物理机一样开箱即用，只有上会话或虚拟化后端时才需要开嵌套虚拟化。\n页面最底下提到的 Windows Sandbox、MicroVM 和 Hyperlight 目前还在实验阶段，得显式加 alpha 配置开启。所以写代码最稳的习惯，就是启动前先调接口查一下当前环境支持什么，别把后端名字写死。')
 
 # ---------- 12 LIFECYCLE
 s=12
@@ -422,7 +422,7 @@ for i,(t,api_lbl,d) in enumerate([('run()','CAPTURED RESULT','Returns stdout, st
         {'text':d,'sizePt':13.5,'color':MUTED},
     ],cy=900000)
 footer(s,'',13)
-note(s,'选好了跑哪种容器、在哪套系统上跑，下一步就是决定这个容器该活多久。MXC 支持用完即焚的 One-shot 和保留现场的 State-aware 两种生命周期。日常百分之八九十的动作，像跑一次编译、执行一遍测试、生成一份报告，都应该优先选 One-shot：每次调用现拉一个全新的窄权限沙箱，干完立刻销毁，不给潜在问题留任何驻留空间。\n只有当你确实需要跨多步保留上下文时，才用 IsolationSession 或 WSLc 这种有状态容器：先发 ProvisionRequest 拿到一个不透明的 ContainerId，后续每条命令单独发 ExecutionRequest，并且一定先确认后端能力边界——比如 IsolationSession 只隔离账号和桌面，不做 MXC 文件和网络过滤，而 WSLc 网络只能全断或全通。不管中间成功、报错还是取消，最后都必须调 deprovision 把临时账号清理干净。\n\n参考来源：Microsoft Learn — MXC policy examples（Reuse a state-aware sandbox）。')
+note(s,'选定了哪种盒子，下一步就是定它活多久。MXC 分成用完即焚的 One-shot 和保留状态的 State-aware 两种模式。日常八九成的任务，比如跑一次编译、测一遍脚本、出个报告，都推荐走上面的 One-shot：每次动作现起一个极窄权限的干净沙箱，跑完立马销毁，不留后患。\n只有确实需要跨步保留现场时，才走下面的有状态容器，比如 IsolationSession 或 WSLc：先调 Provision 拿回容器 ID，后面逐条发执行请求。这里要留神它们的能力边界——比如 IsolationSession 只隔账号和桌面，不做文件网络细筛；而且无论中间跑成跑败，最后都必须调 deprovision 把建出来的临时账号删干净。\n\n参考来源：Microsoft Learn — MXC policy examples（Reuse a state-aware sandbox）。')
 
 # ---------- 13 FILES
 s=13
@@ -461,7 +461,7 @@ for i,(h_,d,col_) in enumerate(rules):
         {'text':d,'sizePt':13.4,'color':MUTED},
     ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=105000)
 footer(s,'',14)
-note(s,'容器形态和生命周期定下来之后，我们对照官方文档里的标准策略示例，看它具体管哪三件事——首先是文件。核心思路是读入和写出彻底拆开：代码库目录只给只读权限，另外建一个专用的 mxc-output 目录放产出；跑编译或分析工具时，如果显式传了环境变量列表，Windows 的 ProcessContainer 要求必须带上 SystemRoot 和 LOCALAPPDATA，顺手把 TEMP 和各类缓存也都指到这个可写目录里，就不用把整个代码库放开成可写了。\n再看 deniedPaths：像 ~/.ssh 或别的项目目录，只要你没放进白名单，默认本来就碰不到；deniedPaths 最实用的地方，是在已经放行只读的仓库目录里把 .env 或 secrets 子目录单独挖掉（也要在目标后端实测一下嵌套拒绝行为，个别挂载式后端会直接报错拒绝而不是静默屏蔽）。最后切记，容器退出不会撤回已经落到宿主机输出目录里的文件，一定要把输出目录当成待检区先验再收。\n\n参考来源：Microsoft Learn — MXC policy examples（learn.microsoft.com/en-us/windows/apps/develop/mxc/examples）。')
+note(s,'容器和生命周期定好之后，我们对照官方示例看看策略具体管哪三块。第一块是文件，核心口诀叫“只读进、专口出”：代码仓库只给只读权限，另外单建一个 mxc-output 目录接产出；在 Windows 下跑编译工具如果自定义了环境变量，记得把 SystemRoot 带上，再把 LOCALAPPDATA 和 TEMP 全指到这个输出目录里，这样工具写缓存也不需要放开源码目录的写权限。\n第二点看 deniedPaths：像 ~/.ssh 或别的目录，只要没加进白名单，默认本来就碰不到；deniedPaths 真正好用的地方，是在已经放开只读的仓库里把 .env 或 secrets 文件夹单独抠出去禁掉。第三点千万记住：销毁沙箱不会撤回已经写进宿主机输出目录的文件，一定要把输出目录当隔离待检区先验再收。\n\n参考来源：Microsoft Learn — MXC policy examples（learn.microsoft.com/en-us/windows/apps/develop/mxc/examples）。')
 
 # ---------- 14 NETWORK
 s=14
@@ -495,7 +495,7 @@ card_box(s,fx,by0,fw,bh,[
     {'text':'• Windows mapping: proxy path needs ingress.default: "allow" while hostLoopback: "deny" blocks general loopback.','sizePt':12.6,'color':MUTED},
 ],fill=CARD,line=EDGE,lw=12700,pad_x=210000,pad_y=130000)
 footer(s,'',15)
-note(s,'光锁住文件还不够，网络出口要是不管，Agent 读到的东西照样能顺着网线发走。MXC 的网络策略默认把 egress、ingress 和 hostLoopback 全部设成 deny，常见放行只有两条路，而且这两条路不要混用：\n第一条是直连网段，在 egress.allow 里填好受信任的 CIDR 和端口，注意系统防火墙只认 IP 和 TCP 端口，不认具体域名或某一个应用服务；第二条是走代理做域名级白名单，由宿主程序先在外面启动代理，再配 runtimeConfig.networkProxy。在 Windows 的 ProcessContainer 下走这条受控代理路径时，有两个很关键的官方细节：一是 allowedProxyPeer 填的是代理程序的包家族名（Package Family Name）或 AppContainer 配置文件名，而不是进程 PID；二是这套 Windows 映射要求把 ingress.default 设成 allow，同时靠 hostLoopback 设为 deny 来封住普通本机回环端口，只让指定的代理身份连通。\n\n参考来源：Microsoft Learn — MXC policy examples（Allow direct access to an IP range & Use an application-provided proxy）。')
+note(s,'光管住文件还不够，网络要是不封，读出来的东西顺着网线就溜了。MXC 网络默认把出站、入站和本机回环全设成 deny。真要放行，通常就两条路，而且两条不要混着配：\n第一条是直连固定网段，在 egress.allow 里写清楚 IP 段和端口——注意系统防火墙只认 IP 和端口，不认域名；第二条是按域名白名单放行，做法是在宿主外面先起一个受控代理，再用 networkProxy 指过去。在 Windows 的 ProcessContainer 下走代理有两个容易踩坑的细节：一是 allowedProxyPeer 填的是代理的包家族名或 AppContainer 配置名，不是进程 PID；二是得把 ingress.default 设成 allow，同时靠 hostLoopback 设为 deny 锁死普通本地端口，只让指定的代理连通。\n\n参考来源：Microsoft Learn — MXC policy examples（Allow direct access to an IP range & Use an application-provided proxy）。')
 
 # ---------- 15 KEYS & UI
 s=15
@@ -530,7 +530,7 @@ ui_code=('"ui": {\n'
          '}')
 tb(s,ex+200000,ui_y+380000,ew-360000,ui_code,size=11.4,color=CODE,font=MF,cy=ui_h-440000)
 footer(s,'',16)
-note(s,'文件与网络之外，最敏感的就是密钥和用户的桌面环境了。有一条铁律可以省掉九成的泄密风险：永远别把 API Key、SSH 私钥直接塞进沙箱的环境变量或配置文件里；真要调受保护的外部接口，让外面的宿主程序或受控代理在审完请求后替它挂上凭证。\n至于桌面与交互控制，策略里的 ui 段给了三个非常精准的开关：默认把 disable 设为 true、clipboard 设为 none、injection（在 V1 SDK 里对应 allowInputInjection）设为 false，彻底封死窗口访问、剪贴板读写和伪造键鼠输入；如果某个工具确实需要弹窗并读取剪贴板输入，也可以只把 disable 改成 false、clipboard 设成单向的 read，依然严禁写剪贴板和注入按键。要是跑整套传统桌面客户端，那就直接放进配好专用机器人账号的 Session Container。\n\n参考来源：Microsoft Learn — MXC policy examples（Allow a visible tool without broad UI access）。')
+note(s,'除了文件和网络，最敏感的就是密钥和员工桌面了。防泄密最省心的一条铁律是：永远别把 API Key、SSH 私钥塞进沙箱的环境变量或磁盘里；真要调外部受保接口，让沙箱外面的宿主或代理验完请求后再替它挂凭证。\n桌面和交互则在 ui 这一段里给了三个开关：默认把 disable 设为 true、剪贴板设为 none、按键注入设为 false，把窗口、剪贴板和模拟键鼠全封死；哪怕个别工具确实得弹窗并读一下剪贴板，也只需要把剪贴板开成单向只读，照样严禁写剪贴板和乱发按键。要是得跑完整的传统桌面软件，那就直接丢进配好专用账号的 Session Container。\n\n参考来源：Microsoft Learn — MXC policy examples（Allow a visible tool without broad UI access）。')
 
 # ---------- 16 LEARNING MODE (image right)
 s=16
@@ -552,7 +552,7 @@ for i,t in enumerate(['01 · Observe','02 · Human Review','03 · Enforce']):
         medallion(s,sx+sw+gap_lm//2,py_lm+260000,diam=200000,glyph='→',fill=CY,size=10)
 banner_box(s,M,py_lm+680000,cxl,580000,'Learning Mode provides evidence, not auto-grants. A human approves every rule.',size=14.2)
 footer(s,'',17,cx=cxl)
-note(s,'聊到这三道最小权限护栏，大家落地时肯定会遇到一个头疼问题：跑一个编译工具或者脚本动不动要读几十个系统路径，我一开始哪猜得到该放行哪些目录？全靠手写肯定跑不通。MXC 专门做了一个 Learning Mode 来帮我们探路。\n平时生产上线开的是严格拦截的 Enforcement，排查疑难杂症可以临时开只记日志不拦截的 Permissive；而在策略打磨阶段，最实用的就是 Learning Mode——它碰到没授权的访问照样拦住，但会把每一次被拒的尝试完整记进活动报告里。你可以先拿真实任务跑几轮，拿到这份证据清单，由工程师逐条甄别哪些真是正常依赖、哪些是越界试探，人工拍板加进策略之后，再切回强制模式上线。')
+note(s,'听到这儿大家肯定会犯愁：跑个编译器或复杂脚本动不动要摸几十个系统路径，我哪猜得到该放开哪些目录？纯靠手写肯定报错。所以 MXC 专门提供了 Learning Mode 帮我们探路。\n线上生产开的是严格拦截的 Enforcement，临时排障可以开只记日志的 Permissive；而在调策略阶段最顺手的就是中间这个 Learning Mode——没授权的访问它照样拦住，但会把每次被拒的明细记进活动报告。你先拿真实任务跑几遍，拿着这份报告由工程师逐条过目，看清哪些真是工具必需的依赖、哪些是越界乱摸，人工拍板写进策略后再切回强制模式上线。')
 
 # ---------- 17 CODING AGENT (image left)
 s=17
@@ -569,7 +569,7 @@ for t,st,c in perm:
     y+=rh+85000
 banner_box(s,xl,5340000,cxr,600000,'In production today: GitHub Copilot CLI enforces command isolation via MXC.',size=14.5)
 footer(s,'',18,x=xl,cx=cxr)
-note(s,'把前面讲的拼到一起，最直观的例子就是写代码的 Coding Agent。你想让它改代码、跑测试、提分支，仔细算算它真正需要的权限其实非常窄：当前这一个仓库目录可读写，node、python、git 这些工具链可调用，再加上通过本地代理去拉依赖包。至于电脑上别的项目、你的个人文档、~/.ssh 密钥，还有随便连外网的权限，全给它关掉，一点不耽误干活。\n这套模式已经在真实大规模生产里跑通了——大家平时用的 GitHub Copilot CLI，底层就是靠 MXC 的进程隔离来兜底约束模型动态生成和执行的命令。')
+note(s,'把这几招串起来，最典型的落地场景就是写代码的 Coding Agent。你想让它改代码、跑测试、提分支，算下来它真正需要的权限其实就这么一点：当前这一个仓库目录可读写，node、python、git 工具链能调，再通过本地代理拉依赖包。至于电脑上别的项目、个人文档、SSH 私钥和外网直连，全给它封死，一点不耽误干活。\n这可不是纸面推演——大家每天在用的 GitHub Copilot CLI，底层就是靠 MXC 的进程隔离来约束模型生成的命令。')
 
 # ---------- 18 DESKTOP & DATA (image right)
 s=18
@@ -587,7 +587,7 @@ for idx_u,(t,d,f) in enumerate(cards):
     rect(s,M+240000,y+ch-420000,cxl-480000,300000,fill=CODEBG,line=EDGE,lw=12700,preset='roundRect',text=f,size=11.5,bold=True,color=CY,font=MF)
     y+=ch+110000
 footer(s,'',19,cx=cxl)
-note(s,'除了研发写代码，企业业务里还有几个场景特别对路。比如操作传统客户端或内网系统的桌面 Agent，给它开一个 Session Container，让它在独立的本地账号和会话里通过 UI Automation 或应用接口跑流程——员工在前台正常办公，Agent 在后台独立桌面里处理单据，两边互不干扰，再配上专门的低权限业务账号就稳妥了。\n再比如审合同、做财报汇总的敏感文档 Agent，直接关进完全断网的 Process Container，只读一个输入目录、只写一个结果目录，物理上断掉外传可能。还有部署在 Windows 365 云电脑上的 Agent，跟员工的云桌面并排运行，进程隔离的用法和体验跟本地电脑完全一致。')
+note(s,'除了写代码，企业里还有三类场景特别合适。第一是操作老牌客户端或内网软件的桌面 Agent：给它开个 Session Container，配上低权限专用机器人账号——员工在前台干自己的活，Agent 在后台独立桌面里录单据，两边互不打扰。\n第二是审合同、算财报的敏感文档 Agent：直接关进断网的 Process Container，只读一个输入文件夹、只写一个汇总结果，从物理上掐断外传可能。第三是跑在 Windows 365 云电脑上的 Agent，跟云桌面并排运行，进程隔离的体验和本地电脑完全一样。')
 
 # ---------- 19 ECOSYSTEM
 s=19
@@ -610,7 +610,7 @@ for title,body,h,col_e in status_rows:
     tb(s,panel_x+200000,y+440000,panel_w-400000,body,size=12.8,color=INK,cy=h-500000)
     y+=h+140000
 footer(s,'',20)
-note(s,'而且 MXC 不是微软关起门来自用的组件，整个 AI 工具链生态接得非常快。像 GitHub Copilot、OpenAI Codex、OpenClaw、Replit、LM Studio 还有 Unsloth AI 现在都已经直接支持 MXC 了；NVIDIA 的 OpenShell 已经集成进来，OpenAI 和 Meta 也在基于这套新的隔离机制往下做深；再加上 Anthropic Claude Code、Box、Perplexity、Raycast 等一众厂商也陆续官宣支持。对企业架构师来说是个好消息：不同工具底层正在往同一套操作系统级安全基础设施收敛，不用每引一个工具就重搭一套孤立的沙箱。')
+note(s,'而且 MXC 不是微软自己关起门来用的组件，整个行业接得非常快。像 GitHub Copilot、OpenAI Codex、OpenClaw、Replit、LM Studio 和 Unsloth AI 已经直接用上了；NVIDIA 的 OpenShell 做了集成，OpenAI 和 Meta 也在往上做深；Anthropic Claude Code、Box、Perplexity、Raycast 等一大批厂商也官宣了支持。对企业架构师来说这是个大好事：各家工具底层正在往同一套操作系统安全底座收敛，不用每接一个工具就重搭一套孤立的沙箱。')
 
 # ---------- 20 REFERENCE ARCHITECTURE
 s=20
@@ -640,7 +640,7 @@ for i,(t,d,col_s) in enumerate(side):
         {'text':d,'sizePt':14.2,'color':MUTED},
     ],fill=CARD,line=EDGE,lw=12700,pad_x=240000,pad_y=140000)
 footer(s,'',21)
-note(s,'看完了典型场景和行业生态，如果我们要把 MXC 接进自家的 Agent 平台，整体该怎么搭？这就是一套可以直接落地的生产参考架构。当大模型规划器决定调工具，比如想执行一句 npm test 时，指令绝不能直通操作系统，而是先交到宿主侧的可信策略引擎手里；宿主按任务类型选好现成的最小权限模板，再通过 MXC SDK 拉起对应的隔离后端去跑。\n跑完往回走的那条路径同样不能省：退出码正不正常、产出格式对不对、中间有没有触发越权拒绝，全由宿主验过关之后再把结果喂回给 Agent。外围再配上管域名和挂凭证的出站代理、帮着收敛权限的 Learning Mode，以及做身份与全局治理的 Entra Agent ID 和 Agent 365，整套防线就严丝合缝了。')
+note(s,'看完场景和生态，如果你们要把 MXC 接进自家的 Agent 平台，整体架构就长这样。当大模型规划器想执行一句 npm test 时，命令绝不能直通操作系统，必须先经过中间那个可信宿主的策略引擎；宿主按任务类型选好现成的最小权限模板，再调 MXC SDK 拉起内核沙箱去跑。\n跑完往回走的那条路同样关键：退出码对不对、输出格式合不合规、中间有没有越权被拒，全由宿主验过关之后，才把结果喂回给大模型。底下再配上替沙箱挂凭证的出站代理、收敛规则用的 Learning Mode，以及管全局身份审计的 Entra Agent ID 和 Agent 365，整套闭环就齐了。')
 
 # ---------- 21 SDKs
 s=21
@@ -664,7 +664,7 @@ tb(s,M+280000,4740000,CW-560000,None,paras=[
     {'text':'Requirements: Windows 11 24H2+ (physical or Windows 365), macOS, or Linux  ·  .NET 8+ / Node.js 18+ / Rust.','sizePt':14,'color':MUTED},
 ],cy=1240000)
 footer(s,'',22)
-note(s,'聚焦到刚才架构图中间那块 MXC SDK，工程接入其实非常轻。官方在 NuGet、npm 和 crates.io 上同步维护了 .NET、TypeScript 和 Rust 三套 SDK。不管你用哪门语言，写法都是一致的：在代码里填好统一的 ContainerRequest，声明清楚文件、网络、命令和超时，SDK 会自动帮你序列化成稳定的 1.0.0 标准契约，不用你操心底层系统的差异。\n接入时只要养成一个好习惯：启动任务前先调 getPlatformSupport 确认当前机器的支撑情况；如果在 Windows 上跑，还可以顺手调一下 probe，提前确认你配的这份策略能不能拿到预期的原生隔离级别。')
+note(s,'落到代码接入上其实非常轻。官方在 NuGet、npm 和 crates.io 上同步维护了 .NET、TypeScript 和 Rust 三套 SDK。不管用哪门语言，套路都一样：在代码里填好统一的 ContainerRequest，写清文件、网络、命令和超时，SDK 会自动转成稳定的 1.0.0 标准配置去调系统原生沙箱。\n写代码时只要养成一个习惯：启动前先调 getPlatformSupport 看一眼当前机器支不支持；在 Windows 上还可以顺手调一下 probe，提前确认这份策略能不能拿到预期的隔离效果。')
 
 # ---------- 22 FIVE STEPS + CODE
 s=22
@@ -699,7 +699,7 @@ code=[
 ]
 tb(s,cx0+240000,cy0+490000,cw_-400000,None,paras=[{'text':l} for l in code],size=11.1,color=CODE,font=MF,cy=3740000)
 footer(s,'',23)
-note(s,'具体到研发团队写代码，用 V1 SDK 接进项目里基本就是右边这十几行的五步闭环：先调同步的 getPlatformSupport 和 probe(request) 摸清当前机器和策略的支撑情况，不支持就明确报错，绝不静默降级成裸跑；接着按默认拒绝写好 ContainerRequest，把 containment、只读代码库与可写输出目录、双向网络拒绝、UI 剪贴板禁令和 timeoutMs 一次定死；开发期先打开 Learning Mode 收集真实访问需求，人工审完再切回强制模式，把正常路径、越权读密钥、直连外网和剪贴板限制正反两面都测过一遍；最后调 run(request) 执行，并在成功、报错和取消三种分支下都做好超时与清理。')
+note(s,'用 V1 SDK 写进项目里，核心就是右边这十几行代码的五步走：第一步先调 getPlatformSupport 和 probe 探路，不支持就直接报错停下，绝不悄悄降级成裸跑；第二步按默认拒绝填好 ContainerRequest，把只读源码、可写输出目录、网络禁令、剪贴板禁令和超时一次定死；第三步开发期先开 Learning Mode 跑几遍，人工审完被拒记录；第四步切回强制模式，正反用例都测过；第五步调 run 执行，并把成功、失败、取消三种分支的清理逻辑都兜住。')
 
 # ---------- 23 HOST JOB LIST
 s=23
@@ -712,7 +712,7 @@ for i,t in enumerate(items):
     medallion(s,x+440000,y+th//2,diam=440000,glyph='✓',fill=CY,size=16)
     tb(s,x+820000,y+80000,tw-1040000,t,size=15.8,color=INK,cy=th-160000)
 footer(s,'',24)
-note(s,'进 Demo 之前，我们最后把宿主程序自己该扛的职责做个小结。跑任务一定要设超时，并且把沙箱没拉起来、里面命令自己跑错了、还有用户主动取消这几类情况区分开；不管哪一步出了异常，收尾的资源回收和 deprovision 都得保证执行，别留下一堆悬空的临时账号。\n分配权限时，坚持一次动作配一个极窄的短命沙箱，远比偷懒复用一个大权限长寿容器安全得多。产出物单独落到专用目录，记住销毁沙箱不会撤回已经写进宿主机目录的文件。遇到越权拦截要大方地把原因告诉用户，而 Learning Mode 跑出来的任何放行建议，上线前都必须经过真人点头。')
+note(s,'进 Demo 之前，最后嘱咐一下宿主程序自己要扛稳的六件事：每次调用都要设超时，而且把沙箱没拉起来、里面脚本跑挂了、用户手动取消这三件事分清楚；不管哪一步抛异常，finally 里的资源回收和账号注销都必须走到，别留一堆僵尸账号。\n给权限时宁可一次动作起一个短命的小沙箱，也别图省事共用一个大权限容器；输出落到专门目录，记住关掉沙箱不会撤回已经写到宿主机上的文件；碰到拦截大大方方把原因报出来，而 Learning Mode 给出的任何放行建议，上线前都得过真人这一关。')
 
 # ---------- 24 DEMO 1 (PROCESSCONTAINER: FILES + NETWORK)
 s=24
@@ -742,7 +742,7 @@ for idx,(t,sub,desc,col_) in enumerate(pc_cards):
         {'text':desc,'sizePt':13,'color':MUTED},
     ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=95000)
 footer(s,'',25)
-note(s,'原理和架构聊透了，接下来我们打开交互式 Demo Studio，通过三组真机实跑的实验亲眼验证操作系统级护栏是怎么落地的。\n第一个 Demo 对应日常最常用的单次任务沙箱 ProcessContainer，一共分五步正反对照测试文件与网络两条边界。\n第一步做能力探测：加载左边这份 policy.json，依次调用同步的 getPlatformSupport() 和 probe(request)，确认当前 Windows 内核的 AppContainer 文件 ACL 与网络过滤器处于就绪状态，绝不在缺能力时静默裸跑。\n第二步验证最小权限正常读写：策略里只给 demo/input 只读、给 demo/output 可写，沙箱内执行命令读取 input/request.txt 并把处理结果写进 output/report.txt，权限刚好够用，返回码为 0 顺利通过。\n第三步做越权读机密的反向验证：保持同一份策略一字不改，让同一个工作负载去读 deniedPaths 明确封锁的 protected/denied.txt，哪怕外层目录能进，Windows 内核的文件系统 ACL 也会当场拦截并返回 Access Denied（退出码 1）。\n第四步与第五步正反验证本机回环网络开关：我们把公网出站 egress 默认锁死为 deny，第四步先把 ingress 里的 hostLoopback 设为 allow，沙箱里的 curl 能正常打通宿主机 127.0.0.1 上的本地代理端口拿到 HTTP 200；第五步只把 hostLoopback 改成 deny，重跑完全相同的 curl 命令，立刻在操作系统网络栈层面被拒绝连接（退出码 7）。五步跑完，右侧状态标签会逐一亮起，清楚证明放行与阻断全由内核说了算。')
+note(s,'好，接下来我们点开右上角打开 Demo Studio，跑三组真机实验。第一个 Demo 测日常用得最多的 ProcessContainer，一共五步，正反对照看文件和网络两道闸门怎么生效。\n第一步先探路：加载左边这份策略，调 getPlatformSupport 和 probe，确认当前 Windows 内核的文件 ACL 和网络过滤都已经就位。\n第二步测合规读写：策略只放开了 input 只读、output 可写，沙箱里读请求文件、往输出目录写报告，权限刚好够用，顺顺当当返回 0。\n第三步马上做反向测试：策略一个字不改，让同一个程序去偷读 deniedPaths 里封死的机密文件 denied.txt——Windows 内核当场拦下，直接报拒绝访问。\n第四步和第五步对比测网络回环开关：我们把公网出站锁死成 deny，第四步先把本机回环 hostLoopback 设成 allow，沙箱里的 curl 能顺利连上本机端口拿到 200；第五步只把这一个开关改成 deny，再跑一模一样的 curl，系统网络栈当场拒绝连接。放行什么、拦住什么，全由系统内核说了算。')
 
 # ---------- 25 DEMO 2 (SESSION PTY, image right)
 s=25
@@ -761,7 +761,7 @@ for i,(t,d) in enumerate(beats):
     ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=90000)
     y+=bh_d2+gap_d2
 footer(s,'',26,cx=cxl)
-note(s,'第二个 Demo 模拟真实的企业一线运维排障场景，用的是保留跨步状态的 IsolationSession 配合交互式 PowerShell PTY 终端，一共分六步走完生命周期闭环。\n第一步拉起隔离会话：宿主程序先把故障工单 INC-1042 和只读诊断授权文件放进专用交接目录，然后调用 MXC 动态创建一个全新的 Windows 本地临时操作员账号和独立 Session 桌面，打开 120×30 的持久化 PowerShell 终端，从根上阻断向员工桌面注入按键或偷读剪贴板。\n第二步核验身份与跨用户目录拦截：对比右侧卡片就能看到，终端里的临时操作员用户名和 Session ID 跟当前登录电脑的员工完全不同；紧接着让它尝试读取宿主机员工的个人目录，立刻被 Windows NTFS 用户 ACL 当场拒绝。\n第三步在保持终端上下文不断开的前提下，读取共享交接目录里的工单文件，确认本次任务被严格限定在 read-only-diagnostics 只读诊断范围。\n第四步做权限边界正反实测：操作员账号正常执行 Get-Service 查出打印后台处理程序 Spooler 和时间服务 W32Time 的实时运行状态；但当它紧接着试图执行 Stop-Service 停掉系统服务时，因为临时账号只是普通非管理员身份，立刻被 Windows 服务控制管理器拦截。\n第五步落盘并由宿主独立验真：Agent 把诊断证据写回交接目录的 triage-evidence.txt，可信宿主程序绝不轻信沙箱自报结果，而是独立校验工单号、操作员身份和服务状态字段齐全合规；在本机 Live 模式下，这一步还可以直接在终端底部输入框里现场敲 whoami、pwd 等任意 PowerShell 命令互动验证。\n第六步彻底清理：退出终端、调用 stopContainer 停掉会话，并用 deprovisionContainer 把刚才建的临时操作员账号从系统里干干净净注销删除，不留任何残留权限。')
+note(s,'第二个 Demo 模拟一线运维排障，用的是带状态的 IsolationSession 配交互式 PowerShell 终端，分六步走完从建号到销号的全流程。\n第一步起会话：宿主先把故障工单 INC-1042 和只读诊断授权放进交接目录，然后让 MXC 现场新建一个 Windows 临时操作员账号和独立桌面会话，拉起持久化 PowerShell 终端，跟员工自己的桌面和剪贴板彻底隔开。\n第二步验身份隔离：看右边对比栏就能发现，终端里的临时用户名和 Session ID 跟宿主机员工完全不同；这会儿让它去摸员工的个人目录，Windows 用户权限当场拒绝。\n第三步终端不断开，接着读交接目录里的工单文件，确认这次任务只准做只读诊断。\n第四步测权限边界：用临时账号跑 Get-Service 查打印服务和时间服务的状态，正常放行；但紧接着让它跑 Stop-Service 想停掉系统服务，因为只是普通非管理员账号，立马被系统拦下。\n第五步落盘验真：Agent 把排查结果写进交接目录，宿主程序在外面独立核对工单号、操作员和服务状态无误后才算过关；如果大家在本机跑 Live 模式，底下输入框还能直接敲任意 PowerShell 命令现场试。\n第六步收尾销户：退出终端、关掉会话，调 deprovision 把临时账号从系统里彻底删干净。')
 
 # ---------- 26 DEMO 3 (HYPERLIGHT MICROVM)
 s=26
@@ -792,7 +792,7 @@ for idx,(t,sub,desc,col_) in enumerate(vm_cards):
         {'text':desc,'sizePt':13,'color':MUTED},
     ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=95000)
 footer(s,'',27)
-note(s,'第三个 Demo 展示隔离等级最高的实验性硬件级后端 Hyperlight MicroVM，一共分五步演示怎么在不到一百毫秒的开销下安全运行完全不可信的代码。\n先说为什么需要它：当你的业务要直接执行大模型现写的复杂 Python 脚本或第三方插件时，连共用宿主机 Windows NT 内核都觉得风险太高；可传统虚拟机冷启动动辄好几秒，在线交互根本等不起。Hyperlight 的解法是在 Windows Hypervisor Platform 硬件虚拟化分区上跑极简的 Unikraft 微内核，每次直接从预热好的内存快照瞬间恢复。\n第一步检查实验策略与预热快照：校验 1.1.0-alpha 版本的 hyperlight 策略配置，确认 bash 和 Python 3.12 两个微内核内存快照已经就绪。\n第二步验证独立内核边界：拉起微虚拟机执行 uname -sr 和根目录列举，约 90 毫秒恢复启动，返回的是独立的 Unikraft 5.15 x86_64 内核，跟宿主机的 Windows 内核彻底物理隔离。\n第三步跑通真实业务计算：把一段 AI 生成的发票对账 Python 脚本放进微虚拟机执行，毫秒级算完并通过标准输出把结构化 JSON 结果安全交回宿主。\n第四步做恶意逃逸探针测试：故意运行一段对抗性 Python 代码，同时去摸宿主机 C:\\Windows 目录、读取宿主机环境变量 USERPROFILE、以及发起外部 TCP Socket 连接——由于微虚拟机压根没挂载宿主磁盘、没透传宿主环境变量、也没开网络协议栈（直接报 Errno 13），三路逃逸尝试全部被硬件边界死死挡住。\n第五步验证快照瞬时清零：先在第一次调用里往微虚拟机的 /tmp/agent-residue.txt 写入残留数据并确认成功；紧接着发起第二次调用去读同一个路径，直接报 FileNotFoundError——因为每次调用都是从干净的初始内存快照重新恢复，上一次运行留下的任何痕迹在退出瞬间就彻底蒸发，真正做到每次执行都是无状态的干净沙箱。')
+note(s,'第三个 Demo 看隔离级别拉满的实验性后端 Hyperlight MicroVM。什么时候会用到它？假设你的业务要直接跑大模型现写的复杂 Python 脚本或陌生插件，连跟宿主机共用 Windows 内核你都不放心；可传统虚拟机开机动不动好几秒，在线请求根本等不起。Hyperlight 的办法是在硬件虚拟化之上跑极简的 Unikraft 微内核，每次直接从预热好的内存快照恢复，不到一百毫秒就能跑完。\n我们分五步验证一遍：第一步检查 alpha 策略和预热好的 bash、Python 内存快照；第二步拉起微虚拟机跑 uname，90 毫秒左右就拿回结果，跑的是独立的 Unikraft 5.15 内核，不是宿主机的 Windows；第三步把一段 AI 写的发票对账 Python 脚本丢进去算完，通过标准输出把 JSON 结果交回宿主；第四步跑一段恶意逃逸探针，同时去摸宿主机 C 盘、读环境变量、连外部 TCP 端口——因为根本没挂宿主磁盘、没传环境变量、也没开网络栈，三路试探全撞在硬件墙上报错；第五步测快照清零：上一次调用刚往 /tmp 写了个残留文件，下一次调用再去读就已经找不到了，每次恢复都是干干净净的初始内存，一点脏状态都留不下。')
 
 # ---------- 27 CLOSER
 s=27
@@ -809,7 +809,7 @@ card_box(s,x,4720000,cx,820000,[
 ],fill=CODEBG,line=EDGE,lw=12700,pad_x=200000,pad_y=90000,font=MF)
 tb(s,x,5700000,cx,'Thank you  ·  Q&A',size=24,color=INK,font=HF,bold=True,cy=520000)
 footer(s,'',28)
-note(s,'最后用四句话给今天的分享做个收尾：把安全护栏下沉到操作系统去强制执行，别让提示词独自扛雷；用好 MXC 这一份通用策略，让它在 Windows、macOS 和 Linux 上各自匹配最顺手的原生沙箱；落地时先用 Learning Mode 看清真实访问足迹，人工审过再锁死最小权限；同时永远记得，关进沙箱不等于结果可信，拿回来的输出一定要再验一道。\n如果大家回去想挑第一个场景试水，我最推荐从 Coding Agent 或者断网的敏感文档处理开始，花半天时间把输入输出目录和拒绝列表配出来，正反两条路径一测，马上就能看到实实在在的效果。今天的内容就到这里，谢谢大家，看看大家有什么问题！')
+note(s,'最后用四句话收个尾：第一，把护栏下沉到操作系统去硬拦，别让提示词自己扛雷；第二，用好 MXC 这一份通用策略，在 Windows、macOS 和 Linux 上自动对接各自的原生沙箱；第三，落地时先开 Learning Mode 摸清真实访问需求，人工审过再锁死最小权限；第四，关进沙箱不代表结果可信，拿回来的产出一定要再验一道。\n大家回去如果想挑第一个场景试水，最推荐从写代码的 Agent 或者断网处理敏感文档开始，花半天把读写目录和拒绝列表配好、正反路径一测，马上就能见效。今天的内容就分享到这里，谢谢大家，看看各位有什么问题！')
 
 
 # ===================== BUILD-TIME LAYOUT VALIDATOR =====================
