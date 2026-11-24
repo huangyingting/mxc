@@ -742,7 +742,7 @@ for idx,(t,sub,desc,col_) in enumerate(pc_cards):
         {'text':desc,'sizePt':13,'color':MUTED},
     ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=95000)
 footer(s,'',25)
-note(s,'原理和架构聊透了，我们直接来看三个真机实跑的 Demo。\n第一个 Demo 跑的是大家最常用的 ProcessContainer。我们先调 getPlatformSupport 和 probe 验证当前 Windows 内核的原生容器能力；接着在只读 input、只写 output 的最小权限下顺利生成报告；随后保持策略一字不改，让同一个脚本去偷读 protected/denied.txt 里的机密内容，你会看到操作系统内核当场拦截；最后在完全封死外网的前提下，对比开启和关闭本机回环时对本地监听端口的访问结果，亲眼确认文件和网络两道闸门都在内核层生效。')
+note(s,'原理和架构聊透了，接下来我们打开交互式 Demo Studio，通过三组真机实跑的实验亲眼验证操作系统级护栏是怎么落地的。\n第一个 Demo 对应日常最常用的单次任务沙箱 ProcessContainer，一共分五步正反对照测试文件与网络两条边界。\n第一步做能力探测：加载左边这份 policy.json，依次调用同步的 getPlatformSupport() 和 probe(request)，确认当前 Windows 内核的 AppContainer 文件 ACL 与网络过滤器处于就绪状态，绝不在缺能力时静默裸跑。\n第二步验证最小权限正常读写：策略里只给 demo/input 只读、给 demo/output 可写，沙箱内执行命令读取 input/request.txt 并把处理结果写进 output/report.txt，权限刚好够用，返回码为 0 顺利通过。\n第三步做越权读机密的反向验证：保持同一份策略一字不改，让同一个工作负载去读 deniedPaths 明确封锁的 protected/denied.txt，哪怕外层目录能进，Windows 内核的文件系统 ACL 也会当场拦截并返回 Access Denied（退出码 1）。\n第四步与第五步正反验证本机回环网络开关：我们把公网出站 egress 默认锁死为 deny，第四步先把 ingress 里的 hostLoopback 设为 allow，沙箱里的 curl 能正常打通宿主机 127.0.0.1 上的本地代理端口拿到 HTTP 200；第五步只把 hostLoopback 改成 deny，重跑完全相同的 curl 命令，立刻在操作系统网络栈层面被拒绝连接（退出码 7）。五步跑完，右侧状态标签会逐一亮起，清楚证明放行与阻断全由内核说了算。')
 
 # ---------- 25 DEMO 2 (SESSION PTY, image right)
 s=25
@@ -761,7 +761,7 @@ for i,(t,d) in enumerate(beats):
     ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=90000)
     y+=bh_d2+gap_d2
 footer(s,'',26,cx=cxl)
-note(s,'第二个 Demo 模拟很真实的运维一线排障，用的是保留状态的 IsolationSession 配合交互式 PTY 终端。假设来了一张打印和时间服务异常的工单 INC-1042，宿主程序先把工单和只读诊断授权放进共享目录，然后现场建一个独立的 Windows 临时操作员账号和专属 Session，拉起 PowerShell 终端。\n大家一会儿看的时候可以重点盯一眼账号对比：终端里的用户名和 Session ID 跟当前登录电脑的员工完全隔离，它查它的 Spooler 和 W32Time 服务、写它的排查证据，需要时真人工程师还能直接接管这个终端敲命令，全程绝对碰不到员工自己的桌面和剪贴板。等宿主核验完生成的排查报告，立刻关闭会话并把临时账号彻底注销删干净。')
+note(s,'第二个 Demo 模拟真实的企业一线运维排障场景，用的是保留跨步状态的 IsolationSession 配合交互式 PowerShell PTY 终端，一共分六步走完生命周期闭环。\n第一步拉起隔离会话：宿主程序先把故障工单 INC-1042 和只读诊断授权文件放进专用交接目录，然后调用 MXC 动态创建一个全新的 Windows 本地临时操作员账号和独立 Session 桌面，打开 120×30 的持久化 PowerShell 终端，从根上阻断向员工桌面注入按键或偷读剪贴板。\n第二步核验身份与跨用户目录拦截：对比右侧卡片就能看到，终端里的临时操作员用户名和 Session ID 跟当前登录电脑的员工完全不同；紧接着让它尝试读取宿主机员工的个人目录，立刻被 Windows NTFS 用户 ACL 当场拒绝。\n第三步在保持终端上下文不断开的前提下，读取共享交接目录里的工单文件，确认本次任务被严格限定在 read-only-diagnostics 只读诊断范围。\n第四步做权限边界正反实测：操作员账号正常执行 Get-Service 查出打印后台处理程序 Spooler 和时间服务 W32Time 的实时运行状态；但当它紧接着试图执行 Stop-Service 停掉系统服务时，因为临时账号只是普通非管理员身份，立刻被 Windows 服务控制管理器拦截。\n第五步落盘并由宿主独立验真：Agent 把诊断证据写回交接目录的 triage-evidence.txt，可信宿主程序绝不轻信沙箱自报结果，而是独立校验工单号、操作员身份和服务状态字段齐全合规；在本机 Live 模式下，这一步还可以直接在终端底部输入框里现场敲 whoami、pwd 等任意 PowerShell 命令互动验证。\n第六步彻底清理：退出终端、调用 stopContainer 停掉会话，并用 deprovisionContainer 把刚才建的临时操作员账号从系统里干干净净注销删除，不留任何残留权限。')
 
 # ---------- 26 DEMO 3 (HYPERLIGHT MICROVM)
 s=26
@@ -792,7 +792,7 @@ for idx,(t,sub,desc,col_) in enumerate(vm_cards):
         {'text':desc,'sizePt':13,'color':MUTED},
     ],fill=CARD,line=EDGE,lw=12700,pad_x=220000,pad_y=95000)
 footer(s,'',27)
-note(s,'第三个 Demo 看隔离级别拉满的实验性后端：Hyperlight MicroVM。什么时候非用它不可？比如你的系统得直接运行大模型现写的复杂 Python 逻辑，或者来路不明的第三方代码，你连宿主机的 Windows 内核都不放心跟它共用；可传统虚拟机一开机就要好几秒，在线业务根本等不起。\nHyperlight 走的是另一条路：它在 Windows Hypervisor 硬件虚拟化之上跑极简的 Unikraft 微内核，每次直接从预热好的内存快照恢复，90 毫秒左右就能跑完返回。演示里我们会顺着走完整个闭环：先检查预热快照，确认里面跑的是独立的 Unikraft 5.15 内核而不是 Windows；接着在百毫秒内算完一段不可信的 Python 对账脚本；再故意跑探针代码去摸宿主机 C 盘、环境变量和网络套接字，看它们被硬件边界全部挡死；最后验证上一次运行留在 /tmp 里的文件，在下一次快照恢复时瞬间清零。')
+note(s,'第三个 Demo 展示隔离等级最高的实验性硬件级后端 Hyperlight MicroVM，一共分五步演示怎么在不到一百毫秒的开销下安全运行完全不可信的代码。\n先说为什么需要它：当你的业务要直接执行大模型现写的复杂 Python 脚本或第三方插件时，连共用宿主机 Windows NT 内核都觉得风险太高；可传统虚拟机冷启动动辄好几秒，在线交互根本等不起。Hyperlight 的解法是在 Windows Hypervisor Platform 硬件虚拟化分区上跑极简的 Unikraft 微内核，每次直接从预热好的内存快照瞬间恢复。\n第一步检查实验策略与预热快照：校验 1.1.0-alpha 版本的 hyperlight 策略配置，确认 bash 和 Python 3.12 两个微内核内存快照已经就绪。\n第二步验证独立内核边界：拉起微虚拟机执行 uname -sr 和根目录列举，约 90 毫秒恢复启动，返回的是独立的 Unikraft 5.15 x86_64 内核，跟宿主机的 Windows 内核彻底物理隔离。\n第三步跑通真实业务计算：把一段 AI 生成的发票对账 Python 脚本放进微虚拟机执行，毫秒级算完并通过标准输出把结构化 JSON 结果安全交回宿主。\n第四步做恶意逃逸探针测试：故意运行一段对抗性 Python 代码，同时去摸宿主机 C:\\Windows 目录、读取宿主机环境变量 USERPROFILE、以及发起外部 TCP Socket 连接——由于微虚拟机压根没挂载宿主磁盘、没透传宿主环境变量、也没开网络协议栈（直接报 Errno 13），三路逃逸尝试全部被硬件边界死死挡住。\n第五步验证快照瞬时清零：先在第一次调用里往微虚拟机的 /tmp/agent-residue.txt 写入残留数据并确认成功；紧接着发起第二次调用去读同一个路径，直接报 FileNotFoundError——因为每次调用都是从干净的初始内存快照重新恢复，上一次运行留下的任何痕迹在退出瞬间就彻底蒸发，真正做到每次执行都是无状态的干净沙箱。')
 
 # ---------- 27 CLOSER
 s=27
